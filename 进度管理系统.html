@@ -6714,131 +6714,24 @@ function init() {
 }
 
 // ── 账号安全管理功能 ───────────────────────────────────────────────────────────
-
-// 超级管理员账号配置
-const SUPER_ADMIN = {
-  username: '13162098878',
-  password: '13162098878',
-  role: 'superadmin'
-};
+// 使用 spm_ 前缀的账号系统（与登录系统统一）
 
 // 初始化账号系统
-function initAuthSystem() {
-  // 检查是否已初始化账号数据
-  let accounts = JSON.parse(localStorage.getItem('auth_accounts') || '[]');
-  
-  // 如果没有账号数据，初始化超级管理员
-  if (accounts.length === 0) {
-    accounts = [SUPER_ADMIN];
-    localStorage.setItem('auth_accounts', JSON.stringify(accounts));
+function initAccountSystem() {
+  // 检查是否有账号数据
+  let accounts = localStorage.getItem('spm_accounts');
+  if (!accounts) {
+    localStorage.setItem('spm_accounts', JSON.stringify(DEFAULT_ACCOUNTS));
   }
   
-  // 检查登录状态
-  const currentUser = localStorage.getItem('auth_current_user');
-  if (!currentUser) {
-    showLoginModal();
+  // 检查是否有登录会话
+  const session = localStorage.getItem('spm_currentUser');
+  if (session) {
+    currentUser = JSON.parse(session);
+    showMainApp();
   } else {
-    hideLoginModal();
+    showLoginPage();
   }
-}
-
-// 显示登录界面
-function showLoginModal() {
-  const modal = document.getElementById('loginModal');
-  if (modal) {
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-  }
-}
-
-// 隐藏登录界面
-function hideLoginModal() {
-  const modal = document.getElementById('loginModal');
-  if (modal) {
-    modal.style.display = 'none';
-    document.body.style.overflow = '';
-  }
-  // 更新用户身份显示
-  updateUserRoleDisplay();
-}
-
-// 更新用户身份显示
-function updateUserRoleDisplay() {
-  const currentUser = JSON.parse(localStorage.getItem('auth_current_user') || '{}');
-  const roleDisplay = document.getElementById('userRoleDisplay');
-  if (roleDisplay && currentUser.role) {
-    let roleText = '';
-    switch (currentUser.role) {
-      case 'superadmin':
-        roleText = '超级管理员';
-        break;
-      case 'admin':
-        roleText = '管理员';
-        break;
-      default:
-        roleText = '访客';
-    }
-    roleDisplay.textContent = roleText;
-  } else if (roleDisplay) {
-    roleDisplay.textContent = '未登录';
-  }
-}
-
-// 处理登录
-function handleLogin() {
-  const username = document.getElementById('loginUsername').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  const errorDiv = document.getElementById('loginError');
-  
-  if (!username || !password) {
-    errorDiv.textContent = '请输入账号和密码';
-    errorDiv.style.display = 'block';
-    return;
-  }
-  
-  // 验证账号
-  const accounts = JSON.parse(localStorage.getItem('auth_accounts') || '[]');
-  const account = accounts.find(acc => acc.username === username && acc.password === password);
-  
-  if (account) {
-    // 登录成功
-    localStorage.setItem('auth_current_user', JSON.stringify({
-      username: account.username,
-      role: account.role || 'user',
-      loginTime: new Date().toISOString()
-    }));
-    errorDiv.style.display = 'none';
-    hideLoginModal();
-    // 刷新安全设置面板
-    if (document.getElementById('securitySettingsPanel').classList.contains('open')) {
-      renderSecuritySettings();
-    }
-  } else {
-    errorDiv.textContent = '账号或密码错误';
-    errorDiv.style.display = 'block';
-  }
-}
-
-// 退出登录
-function logout() {
-  localStorage.removeItem('auth_current_user');
-  closeSecuritySettings();
-  showLoginModal();
-  // 清空登录表单
-  document.getElementById('loginUsername').value = '';
-  document.getElementById('loginPassword').value = '';
-  document.getElementById('loginError').style.display = 'none';
-}
-
-// 打开安全设置面板
-function openSecuritySettings() {
-  renderSecuritySettings();
-  document.getElementById('securitySettingsPanel').classList.add('open');
-}
-
-// 关闭安全设置面板
-function closeSecuritySettings() {
-  document.getElementById('securitySettingsPanel').classList.remove('open');
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -8591,18 +8484,17 @@ function resetDashboardConfig() {
   updateDashboardPreview();
 }
 
-// 渲染安全设置面板
+// 渲染安全设置面板（使用 spm_ 账号系统）
 function renderSecuritySettings() {
-  const currentUser = JSON.parse(localStorage.getItem('auth_current_user') || '{}');
+  if (!currentUser) return;
   document.getElementById('currentUserDisplay').textContent = currentUser.username || '-';
   renderAuthorizedAccountsList();
 }
 
-// 渲染已授权账号列表
+// 渲染已授权账号列表（使用 spm_ 账号系统）
 function renderAuthorizedAccountsList() {
   const container = document.getElementById('authorizedAccountsList');
-  const accounts = JSON.parse(localStorage.getItem('auth_accounts') || '[]');
-  const currentUser = JSON.parse(localStorage.getItem('auth_current_user') || '{}');
+  const accounts = JSON.parse(localStorage.getItem('spm_accounts') || '[]');
   
   if (accounts.length === 0) {
     container.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">暂无授权账号</div>';
@@ -8610,14 +8502,16 @@ function renderAuthorizedAccountsList() {
   }
   
   container.innerHTML = accounts.map(acc => {
-    const isCurrentUser = acc.username === currentUser.username;
-    const isSuperAdmin = acc.role === 'superadmin';
-    const canDelete = currentUser.role === 'superadmin' && !isSuperAdmin;
+    const isCurrentUser = acc.username === (currentUser?.username || '');
+    const isAdmin = acc.role === 'admin';
+    const canDelete = currentUser?.role === 'admin' && !isAdmin;
+    const roleInfo = ROLE_PERMISSIONS[acc.role];
     
     return `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid #e8e8e8;border-radius:6px;margin-bottom:8px;background:#fff;">
         <div>
-          <div style="font-size:14px;font-weight:500;color:#333;">${acc.username} ${isSuperAdmin ? '<span style="color:#1677ff;font-size:12px;">[超管]</span>' : ''} ${isCurrentUser ? '<span style="color:#52c41a;font-size:12px;">[当前]</span>' : ''}</div>
+          <div style="font-size:14px;font-weight:500;color:#333;">${acc.username} ${isAdmin ? '<span style="color:#1677ff;font-size:12px;">[管理员]</span>' : ''} ${isCurrentUser ? '<span style="color:#52c41a;font-size:12px;">[当前]</span>' : ''}</div>
+          <div style="font-size:12px;color:#999;">${roleInfo?.name || acc.role}</div>
         </div>
         ${canDelete ? `<button onclick="deleteAccount('${acc.username}')" style="padding:4px 12px;background:#ff4d4f;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;">删除</button>` : ''}
       </div>
@@ -8646,8 +8540,12 @@ function changePassword() {
     return;
   }
   
-  const currentUser = JSON.parse(localStorage.getItem('auth_current_user') || '{}');
-  let accounts = JSON.parse(localStorage.getItem('auth_accounts') || '[]');
+  if (!currentUser) {
+    alert('请先登录');
+    return;
+  }
+  
+  let accounts = JSON.parse(localStorage.getItem('spm_accounts') || '[]');
   
   const accountIndex = accounts.findIndex(acc => acc.username === currentUser.username);
   if (accountIndex === -1) {
@@ -8662,7 +8560,7 @@ function changePassword() {
   
   // 更新密码
   accounts[accountIndex].password = newPassword;
-  localStorage.setItem('auth_accounts', JSON.stringify(accounts));
+  localStorage.setItem('spm_accounts', JSON.stringify(accounts));
   
   // 清空表单
   document.getElementById('oldPassword').value = '';
@@ -8674,11 +8572,14 @@ function changePassword() {
 
 // 授权新账号
 function authorizeNewAccount() {
-  const currentUser = JSON.parse(localStorage.getItem('auth_current_user') || '{}');
+  if (!currentUser) {
+    alert('请先登录');
+    return;
+  }
   
-  // 只有超级管理员可以授权新账号
-  if (currentUser.role !== 'superadmin') {
-    alert('只有超级管理员可以授权新账号');
+  // 只有管理员可以授权新账号
+  if (currentUser.role !== 'admin') {
+    alert('只有管理员可以授权新账号');
     return;
   }
   
@@ -8695,7 +8596,7 @@ function authorizeNewAccount() {
     return;
   }
   
-  let accounts = JSON.parse(localStorage.getItem('auth_accounts') || '[]');
+  let accounts = JSON.parse(localStorage.getItem('spm_accounts') || '[]');
   
   // 检查账号是否已存在
   if (accounts.find(acc => acc.username === username)) {
@@ -8703,13 +8604,13 @@ function authorizeNewAccount() {
     return;
   }
   
-  // 添加新账号
+  // 添加新账号（默认编辑者角色）
   accounts.push({
     username: username,
     password: password,
-    role: 'user'
+    role: 'editor'
   });
-  localStorage.setItem('auth_accounts', JSON.stringify(accounts));
+  localStorage.setItem('spm_accounts', JSON.stringify(accounts));
   
   // 清空表单
   document.getElementById('newAuthUsername').value = '';
@@ -8721,10 +8622,13 @@ function authorizeNewAccount() {
 
 // 删除账号
 function deleteAccount(username) {
-  const currentUser = JSON.parse(localStorage.getItem('auth_current_user') || '{}');
+  if (!currentUser) {
+    alert('请先登录');
+    return;
+  }
   
-  if (currentUser.role !== 'superadmin') {
-    alert('只有超级管理员可以删除账号');
+  if (currentUser.role !== 'admin') {
+    alert('只有管理员可以删除账号');
     return;
   }
   
@@ -8732,17 +8636,17 @@ function deleteAccount(username) {
     return;
   }
   
-  let accounts = JSON.parse(localStorage.getItem('auth_accounts') || '[]');
+  let accounts = JSON.parse(localStorage.getItem('spm_accounts') || '[]');
   accounts = accounts.filter(acc => acc.username !== username);
-  localStorage.setItem('auth_accounts', JSON.stringify(accounts));
+  localStorage.setItem('spm_accounts', JSON.stringify(accounts));
   
   renderAuthorizedAccountsList();
 }
 
 // 监听回车键登录
 document.addEventListener('DOMContentLoaded', function() {
-  // 初始化认证系统
-  initAuthSystem();
+  // 初始化账号系统（使用 spm_ 前缀的统一系统）
+  initAccountSystem();
   
   const passwordInput = document.getElementById('loginPassword');
   if (passwordInput) {
@@ -8754,40 +8658,11 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-// 重写init函数，添加登录检查
-const originalInit = init;
-init = function() {
-  initAuthSystem();
-  originalInit();
-};
-
+// 页面加载完成后初始化
 init();
 </script>
 
 </div><!-- 主内容区结束 -->
-
-<!-- 登录界面 -->
-<div id="loginModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);z-index:10000;align-items:center;justify-content:center;">
-  <div style="width:400px;padding:40px;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
-    <div style="text-align:center;margin-bottom:32px;">
-      <div style="width:80px;height:80px;background:linear-gradient(135deg,#1677ff 0%,#0958d9 100%);border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;">
-        <span style="font-size:36px;">🏪</span>
-      </div>
-      <h2 style="font-size:24px;font-weight:600;color:#1a1a2e;margin-bottom:8px;">门店筹建进度管理系统</h2>
-      <p style="font-size:14px;color:#666;">请登录以继续</p>
-    </div>
-    <div style="margin-bottom:20px;">
-      <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">账号</label>
-      <input type="text" id="loginUsername" placeholder="请输入账号" style="width:100%;padding:12px 16px;border:1px solid #d0d0d0;border-radius:8px;font-size:15px;transition:all 0.2s;" onfocus="this.style.borderColor='#1677ff'" onblur="this.style.borderColor='#d0d0d0'">
-    </div>
-    <div style="margin-bottom:24px;">
-      <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">密码</label>
-      <input type="password" id="loginPassword" placeholder="请输入密码" style="width:100%;padding:12px 16px;border:1px solid #d0d0d0;border-radius:8px;font-size:15px;transition:all 0.2s;" onfocus="this.style.borderColor='#1677ff'" onblur="this.style.borderColor='#d0d0d0'">
-    </div>
-    <button onclick="handleLogin()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1677ff 0%,#0958d9 100%);color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:500;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">登录</button>
-    <div id="loginError" style="display:none;margin-top:16px;padding:12px;background:#fff2f0;border:1px solid #ffccc7;border-radius:6px;color:#cf1322;font-size:13px;text-align:center;"></div>
-  </div>
-</div>
 
 <!-- 数据看板面板 -->
 <div class="detail-panel" id="dashboardPanel" style="width:680px;z-index:203;">
