@@ -7863,8 +7863,86 @@ function resetDashboardConfig() {
 // 渲染安全设置面板
 function renderSecuritySettings() {
   const currentUser = JSON.parse(localStorage.getItem('auth_current_user') || '{}');
-  document.getElementById('currentUserDisplay').textContent = currentUser.username || '-';
-  renderAuthorizedAccountsList();
+  const isLoggedIn = !!currentUser.username;
+  
+  // 根据登录状态渲染不同内容
+  const container = document.getElementById('securitySettingsBd');
+  
+  if (!isLoggedIn) {
+    // 未登录状态
+    container.innerHTML = `
+      <!-- 未登录提示 -->
+      <div style="padding:40px 20px;text-align:center;">
+        <div style="font-size:48px;margin-bottom:16px;">🔒</div>
+        <div style="font-size:16px;color:#333;margin-bottom:8px;">您尚未登录</div>
+        <div style="font-size:13px;color:#999;margin-bottom:24px;">请先登录后再进行安全设置</div>
+        <button onclick="closeSecuritySettings(); showLoginModal();" style="padding:10px 32px;background:#1677ff;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">去登录</button>
+      </div>
+    `;
+  } else {
+    // 已登录状态 - 恢复原始内容
+    container.innerHTML = `
+      <!-- 当前登录信息 -->
+      <div style="padding:16px;background:#f6ffed;border:1px solid #b7eb8f;border-radius:8px;margin-bottom:20px;">
+        <div style="font-size:13px;color:#52c41a;font-weight:500;margin-bottom:4px;">✓ 已登录</div>
+        <div style="font-size:14px;color:#333;">当前账号：<span id="currentUserDisplay">${currentUser.username}</span></div>
+      </div>
+      
+      <!-- 修改密码 -->
+      <div style="margin-bottom:24px;">
+        <h4 style="font-size:15px;font-weight:600;color:#333;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #e8e8e8;">修改当前账号密码</h4>
+        <div style="margin-bottom:12px;">
+          <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">当前密码</label>
+          <input type="password" id="currentPassword" placeholder="请输入当前密码" style="width:100%;padding:10px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;box-sizing:border-box;">
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">新密码</label>
+          <input type="password" id="newPassword" placeholder="请输入新密码（至少6位）" style="width:100%;padding:10px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;box-sizing:border-box;">
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">确认新密码</label>
+          <input type="password" id="confirmNewPassword" placeholder="请再次输入新密码" style="width:100%;padding:10px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;box-sizing:border-box;">
+        </div>
+        <button onclick="changePassword()" style="width:100%;padding:12px;background:#1677ff;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;">修改密码</button>
+      </div>
+      
+      <!-- 授权新账号（仅超级管理员可见） -->
+      ${currentUser.role === 'superadmin' ? `
+      <div style="margin-bottom:24px;">
+        <h4 style="font-size:15px;font-weight:600;color:#333;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #e8e8e8;">授权新账号</h4>
+        <div style="margin-bottom:12px;">
+          <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">新账号</label>
+          <input type="text" id="newAuthUsername" placeholder="请输入新账号用户名" style="width:100%;padding:10px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;box-sizing:border-box;">
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">设置密码</label>
+          <input type="password" id="newAuthPassword" placeholder="请输入密码（至少6位）" style="width:100%;padding:10px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;box-sizing:border-box;">
+        </div>
+        <button onclick="authorizeNewAccount()" style="width:100%;padding:12px;background:#52c41a;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;">授权账号</button>
+      </div>
+      ` : ''}
+      
+      <!-- 已授权账号列表（仅超级管理员可见） -->
+      ${currentUser.role === 'superadmin' ? `
+      <div style="margin-bottom:24px;">
+        <h4 style="font-size:15px;font-weight:600;color:#333;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #e8e8e8;">已授权账号</h4>
+        <div id="authorizedAccountsList" style="max-height:200px;overflow-y:auto;">
+          <!-- 动态生成 -->
+        </div>
+      </div>
+      ` : ''}
+      
+      <!-- 退出登录 -->
+      <div style="margin-top:24px;padding-top:20px;border-top:2px solid #e8e8e8;">
+        <button onclick="logout()" style="width:100%;padding:12px;background:#ff4d4f;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;">退出登录</button>
+      </div>
+    `;
+    
+    // 渲染账号列表
+    if (currentUser.role === 'superadmin') {
+      renderAuthorizedAccountsList();
+    }
+  }
 }
 
 // 渲染已授权账号列表
@@ -7896,9 +7974,9 @@ function renderAuthorizedAccountsList() {
 
 // 修改密码
 function changePassword() {
-  const oldPassword = document.getElementById('oldPassword').value;
+  const oldPassword = document.getElementById('currentPassword').value;
   const newPassword = document.getElementById('newPassword').value;
-  const confirmPassword = document.getElementById('confirmPassword').value;
+  const confirmPassword = document.getElementById('confirmNewPassword').value;
   
   if (!oldPassword || !newPassword || !confirmPassword) {
     alert('请填写所有密码字段');
@@ -8243,56 +8321,7 @@ init();
     <button class="panel-close" onclick="closeSecuritySettings()">✕</button>
   </div>
   <div class="panel-bd" id="securitySettingsBd">
-    <!-- 当前登录信息 -->
-    <div style="padding:16px;background:#f6ffed;border:1px solid #b7eb8f;border-radius:8px;margin-bottom:20px;">
-      <div style="font-size:13px;color:#52c41a;font-weight:500;margin-bottom:4px;">✓ 已登录</div>
-      <div style="font-size:14px;color:#333;">当前账号：<span id="currentUserDisplay">-</span></div>
-    </div>
-    
-    <!-- 修改密码 -->
-    <div style="margin-bottom:24px;">
-      <h4 style="font-size:15px;font-weight:600;color:#333;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #e8e8e8;">修改当前账号密码</h4>
-      <div style="margin-bottom:12px;">
-        <label style="display:block;font-size:12px;color:#666;margin-bottom:4px;">原密码</label>
-        <input type="password" id="oldPassword" placeholder="请输入原密码" style="width:100%;padding:10px 12px;border:1px solid #d0d0d0;border-radius:6px;font-size:14px;">
-      </div>
-      <div style="margin-bottom:12px;">
-        <label style="display:block;font-size:12px;color:#666;margin-bottom:4px;">新密码</label>
-        <input type="password" id="newPassword" placeholder="请输入新密码" style="width:100%;padding:10px 12px;border:1px solid #d0d0d0;border-radius:6px;font-size:14px;">
-      </div>
-      <div style="margin-bottom:16px;">
-        <label style="display:block;font-size:12px;color:#666;margin-bottom:4px;">确认新密码</label>
-        <input type="password" id="confirmPassword" placeholder="请再次输入新密码" style="width:100%;padding:10px 12px;border:1px solid #d0d0d0;border-radius:6px;font-size:14px;">
-      </div>
-      <button onclick="changePassword()" style="width:100%;padding:12px;background:#1677ff;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;">修改密码</button>
-    </div>
-    
-    <!-- 授权新账号 -->
-    <div style="margin-bottom:24px;">
-      <h4 style="font-size:15px;font-weight:600;color:#333;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #e8e8e8;">授权新账号</h4>
-      <div style="margin-bottom:12px;">
-        <label style="display:block;font-size:12px;color:#666;margin-bottom:4px;">新账号</label>
-        <input type="text" id="newAuthUsername" placeholder="请输入新账号" style="width:100%;padding:10px 12px;border:1px solid #d0d0d0;border-radius:6px;font-size:14px;">
-      </div>
-      <div style="margin-bottom:16px;">
-        <label style="display:block;font-size:12px;color:#666;margin-bottom:4px;">设置密码</label>
-        <input type="password" id="newAuthPassword" placeholder="请设置密码" style="width:100%;padding:10px 12px;border:1px solid #d0d0d0;border-radius:6px;font-size:14px;">
-      </div>
-      <button onclick="authorizeNewAccount()" style="width:100%;padding:12px;background:#52c41a;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;">授权账号</button>
-    </div>
-    
-    <!-- 已授权账号列表 -->
-    <div>
-      <h4 style="font-size:15px;font-weight:600;color:#333;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #e8e8e8;">已授权账号</h4>
-      <div id="authorizedAccountsList" style="max-height:200px;overflow-y:auto;">
-        <!-- 动态生成 -->
-      </div>
-    </div>
-    
-    <!-- 退出登录 -->
-    <div style="margin-top:24px;padding-top:20px;border-top:2px solid #e8e8e8;">
-      <button onclick="logout()" style="width:100%;padding:12px;background:#ff4d4f;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;">退出登录</button>
-    </div>
+    <!-- 动态生成内容 -->
   </div>
 </div>
 
