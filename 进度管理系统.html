@@ -5932,8 +5932,8 @@ function closeAllDropdowns() {
   document.getElementById('teamDropdownMenu').style.display = 'none';
 }
 
-// ── 初始化 ────────────────────────────────────────────────────────────────────
-function init() {
+// ── 初始化页面内容（登录后调用）────────────────────────────────────────────────
+function initPageContent() {
   // 初始化默认字段
   initDefaultStoreFields();
   initDefaultBasicFields();
@@ -5951,6 +5951,25 @@ function init() {
   ganttWrap.addEventListener('scroll', function() {
     headerSticky.scrollLeft = ganttWrap.scrollLeft;
   });
+}
+
+// ── 初始化 ────────────────────────────────────────────────────────────────────
+function init() {
+  // 先初始化账号系统
+  initAuthSystem();
+  
+  // 检查登录状态，未登录则只显示登录界面
+  const currentUser = localStorage.getItem('auth_current_user');
+  if (!currentUser) {
+    showLoginModal();
+    return;
+  }
+  
+  // 已登录，隐藏登录界面并加载页面内容
+  hideLoginModal();
+  
+  // 初始化页面内容
+  initPageContent();
   
   // 点击外部关闭下拉菜单
   document.addEventListener('click', function(e) {
@@ -6078,6 +6097,8 @@ function handleLogin() {
     }));
     errorDiv.style.display = 'none';
     hideLoginModal();
+    // 登录成功后重新初始化页面内容
+    initPageContent();
     // 刷新安全设置面板
     if (document.getElementById('securitySettingsPanel').classList.contains('open')) {
       renderSecuritySettings();
