@@ -162,6 +162,7 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
   margin-left: 0;
   min-height: 100vh;
   transition: margin-left 0.3s ease;
+  display: none; /* 默认隐藏，登录后显示 */
 }
 
 .main-content.sidebar-open {
@@ -5962,11 +5963,15 @@ function init() {
   const currentUser = localStorage.getItem('auth_current_user');
   if (!currentUser) {
     showLoginModal();
+    // 隐藏主内容区
+    document.getElementById('mainContent').style.display = 'none';
     return;
   }
   
   // 已登录，隐藏登录界面并加载页面内容
   hideLoginModal();
+  // 显示主内容区
+  document.getElementById('mainContent').style.display = 'block';
   
   // 初始化页面内容
   initPageContent();
@@ -6045,6 +6050,11 @@ function hideLoginModal() {
   if (modal) {
     modal.style.display = 'none';
     document.body.style.overflow = '';
+  }
+  // 显示主内容区
+  const mainContent = document.getElementById('mainContent');
+  if (mainContent) {
+    mainContent.style.display = 'block';
   }
   // 更新用户身份显示
   updateUserRoleDisplay();
