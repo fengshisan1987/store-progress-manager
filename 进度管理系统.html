@@ -1947,28 +1947,9 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
 
 <!-- 左侧边栏 -->
 <div class="sidebar" id="sidebar">
-  <div class="sidebar-menu">
-    <div class="sidebar-item" onclick="openStoreEditor(); toggleSidebar();">
-      <span class="sidebar-icon">➕</span>
-      <span>添加门店</span>
-    </div>
-    <div class="sidebar-item" onclick="openNodeEditor(); toggleSidebar();">
-      <span class="sidebar-icon">⚙️</span>
-      <span>编辑节点</span>
-    </div>
-    <div class="sidebar-item" onclick="openBasicFieldSettings(); toggleSidebar();">
-      <span class="sidebar-icon">📋</span>
-      <span>基本信息设置</span>
-    </div>
-    <div class="sidebar-divider"></div>
-    <div class="sidebar-item" onclick="openImportModal(); toggleSidebar();">
-      <span class="sidebar-icon">📥</span>
-      <span>导入数据</span>
-    </div>
-    <div class="sidebar-item" onclick="exportData(); toggleSidebar();">
-      <span class="sidebar-icon">📤</span>
-      <span>导出数据</span>
-    </div>
+  <div class="sidebar-menu" id="sidebarMenu">
+    <!-- 动态生成，根据角色显示不同选项 -->
+  </div>
     <div class="sidebar-divider"></div>
     <div class="sidebar-item" onclick="openDashboardPanel(); toggleSidebar();">
       <span class="sidebar-icon">📊</span>
