@@ -2370,7 +2370,7 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
     </div>
     <div class="stop-work-actions">
       <button class="btn btn-secondary" onclick="closeStopWorkDialog()">取消</button>
-      <button class="btn btn-primary" onclick="confirmStopWorkDialog()">保存</button>
+      <button class="btn btn-primary" onclick="confirmStopWorkDialog()">是否保存</button>
     </div>
   </div>
 </div>
@@ -3488,16 +3488,13 @@ let _stopWorkStoreIdx = null;
 
 // ── 打开停工天数输入对话框 ───────────────────────────────────────────────────────
 function openStopWorkDialog(storeIdx) {
-  console.log('openStopWorkDialog 被调用，storeIdx:', storeIdx);
   _stopWorkStoreIdx = storeIdx;
   const store = STORES[storeIdx];
   const currentDays = store['停工天数'] || '';
   
-  console.log('准备显示弹窗，当前停工天数:', currentDays);
   document.getElementById('stopWorkDaysInput').value = currentDays;
   document.getElementById('stopWorkModal').classList.add('show');
   document.getElementById('stopWorkOverlay').classList.add('show');
-  console.log('弹窗应该已显示');
   
   // 自动聚焦输入框
   setTimeout(() => {
@@ -3709,7 +3706,6 @@ function toggleNode(storeIdx, step, event) {
   
   // 如果是"门店是否有停工情况"节点，弹出停工天数输入对话框
   if (step === '门店是否有停工情况') {
-    console.log('停工节点被点击，storeIdx:', storeIdx, 'step:', step);
     openStopWorkDialog(storeIdx);
     return;
   }
