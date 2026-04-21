@@ -8119,13 +8119,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-// 重写init函数，添加登录检查
-const originalInit = init;
-init = function() {
-  initAuthSystem();
-  originalInit();
-};
-
+// 页面加载完成后执行初始化
 init();
 </script>
 
