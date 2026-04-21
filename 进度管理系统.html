@@ -7992,10 +7992,20 @@ function renderAuthorizedAccountsList() {
     const isSuperAdmin = acc.role === 'superadmin';
     const canDelete = currentUser.role === 'superadmin' && !isSuperAdmin;
     
+    // 角色显示文本
+    let roleText = '';
+    if (acc.role === 'superadmin') {
+      roleText = '<span style="color:#1677ff;font-size:12px;">[超管]</span>';
+    } else if (acc.role === 'admin') {
+      roleText = '<span style="color:#52c41a;font-size:12px;">[管理员]</span>';
+    } else if (acc.role === 'guest') {
+      roleText = '<span style="color:#999;font-size:12px;">[访客]</span>';
+    }
+    
     return `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid #e8e8e8;border-radius:6px;margin-bottom:8px;background:#fff;">
         <div>
-          <div style="font-size:14px;font-weight:500;color:#333;">${acc.username} ${isSuperAdmin ? '<span style="color:#1677ff;font-size:12px;">[超管]</span>' : ''} ${isCurrentUser ? '<span style="color:#52c41a;font-size:12px;">[当前]</span>' : ''}</div>
+          <div style="font-size:14px;font-weight:500;color:#333;">${acc.username} ${roleText} ${isCurrentUser ? '<span style="color:#52c41a;font-size:12px;">[当前]</span>' : ''}</div>
         </div>
         ${canDelete ? `<button onclick="deleteAccount('${acc.username}')" style="padding:4px 12px;background:#ff4d4f;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;">删除</button>` : ''}
       </div>
@@ -8062,6 +8072,7 @@ function authorizeNewAccount() {
   
   const username = document.getElementById('newAuthUsername').value.trim();
   const password = document.getElementById('newAuthPassword').value;
+  const role = document.getElementById('newAuthRole').value;
   
   if (!username || !password) {
     alert('请输入账号和密码');
@@ -8085,13 +8096,14 @@ function authorizeNewAccount() {
   accounts.push({
     username: username,
     password: password,
-    role: 'user'
+    role: role
   });
   localStorage.setItem('auth_accounts', JSON.stringify(accounts));
   
   // 清空表单
   document.getElementById('newAuthUsername').value = '';
   document.getElementById('newAuthPassword').value = '';
+  document.getElementById('newAuthRole').value = 'user';
   
   alert('账号授权成功');
   renderAuthorizedAccountsList();
