@@ -8,333 +8,6 @@
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; background:#f0f2f5; color:#333; }
 
-/* ── 登录页面 ── */
-.login-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.login-box {
-  background: #fff;
-  border-radius: 12px;
-  padding: 40px;
-  width: 100%;
-  max-width: 400px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-}
-
-.login-title {
-  font-size: 24px;
-  font-weight: 600;
-  text-align: center;
-  margin-bottom: 8px;
-  color: #1a1a2e;
-}
-
-.login-subtitle {
-  font-size: 14px;
-  color: #666;
-  text-align: center;
-  margin-bottom: 32px;
-}
-
-.login-form-group {
-  margin-bottom: 20px;
-}
-
-.login-form-group label {
-  display: block;
-  font-size: 14px;
-  color: #333;
-  margin-bottom: 8px;
-  font-weight: 500;
-}
-
-.login-form-group input {
-  width: 100%;
-  padding: 12px 16px;
-  border: 1px solid #d9d9d9;
-  border-radius: 8px;
-  font-size: 15px;
-  transition: all 0.2s;
-}
-
-.login-form-group input:focus {
-  outline: none;
-  border-color: #1890ff;
-  box-shadow: 0 0 0 3px rgba(24,144,255,0.1);
-}
-
-.login-btn {
-  width: 100%;
-  padding: 14px;
-  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-top: 8px;
-}
-
-.login-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(24,144,255,0.4);
-}
-
-.login-btn:active {
-  transform: translateY(0);
-}
-
-.login-error {
-  color: #ff4d4f;
-  font-size: 13px;
-  text-align: center;
-  margin-top: 16px;
-  min-height: 20px;
-}
-
-.login-hidden {
-  display: none !important;
-}
-
-/* ── 账号管理面板 ── */
-.account-manager-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s;
-}
-
-.account-manager-overlay.show {
-  opacity: 1;
-  visibility: visible;
-}
-
-.account-manager-panel {
-  background: #fff;
-  border-radius: 12px;
-  width: 90%;
-  max-width: 500px;
-  max-height: 80vh;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-  transform: scale(0.9);
-  transition: transform 0.3s;
-}
-
-.account-manager-overlay.show .account-manager-panel {
-  transform: scale(1);
-}
-
-.account-manager-header {
-  padding: 20px 24px;
-  border-bottom: 1px solid #e8e8e8;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.account-manager-title {
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.account-manager-close {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 20px;
-  color: #999;
-  transition: all 0.2s;
-}
-
-.account-manager-close:hover {
-  background: #f5f5f5;
-  color: #333;
-}
-
-.account-manager-body {
-  padding: 20px 24px;
-  max-height: 50vh;
-  overflow-y: auto;
-}
-
-.account-list {
-  margin-bottom: 20px;
-}
-
-.account-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  margin-bottom: 8px;
-}
-
-.account-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.account-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.account-details {
-  display: flex;
-  flex-direction: column;
-}
-
-.account-name {
-  font-weight: 500;
-  font-size: 14px;
-}
-
-.account-role {
-  font-size: 12px;
-  color: #888;
-}
-
-.account-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.account-btn {
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 12px;
-  cursor: pointer;
-  border: none;
-  transition: all 0.2s;
-}
-
-.account-btn-edit {
-  background: #e6f7ff;
-  color: #1890ff;
-}
-
-.account-btn-delete {
-  background: #fff1f0;
-  color: #ff4d4f;
-}
-
-.account-btn:hover {
-  opacity: 0.8;
-}
-
-.add-account-form {
-  border-top: 1px solid #e8e8e8;
-  padding-top: 20px;
-}
-
-.add-account-title {
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 16px;
-  color: #333;
-}
-
-.form-row {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.form-row input, .form-row select {
-  flex: 1;
-  padding: 10px 12px;
-  border: 1px solid #d9d9d9;
-  border-radius: 6px;
-  font-size: 14px;
-}
-
-.add-account-btn {
-  width: 100%;
-  padding: 12px;
-  background: #52c41a;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.add-account-btn:hover {
-  background: #389e0d;
-}
-
-.current-user-info {
-  background: linear-gradient(135deg, #e6f7ff 0%, #f0f5ff 100%);
-  padding: 16px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.current-user-text {
-  font-size: 14px;
-}
-
-.current-user-name {
-  font-weight: 600;
-  color: #1890ff;
-}
-
-.logout-btn {
-  padding: 8px 16px;
-  background: #ff4d4f;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.logout-btn:hover {
-  background: #ff7875;
-}
-
 /* ── 页面布局 ── */
 .page-wrapper {
   display: flex;
@@ -2124,9 +1797,7 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
   /* 导航栏 */
   .navbar { padding:0 12px; height:50px; }
   .navbar-title { font-size:15px; }
-  .navbar-meta { font-size:11px; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  /* settings-btn 在手机端靠右 */
-  .settings-btn { right: 12px; top: 7px; }
+  .navbar-meta { font-size:11px; }
 
   /* 统计栏 - 横向滚动 */
   .stats-bar {
@@ -2199,32 +1870,16 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
   .detail-panel {
     width:100%;
     right:-100%;
-    /* iOS Safari 修复：确保面板完全滑出并隐藏 */
-    visibility: hidden;
-    transition: right 0.3s, visibility 0.3s;
-  }
-  .detail-panel.open {
-    right:0;
-    visibility: visible;
   }
   #nodeEditorPanel { right:-100%; z-index:201; }
-  #nodeEditorPanel.open { right:0; visibility: visible; }
   #storeEditorPanel { right:-100%; z-index:202; }
-  #storeEditorPanel.open { right:0; visibility: visible; }
   #fieldManagerPanel { right:-100%; z-index:203; }
-  #fieldManagerPanel.open { right:0; visibility: visible; }
   #groupManagerPanel { right:-100%; z-index:203; }
-  #groupManagerPanel.open { right:0; visibility: visible; }
 
   /* 面板头部 */
-  .panel-hd { padding:16px 56px 16px 16px; position:relative; }
+  .panel-hd { padding:16px; }
   .panel-hd h2 { font-size:15px; }
-  .panel-close { 
-    top:10px; right:10px; width:40px; height:40px; font-size:18px;
-    background:rgba(255,255,255,0.25);
-    -webkit-tap-highlight-color: transparent;
-  }
-  .panel-close:active { background:rgba(255,255,255,0.4); transform:scale(0.95); }
+  .panel-close { top:12px; right:12px; width:28px; height:28px; font-size:15px; }
 
   /* 面板内容 */
   .panel-bd { padding:16px; }
@@ -2242,44 +1897,6 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
   .editor-phase-hd input { font-size:12px; }
   .editor-step input { font-size:11px; }
   .editor-step .btn { font-size:10px; padding:3px 8px; }
-
-  /* 区域门店/门店周期 — header 内筛选器换行 */
-  .region-stats-section-wrapper .collapsible-header,
-  .cycle-stats-section-wrapper .collapsible-header {
-    flex-wrap: wrap !important;
-    align-items: flex-start !important;
-    padding: 0 !important;
-  }
-  .region-stats-section-wrapper .collapsible-header > div:first-child,
-  .cycle-stats-section-wrapper .collapsible-header > div:first-child {
-    flex: 1 0 100% !important;
-    padding: 12px 16px !important;
-  }
-  /* 筛选控件区域换到第二行 */
-  .region-stats-section-wrapper .collapsible-header > div:last-child,
-  .cycle-stats-section-wrapper .collapsible-header > div:last-child {
-    flex: 1 0 100% !important;
-    flex-wrap: wrap !important;
-    gap: 6px !important;
-    padding: 0 12px 10px !important;
-    justify-content: flex-start !important;
-  }
-  /* 筛选控件内的日期输入框缩小 */
-  .region-stats-section-wrapper .collapsible-header input[type="date"],
-  .cycle-stats-section-wrapper .collapsible-header input[type="date"] {
-    font-size: 12px !important;
-    padding: 4px 6px !important;
-    max-width: 120px !important;
-  }
-  .region-stats-section-wrapper .collapsible-header select,
-  .cycle-stats-section-wrapper .collapsible-header select {
-    font-size: 12px !important;
-    padding: 4px 6px !important;
-    min-width: 80px !important;
-  }
-
-  /* dashboard 外边距手机端缩小 */
-  .dashboard-wrapper { margin: 0 12px 12px; }
 }
 
 /* 小屏手机适配 (小于 480px) */
@@ -2320,93 +1937,9 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
   .stats-bar { padding:8px 12px; }
 }
 </style>
-
-<!-- xlsx 库异步按需加载，不阻塞主页面 -->
-<script>
-window._xlsxLoaded = false;
-window._xlsxLoading = false;
-window._xlsxCallbacks = [];
-
-function loadXlsx(callback) {
-  if (window._xlsxLoaded && window.XLSX) {
-    callback(null);
-    return;
-  }
-  if (callback) window._xlsxCallbacks.push(callback);
-  if (window._xlsxLoading) return;
-  window._xlsxLoading = true;
-  var s = document.createElement('script');
-  s.src = 'https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js';
-  s.onload = function() {
-    window._xlsxLoaded = true;
-    window._xlsxLoading = false;
-    window._xlsxCallbacks.forEach(function(cb) { cb(null); });
-    window._xlsxCallbacks = [];
-  };
-  s.onerror = function() {
-    window._xlsxLoading = false;
-    window._xlsxCallbacks.forEach(function(cb) { cb(new Error('xlsx库加载失败，请检查网络连接后重试')); });
-    window._xlsxCallbacks = [];
-  };
-  document.head.appendChild(s);
-}
-</script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
-
-<!-- 登录页面 -->
-<div id="loginOverlay" class="login-overlay">
-  <div class="login-box">
-    <div class="login-title">🏪 门店筹建进度管理系统</div>
-    <div class="login-subtitle">请登录后继续</div>
-    <form id="loginForm" onsubmit="handleLogin(event)">
-      <div class="login-form-group">
-        <label>账号</label>
-        <input type="text" id="loginUsername" placeholder="请输入账号" required autocomplete="username">
-      </div>
-      <div class="login-form-group">
-        <label>密码</label>
-        <input type="password" id="loginPassword" placeholder="请输入密码" required autocomplete="current-password">
-      </div>
-      <button type="submit" class="login-btn">登 录</button>
-      <div id="loginError" class="login-error"></div>
-    </form>
-  </div>
-</div>
-
-<!-- 账号管理面板 -->
-<div id="accountManagerOverlay" class="account-manager-overlay" onclick="closeAccountManager(event)">
-  <div class="account-manager-panel" onclick="event.stopPropagation()">
-    <div class="account-manager-header">
-      <div class="account-manager-title">👥 账号管理</div>
-      <div class="account-manager-close" onclick="closeAccountManager()">&times;</div>
-    </div>
-    <div class="account-manager-body">
-      <div class="current-user-info">
-        <div class="current-user-text">
-          当前登录：<span id="currentUserDisplay" class="current-user-name">-</span>
-        </div>
-        <button class="logout-btn" onclick="handleLogout()">退出登录</button>
-      </div>
-      <div class="account-list" id="accountList"></div>
-      <div class="add-account-form">
-        <div class="add-account-title">➕ 添加新账号</div>
-        <div class="form-row">
-          <input type="text" id="newAccountUsername" placeholder="账号">
-          <input type="password" id="newAccountPassword" placeholder="密码">
-        </div>
-        <div class="form-row">
-          <select id="newAccountRole">
-            <option value="admin">管理员</option>
-            <option value="editor">编辑者</option>
-            <option value="viewer">查看者</option>
-          </select>
-          <button class="add-account-btn" onclick="addAccount()">添加账号</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- 遮罩层 -->
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
@@ -2443,11 +1976,6 @@ function loadXlsx(callback) {
     <div class="sidebar-item" onclick="openSecuritySettings(); toggleSidebar();">
       <span class="sidebar-icon">🔒</span>
       <span>安全设置</span>
-    </div>
-    <div class="sidebar-divider"></div>
-    <div class="sidebar-item" onclick="openAccountManager(); toggleSidebar();">
-      <span class="sidebar-icon">👤</span>
-      <span>账号管理</span>
     </div>
   </div>
 </div>
@@ -2751,7 +2279,7 @@ function loadXlsx(callback) {
 </div>
 
 <!-- 遮罩 -->
-<div class="panel-overlay" id="overlay" onclick="closePanel(); closeNodeEditor(); closeFieldManager(); closeStoreEditor(); closeBasicFieldSettings(); closeGroupManager();"></div>
+<div class="panel-overlay" id="overlay" onclick="closePanel(); closeNodeEditor();"></div>
 
 <!-- 详情面板 -->
 <div class="detail-panel" id="detailPanel">
@@ -2848,237 +2376,6 @@ function loadXlsx(callback) {
 </div>
 
 <script>
-// ── 账号管理系统 ──────────────────────────────────────────────────────────────
-// 默认账号配置（首次使用）
-const DEFAULT_ACCOUNTS = [
-  { username: 'admin', password: 'admin123', role: 'admin', createdAt: new Date().toISOString() }
-];
-
-// 角色权限定义
-const ROLE_PERMISSIONS = {
-  admin: { name: '管理员', canEdit: true, canDelete: true, canManageAccounts: true, canImport: true, canExport: true },
-  editor: { name: '编辑者', canEdit: true, canDelete: false, canManageAccounts: false, canImport: true, canExport: true },
-  viewer: { name: '查看者', canEdit: false, canDelete: false, canManageAccounts: false, canImport: false, canExport: false }
-};
-
-// 当前登录用户
-let currentUser = null;
-
-// 初始化账号系统
-function initAuthSystem() {
-  // 检查是否有账号数据
-  let accounts = localStorage.getItem('spm_accounts');
-  if (!accounts) {
-    localStorage.setItem('spm_accounts', JSON.stringify(DEFAULT_ACCOUNTS));
-  }
-  
-  // 检查是否有登录会话
-  const session = localStorage.getItem('spm_currentUser');
-  if (session) {
-    currentUser = JSON.parse(session);
-    showMainApp();
-  } else {
-    showLoginPage();
-  }
-}
-
-// 显示登录页面
-function showLoginPage() {
-  document.getElementById('loginOverlay').classList.remove('login-hidden');
-  document.getElementById('mainContent').style.display = 'none';
-}
-
-// 显示主应用
-function showMainApp() {
-  document.getElementById('loginOverlay').classList.add('login-hidden');
-  document.getElementById('mainContent').style.display = 'block';
-  updateUserRoleDisplay();
-  applyPermissions();
-}
-
-// 处理登录
-function handleLogin(event) {
-  event.preventDefault();
-  
-  const username = document.getElementById('loginUsername').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  const errorEl = document.getElementById('loginError');
-  
-  const accounts = JSON.parse(localStorage.getItem('spm_accounts') || '[]');
-  const user = accounts.find(a => a.username === username && a.password === password);
-  
-  if (user) {
-    currentUser = { username: user.username, role: user.role };
-    localStorage.setItem('spm_currentUser', JSON.stringify(currentUser));
-    errorEl.textContent = '';
-    showMainApp();
-  } else {
-    errorEl.textContent = '账号或密码错误';
-  }
-}
-
-// 处理退出
-function handleLogout() {
-  currentUser = null;
-  localStorage.removeItem('spm_currentUser');
-  closeAccountManager();
-  showLoginPage();
-  document.getElementById('loginUsername').value = '';
-  document.getElementById('loginPassword').value = '';
-}
-
-// 更新用户角色显示
-function updateUserRoleDisplay() {
-  if (!currentUser) return;
-  const roleInfo = ROLE_PERMISSIONS[currentUser.role];
-  document.getElementById('userRoleDisplay').textContent = `${currentUser.username} (${roleInfo.name})`;
-  document.getElementById('currentUserDisplay').textContent = `${currentUser.username} (${roleInfo.name})`;
-}
-
-// 应用权限控制
-function applyPermissions() {
-  if (!currentUser) return;
-  const perms = ROLE_PERMISSIONS[currentUser.role];
-  
-  // 控制添加门店按钮
-  const addStoreBtn = document.querySelector('.sidebar-item[onclick*="openStoreEditor"]');
-  if (addStoreBtn) addStoreBtn.style.display = perms.canEdit ? 'flex' : 'none';
-  
-  // 控制编辑节点按钮
-  const editNodeBtn = document.querySelector('.sidebar-item[onclick*="openNodeEditor"]');
-  if (editNodeBtn) editNodeBtn.style.display = perms.canEdit ? 'flex' : 'none';
-  
-  // 控制基本信息设置按钮
-  const basicFieldBtn = document.querySelector('.sidebar-item[onclick*="openBasicFieldSettings"]');
-  if (basicFieldBtn) basicFieldBtn.style.display = perms.canEdit ? 'flex' : 'none';
-  
-  // 控制导入按钮
-  const importBtn = document.querySelector('.sidebar-item[onclick*="openImportModal"]');
-  if (importBtn) importBtn.style.display = perms.canImport ? 'flex' : 'none';
-  
-  // 控制导出按钮
-  const exportBtn = document.querySelector('.sidebar-item[onclick*="exportData"]');
-  if (exportBtn) exportBtn.style.display = perms.canExport ? 'flex' : 'none';
-  
-  // 控制账号管理按钮
-  const accountBtn = document.querySelector('.sidebar-item[onclick*="openAccountManager"]');
-  if (accountBtn) accountBtn.style.display = perms.canManageAccounts ? 'flex' : 'none';
-}
-
-// 检查是否有编辑权限
-function hasEditPermission() {
-  if (!currentUser) return false;
-  return ROLE_PERMISSIONS[currentUser.role].canEdit;
-}
-
-// 检查是否有删除权限
-function hasDeletePermission() {
-  if (!currentUser) return false;
-  return ROLE_PERMISSIONS[currentUser.role].canDelete;
-}
-
-// 打开账号管理面板
-function openAccountManager() {
-  if (!currentUser || !ROLE_PERMISSIONS[currentUser.role].canManageAccounts) {
-    alert('您没有权限管理账号');
-    return;
-  }
-  renderAccountList();
-  document.getElementById('accountManagerOverlay').classList.add('show');
-}
-
-// 关闭账号管理面板
-function closeAccountManager(event) {
-  if (!event || event.target === document.getElementById('accountManagerOverlay')) {
-    document.getElementById('accountManagerOverlay').classList.remove('show');
-  }
-}
-
-// 渲染账号列表
-function renderAccountList() {
-  const accounts = JSON.parse(localStorage.getItem('spm_accounts') || '[]');
-  const listEl = document.getElementById('accountList');
-  
-  listEl.innerHTML = accounts.map(acc => {
-    const roleInfo = ROLE_PERMISSIONS[acc.role];
-    const isCurrentUser = acc.username === currentUser.username;
-    return `
-      <div class="account-item">
-        <div class="account-info">
-          <div class="account-avatar">${acc.username.charAt(0).toUpperCase()}</div>
-          <div class="account-details">
-            <div class="account-name">${acc.username} ${isCurrentUser ? '(当前)' : ''}</div>
-            <div class="account-role">${roleInfo.name}</div>
-          </div>
-        </div>
-        <div class="account-actions">
-          <button class="account-btn account-btn-edit" onclick="editAccount('${acc.username}')">修改密码</button>
-          ${!isCurrentUser ? `<button class="account-btn account-btn-delete" onclick="deleteAccount('${acc.username}')">删除</button>` : ''}
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-// 添加账号
-function addAccount() {
-  const username = document.getElementById('newAccountUsername').value.trim();
-  const password = document.getElementById('newAccountPassword').value;
-  const role = document.getElementById('newAccountRole').value;
-  
-  if (!username || !password) {
-    alert('请填写账号和密码');
-    return;
-  }
-  
-  const accounts = JSON.parse(localStorage.getItem('spm_accounts') || '[]');
-  
-  if (accounts.find(a => a.username === username)) {
-    alert('该账号已存在');
-    return;
-  }
-  
-  accounts.push({
-    username,
-    password,
-    role,
-    createdAt: new Date().toISOString()
-  });
-  
-  localStorage.setItem('spm_accounts', JSON.stringify(accounts));
-  
-  document.getElementById('newAccountUsername').value = '';
-  document.getElementById('newAccountPassword').value = '';
-  
-  renderAccountList();
-  alert('账号添加成功');
-}
-
-// 删除账号
-function deleteAccount(username) {
-  if (!confirm(`确定要删除账号 "${username}" 吗？`)) return;
-  
-  let accounts = JSON.parse(localStorage.getItem('spm_accounts') || '[]');
-  accounts = accounts.filter(a => a.username !== username);
-  localStorage.setItem('spm_accounts', JSON.stringify(accounts));
-  
-  renderAccountList();
-}
-
-// 修改账号密码
-function editAccount(username) {
-  const newPassword = prompt(`请输入 "${username}" 的新密码：`);
-  if (!newPassword) return;
-  
-  const accounts = JSON.parse(localStorage.getItem('spm_accounts') || '[]');
-  const account = accounts.find(a => a.username === username);
-  if (account) {
-    account.password = newPassword;
-    localStorage.setItem('spm_accounts', JSON.stringify(accounts));
-    alert('密码修改成功');
-  }
-}
-
 // ── 阶段定义（可编辑）──────────────────────────────────────────────────────────
 // 默认阶段配置
 const DEFAULT_PHASES = [
@@ -3132,6 +2429,7 @@ const DEFAULT_PHASES = [
       { name: '新提醒约食药监老师看现场', requireDate: false },
       { name: '门店广告物料已安装', requireDate: false },
       { name: '预估验收日期', requireDate: true },
+      { name: '门店是否有停工情况', requireDate: false },
       { name: '门店已验收', requireDate: true, requireConfirm: true, confirmText: '门店是否已填验收表并按照验收表整改好？' },
     ]
   },
@@ -4190,13 +3488,16 @@ let _stopWorkStoreIdx = null;
 
 // ── 打开停工天数输入对话框 ───────────────────────────────────────────────────────
 function openStopWorkDialog(storeIdx) {
+  console.log('openStopWorkDialog 被调用，storeIdx:', storeIdx);
   _stopWorkStoreIdx = storeIdx;
   const store = STORES[storeIdx];
   const currentDays = store['停工天数'] || '';
   
+  console.log('准备显示弹窗，当前停工天数:', currentDays);
   document.getElementById('stopWorkDaysInput').value = currentDays;
   document.getElementById('stopWorkModal').classList.add('show');
   document.getElementById('stopWorkOverlay').classList.add('show');
+  console.log('弹窗应该已显示');
   
   // 自动聚焦输入框
   setTimeout(() => {
@@ -4408,10 +3709,11 @@ function toggleNode(storeIdx, step, event) {
   
   // 如果是"门店是否有停工情况"节点，弹出停工天数输入对话框
   if (step === '门店是否有停工情况') {
+    console.log('停工节点被点击，storeIdx:', storeIdx, 'step:', step);
     openStopWorkDialog(storeIdx);
     return;
   }
-
+  
   // 如果该节点需要日期，弹出日期选择
   if (stepRequireDate) {
     if (currentVal && currentVal !== '待完成' && currentVal !== '待启动' && currentVal !== '已完成') {
@@ -5161,50 +4463,39 @@ function handleFileSelect(input) {
   
   document.getElementById('fileName').textContent = file.name;
   
-  // 先显示加载中
-  document.getElementById('importBtn').disabled = true;
-  document.getElementById('previewContent').innerHTML = '<div style="color:#999;text-align:center;padding:16px;">正在加载解析库...</div>';
-  document.getElementById('importPreview').style.display = 'block';
-
-  loadXlsx(function(err) {
-    if (err) {
-      document.getElementById('previewContent').innerHTML = '<div style="color:#ff4d4f;text-align:center;padding:16px;">⚠️ ' + err.message + '</div>';
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      try {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-        
-        if (jsonData.length < 2) {
-          alert('文件格式不正确，至少需要包含表头和一行数据');
-          return;
-        }
-        
-        window._importData = jsonData;
-        
-        // 显示预览
-        const headers = jsonData[0];
-        const previewRow = jsonData[1];
-        let previewHtml = `<div style="margin-bottom: 8px;"><strong>共 ${jsonData.length - 1} 条数据</strong></div>`;
-        previewHtml += `<div style="display: grid; grid-template-columns: 120px 1fr; gap: 4px;">`;
-        headers.slice(0, 6).forEach((h, i) => {
-          previewHtml += `<div style="color: #999;">${h}:</div><div>${previewRow[i] || '-'}</div>`;
-        });
-        previewHtml += `</div>`;
-        
-        document.getElementById('previewContent').innerHTML = previewHtml;
-        document.getElementById('importPreview').style.display = 'block';
-        document.getElementById('importBtn').disabled = false;
-      } catch (err) {
-        alert('解析文件失败: ' + err.message);
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+      
+      if (jsonData.length < 2) {
+        alert('文件格式不正确，至少需要包含表头和一行数据');
+        return;
       }
-    };
-    reader.readAsArrayBuffer(file);
-  });
+      
+      window._importData = jsonData;
+      
+      // 显示预览
+      const headers = jsonData[0];
+      const previewRow = jsonData[1];
+      let previewHtml = `<div style="margin-bottom: 8px;"><strong>共 ${jsonData.length - 1} 条数据</strong></div>`;
+      previewHtml += `<div style="display: grid; grid-template-columns: 120px 1fr; gap: 4px;">`;
+      headers.slice(0, 6).forEach((h, i) => {
+        previewHtml += `<div style="color: #999;">${h}:</div><div>${previewRow[i] || '-'}</div>`;
+      });
+      previewHtml += `</div>`;
+      
+      document.getElementById('previewContent').innerHTML = previewHtml;
+      document.getElementById('importPreview').style.display = 'block';
+      document.getElementById('importBtn').disabled = false;
+    } catch (err) {
+      alert('解析文件失败: ' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
 }
 
 function confirmImport() {
@@ -5338,93 +4629,83 @@ function closeExportModal() {
   }
 }
 
-function confirmExport() {
+async function confirmExport() {
   // 按钮点击反馈
   const btn = document.querySelector('#exportModal .btn-primary');
   if (btn) {
     btn.style.transform = 'scale(0.95)';
     btn.style.opacity = '0.8';
     btn.disabled = true;
-    btn.textContent = '加载中...';
+    btn.textContent = '导出中...';
   }
   
-  loadXlsx(function(err) {
-    if (err) {
-      alert(err.message);
-      if (btn) { btn.disabled = false; btn.textContent = '导出到 Excel'; btn.style.opacity = ''; btn.style.transform = ''; }
-      return;
+  try {
+    const fileNameInput = document.getElementById('exportFileName');
+    let fileName = fileNameInput ? fileNameInput.value.trim() : '';
+    if (!fileName) {
+      fileName = '门店进度数据_' + new Date().toISOString().slice(0, 10);
     }
-    if (btn) btn.textContent = '导出中...';
-    try {
-      const fileNameInput = document.getElementById('exportFileName');
-      let fileName = fileNameInput ? fileNameInput.value.trim() : '';
-      if (!fileName) {
-        fileName = '门店进度数据_' + new Date().toISOString().slice(0, 10);
-      }
-      if (!fileName.endsWith('.xlsx')) {
-        fileName += '.xlsx';
-      }
+    if (!fileName.endsWith('.xlsx')) {
+      fileName += '.xlsx';
+    }
+    
+    // 准备表头
+    const headers = ['门店', '区域', '门店状态', '工程负责人', '门店类型', '装修形式'];
+    // 从 PHASES 中获取所有步骤作为列
+    const allSteps = [];
+    PHASES.forEach(phase => {
+      phase.steps.forEach(step => {
+        allSteps.push({
+          phase: phase.name,
+          name: step.name,
+          key: step.name
+        });
+        headers.push(step.name);
+      });
+    });
+    
+    // 准备数据
+    const data = STORES.map(store => {
+      const row = [
+        store['门店'] || '',
+        store['区域'] || '',
+        store['门店状态'] || '',
+        store['工程负责人'] || store['姓名'] || '',
+        store['门店类型'] || '',
+        store['装修形式'] || ''
+      ];
       
-      // 准备表头
-      const headers = ['门店', '区域', '门店状态', '工程负责人', '门店类型', '装修形式'];
-      // 从 PHASES 中获取所有步骤作为列
-      const allSteps = [];
+      // 遍历所有阶段和步骤，直接获取日期值
       PHASES.forEach(phase => {
         phase.steps.forEach(step => {
-          allSteps.push({
-            phase: phase.name,
-            name: step.name,
-            key: step.name
-          });
-          headers.push(step.name);
+          // 日期直接存储在store对象中，key为step.name
+          const dateValue = store[step.name] || '';
+          row.push(dateValue);
         });
       });
       
-      // 准备数据
-      const data = STORES.map(store => {
-        const row = [
-          store['门店'] || '',
-          store['区域'] || '',
-          store['门店状态'] || '',
-          store['工程负责人'] || store['姓名'] || '',
-          store['门店类型'] || '',
-          store['装修形式'] || ''
-        ];
-        
-        // 遍历所有阶段和步骤，直接获取日期值
-        PHASES.forEach(phase => {
-          phase.steps.forEach(step => {
-            // 日期直接存储在store对象中，key为step.name
-            const dateValue = store[step.name] || '';
-            row.push(dateValue);
-          });
-        });
-        
-        return row;
-      });
-      
-      // 创建工作簿
-      const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, '门店数据');
-      
-      // 使用 XLSX.writeFile 直接下载（兼容所有浏览器）
-      XLSX.writeFile(wb, fileName);
-      
-      showToast('文件已开始下载');
-      closeExportModal();
-    } catch (err) {
-      console.error('导出失败:', err);
-      alert('导出失败: ' + err.message);
-    } finally {
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = '导出到 Excel';
-        btn.style.opacity = '';
-        btn.style.transform = '';
-      }
+      return row;
+    });
+    
+    // 创建工作簿
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '门店数据');
+    
+    // 使用 XLSX.writeFile 直接下载（兼容所有浏览器）
+    XLSX.writeFile(wb, fileName);
+    
+    showToast('文件已开始下载');
+    closeExportModal();
+  } catch (err) {
+    console.error('导出失败:', err);
+    alert('导出失败: ' + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '导出到 Excel';
     }
-  });
+  }
 }
 
 function downloadFile(blob, fileName) {
@@ -5934,10 +5215,6 @@ function saveBasicFieldSettings() {
 }
 
 function saveStore() {
-  if (!hasEditPermission()) {
-    alert('您没有编辑权限');
-    return;
-  }
   const nameEl = document.getElementById('seName');
   const personEl = document.getElementById('sePerson');
   const regionSelectEl = document.getElementById('seRegion');
@@ -6155,10 +5432,6 @@ function initRegionButtons() {
 }
 
 function deleteStore(storeIdx) {
-  if (!hasDeletePermission()) {
-    alert('您没有删除权限');
-    return;
-  }
   if (confirm(`确定删除门店「${STORES[storeIdx]['门店']}」吗？此操作不可恢复。`)) {
     STORES.splice(storeIdx, 1);
     saveStores();
@@ -6714,24 +5987,131 @@ function init() {
 }
 
 // ── 账号安全管理功能 ───────────────────────────────────────────────────────────
-// 使用 spm_ 前缀的账号系统（与登录系统统一）
+
+// 超级管理员账号配置
+const SUPER_ADMIN = {
+  username: '13162098878',
+  password: '13162098878',
+  role: 'superadmin'
+};
 
 // 初始化账号系统
-function initAccountSystem() {
-  // 检查是否有账号数据
-  let accounts = localStorage.getItem('spm_accounts');
-  if (!accounts) {
-    localStorage.setItem('spm_accounts', JSON.stringify(DEFAULT_ACCOUNTS));
+function initAuthSystem() {
+  // 检查是否已初始化账号数据
+  let accounts = JSON.parse(localStorage.getItem('auth_accounts') || '[]');
+  
+  // 如果没有账号数据，初始化超级管理员
+  if (accounts.length === 0) {
+    accounts = [SUPER_ADMIN];
+    localStorage.setItem('auth_accounts', JSON.stringify(accounts));
   }
   
-  // 检查是否有登录会话
-  const session = localStorage.getItem('spm_currentUser');
-  if (session) {
-    currentUser = JSON.parse(session);
-    showMainApp();
+  // 检查登录状态
+  const currentUser = localStorage.getItem('auth_current_user');
+  if (!currentUser) {
+    showLoginModal();
   } else {
-    showLoginPage();
+    hideLoginModal();
   }
+}
+
+// 显示登录界面
+function showLoginModal() {
+  const modal = document.getElementById('loginModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+// 隐藏登录界面
+function hideLoginModal() {
+  const modal = document.getElementById('loginModal');
+  if (modal) {
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+  // 更新用户身份显示
+  updateUserRoleDisplay();
+}
+
+// 更新用户身份显示
+function updateUserRoleDisplay() {
+  const currentUser = JSON.parse(localStorage.getItem('auth_current_user') || '{}');
+  const roleDisplay = document.getElementById('userRoleDisplay');
+  if (roleDisplay && currentUser.role) {
+    let roleText = '';
+    switch (currentUser.role) {
+      case 'superadmin':
+        roleText = '超级管理员';
+        break;
+      case 'admin':
+        roleText = '管理员';
+        break;
+      default:
+        roleText = '访客';
+    }
+    roleDisplay.textContent = roleText;
+  } else if (roleDisplay) {
+    roleDisplay.textContent = '未登录';
+  }
+}
+
+// 处理登录
+function handleLogin() {
+  const username = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errorDiv = document.getElementById('loginError');
+  
+  if (!username || !password) {
+    errorDiv.textContent = '请输入账号和密码';
+    errorDiv.style.display = 'block';
+    return;
+  }
+  
+  // 验证账号
+  const accounts = JSON.parse(localStorage.getItem('auth_accounts') || '[]');
+  const account = accounts.find(acc => acc.username === username && acc.password === password);
+  
+  if (account) {
+    // 登录成功
+    localStorage.setItem('auth_current_user', JSON.stringify({
+      username: account.username,
+      role: account.role || 'user',
+      loginTime: new Date().toISOString()
+    }));
+    errorDiv.style.display = 'none';
+    hideLoginModal();
+    // 刷新安全设置面板
+    if (document.getElementById('securitySettingsPanel').classList.contains('open')) {
+      renderSecuritySettings();
+    }
+  } else {
+    errorDiv.textContent = '账号或密码错误';
+    errorDiv.style.display = 'block';
+  }
+}
+
+// 退出登录
+function logout() {
+  localStorage.removeItem('auth_current_user');
+  closeSecuritySettings();
+  showLoginModal();
+  // 清空登录表单
+  document.getElementById('loginUsername').value = '';
+  document.getElementById('loginPassword').value = '';
+  document.getElementById('loginError').style.display = 'none';
+}
+
+// 打开安全设置面板
+function openSecuritySettings() {
+  renderSecuritySettings();
+  document.getElementById('securitySettingsPanel').classList.add('open');
+}
+
+// 关闭安全设置面板
+function closeSecuritySettings() {
+  document.getElementById('securitySettingsPanel').classList.remove('open');
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -8484,17 +7864,18 @@ function resetDashboardConfig() {
   updateDashboardPreview();
 }
 
-// 渲染安全设置面板（使用 spm_ 账号系统）
+// 渲染安全设置面板
 function renderSecuritySettings() {
-  if (!currentUser) return;
+  const currentUser = JSON.parse(localStorage.getItem('auth_current_user') || '{}');
   document.getElementById('currentUserDisplay').textContent = currentUser.username || '-';
   renderAuthorizedAccountsList();
 }
 
-// 渲染已授权账号列表（使用 spm_ 账号系统）
+// 渲染已授权账号列表
 function renderAuthorizedAccountsList() {
   const container = document.getElementById('authorizedAccountsList');
-  const accounts = JSON.parse(localStorage.getItem('spm_accounts') || '[]');
+  const accounts = JSON.parse(localStorage.getItem('auth_accounts') || '[]');
+  const currentUser = JSON.parse(localStorage.getItem('auth_current_user') || '{}');
   
   if (accounts.length === 0) {
     container.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">暂无授权账号</div>';
@@ -8502,16 +7883,14 @@ function renderAuthorizedAccountsList() {
   }
   
   container.innerHTML = accounts.map(acc => {
-    const isCurrentUser = acc.username === (currentUser?.username || '');
-    const isAdmin = acc.role === 'admin';
-    const canDelete = currentUser?.role === 'admin' && !isAdmin;
-    const roleInfo = ROLE_PERMISSIONS[acc.role];
+    const isCurrentUser = acc.username === currentUser.username;
+    const isSuperAdmin = acc.role === 'superadmin';
+    const canDelete = currentUser.role === 'superadmin' && !isSuperAdmin;
     
     return `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid #e8e8e8;border-radius:6px;margin-bottom:8px;background:#fff;">
         <div>
-          <div style="font-size:14px;font-weight:500;color:#333;">${acc.username} ${isAdmin ? '<span style="color:#1677ff;font-size:12px;">[管理员]</span>' : ''} ${isCurrentUser ? '<span style="color:#52c41a;font-size:12px;">[当前]</span>' : ''}</div>
-          <div style="font-size:12px;color:#999;">${roleInfo?.name || acc.role}</div>
+          <div style="font-size:14px;font-weight:500;color:#333;">${acc.username} ${isSuperAdmin ? '<span style="color:#1677ff;font-size:12px;">[超管]</span>' : ''} ${isCurrentUser ? '<span style="color:#52c41a;font-size:12px;">[当前]</span>' : ''}</div>
         </div>
         ${canDelete ? `<button onclick="deleteAccount('${acc.username}')" style="padding:4px 12px;background:#ff4d4f;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;">删除</button>` : ''}
       </div>
@@ -8540,12 +7919,8 @@ function changePassword() {
     return;
   }
   
-  if (!currentUser) {
-    alert('请先登录');
-    return;
-  }
-  
-  let accounts = JSON.parse(localStorage.getItem('spm_accounts') || '[]');
+  const currentUser = JSON.parse(localStorage.getItem('auth_current_user') || '{}');
+  let accounts = JSON.parse(localStorage.getItem('auth_accounts') || '[]');
   
   const accountIndex = accounts.findIndex(acc => acc.username === currentUser.username);
   if (accountIndex === -1) {
@@ -8560,7 +7935,7 @@ function changePassword() {
   
   // 更新密码
   accounts[accountIndex].password = newPassword;
-  localStorage.setItem('spm_accounts', JSON.stringify(accounts));
+  localStorage.setItem('auth_accounts', JSON.stringify(accounts));
   
   // 清空表单
   document.getElementById('oldPassword').value = '';
@@ -8572,14 +7947,11 @@ function changePassword() {
 
 // 授权新账号
 function authorizeNewAccount() {
-  if (!currentUser) {
-    alert('请先登录');
-    return;
-  }
+  const currentUser = JSON.parse(localStorage.getItem('auth_current_user') || '{}');
   
-  // 只有管理员可以授权新账号
-  if (currentUser.role !== 'admin') {
-    alert('只有管理员可以授权新账号');
+  // 只有超级管理员可以授权新账号
+  if (currentUser.role !== 'superadmin') {
+    alert('只有超级管理员可以授权新账号');
     return;
   }
   
@@ -8596,7 +7968,7 @@ function authorizeNewAccount() {
     return;
   }
   
-  let accounts = JSON.parse(localStorage.getItem('spm_accounts') || '[]');
+  let accounts = JSON.parse(localStorage.getItem('auth_accounts') || '[]');
   
   // 检查账号是否已存在
   if (accounts.find(acc => acc.username === username)) {
@@ -8604,13 +7976,13 @@ function authorizeNewAccount() {
     return;
   }
   
-  // 添加新账号（默认编辑者角色）
+  // 添加新账号
   accounts.push({
     username: username,
     password: password,
-    role: 'editor'
+    role: 'user'
   });
-  localStorage.setItem('spm_accounts', JSON.stringify(accounts));
+  localStorage.setItem('auth_accounts', JSON.stringify(accounts));
   
   // 清空表单
   document.getElementById('newAuthUsername').value = '';
@@ -8622,13 +7994,10 @@ function authorizeNewAccount() {
 
 // 删除账号
 function deleteAccount(username) {
-  if (!currentUser) {
-    alert('请先登录');
-    return;
-  }
+  const currentUser = JSON.parse(localStorage.getItem('auth_current_user') || '{}');
   
-  if (currentUser.role !== 'admin') {
-    alert('只有管理员可以删除账号');
+  if (currentUser.role !== 'superadmin') {
+    alert('只有超级管理员可以删除账号');
     return;
   }
   
@@ -8636,33 +8005,59 @@ function deleteAccount(username) {
     return;
   }
   
-  let accounts = JSON.parse(localStorage.getItem('spm_accounts') || '[]');
+  let accounts = JSON.parse(localStorage.getItem('auth_accounts') || '[]');
   accounts = accounts.filter(acc => acc.username !== username);
-  localStorage.setItem('spm_accounts', JSON.stringify(accounts));
+  localStorage.setItem('auth_accounts', JSON.stringify(accounts));
   
   renderAuthorizedAccountsList();
 }
 
 // 监听回车键登录
 document.addEventListener('DOMContentLoaded', function() {
-  // 初始化账号系统（使用 spm_ 前缀的统一系统）
-  initAccountSystem();
-  
   const passwordInput = document.getElementById('loginPassword');
   if (passwordInput) {
     passwordInput.addEventListener('keypress', function(e) {
       if (e.key === 'Enter') {
-        handleLogin(e);
+        handleLogin();
       }
     });
   }
 });
 
-// 页面加载完成后初始化
+// 重写init函数，添加登录检查
+const originalInit = init;
+init = function() {
+  initAuthSystem();
+  originalInit();
+};
+
 init();
 </script>
 
 </div><!-- 主内容区结束 -->
+
+<!-- 登录界面 -->
+<div id="loginModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);z-index:10000;align-items:center;justify-content:center;">
+  <div style="width:400px;padding:40px;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+    <div style="text-align:center;margin-bottom:32px;">
+      <div style="width:80px;height:80px;background:linear-gradient(135deg,#1677ff 0%,#0958d9 100%);border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;">
+        <span style="font-size:36px;">🏪</span>
+      </div>
+      <h2 style="font-size:24px;font-weight:600;color:#1a1a2e;margin-bottom:8px;">门店筹建进度管理系统</h2>
+      <p style="font-size:14px;color:#666;">请登录以继续</p>
+    </div>
+    <div style="margin-bottom:20px;">
+      <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">账号</label>
+      <input type="text" id="loginUsername" placeholder="请输入账号" style="width:100%;padding:12px 16px;border:1px solid #d0d0d0;border-radius:8px;font-size:15px;transition:all 0.2s;" onfocus="this.style.borderColor='#1677ff'" onblur="this.style.borderColor='#d0d0d0'">
+    </div>
+    <div style="margin-bottom:24px;">
+      <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">密码</label>
+      <input type="password" id="loginPassword" placeholder="请输入密码" style="width:100%;padding:12px 16px;border:1px solid #d0d0d0;border-radius:8px;font-size:15px;transition:all 0.2s;" onfocus="this.style.borderColor='#1677ff'" onblur="this.style.borderColor='#d0d0d0'">
+    </div>
+    <button onclick="handleLogin()" style="width:100%;padding:14px;background:linear-gradient(135deg,#1677ff 0%,#0958d9 100%);color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:500;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">登录</button>
+    <div id="loginError" style="display:none;margin-top:16px;padding:12px;background:#fff2f0;border:1px solid #ffccc7;border-radius:6px;color:#cf1322;font-size:13px;text-align:center;"></div>
+  </div>
+</div>
 
 <!-- 数据看板面板 -->
 <div class="detail-panel" id="dashboardPanel" style="width:680px;z-index:203;">
