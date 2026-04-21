@@ -162,7 +162,6 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
   margin-left: 0;
   min-height: 100vh;
   transition: margin-left 0.3s ease;
-  display: none; /* 默认隐藏，登录后显示 */
 }
 
 .main-content.sidebar-open {
@@ -330,354 +329,181 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
   background: linear-gradient(135deg, #e6fffb 0%, #b5f5ec 100%);
   border-left: 4px solid #13c2c2;
 }
-/* 新的预估开业门店列表样式 - 按日期分组展示 */
-.opening-store-list-container {
-  padding: 12px;
+.opening-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  padding: 10px;
   background: #f8f9fa;
   border-radius: 12px;
 }
-.opening-store-list-nav {
+.opening-calendar-header {
+  text-align: center;
+  padding: 6px 2px;
+  background: #13c2c2;
+  color: #fff;
+  font-weight: 600;
+  font-size: 11px;
+  border-radius: 4px;
+}
+.opening-calendar-day {
+  min-height: 50px;
+  background: #fff;
+  border-radius: 4px;
+  padding: 2px 4px;
+  border: 1px solid #e8e8e8;
+  transition: all 0.2s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  overflow: hidden;
+}
+.opening-calendar-day:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.opening-calendar-day.other-month {
+  background: #f5f5f5;
+  color: #999;
+}
+.opening-calendar-day.today {
+  border: 2px solid #13c2c2;
+}
+.opening-calendar-day.has-store {
+  background: #e6fffb;
+  border-color: #13c2c2;
+}
+.opening-calendar-day.has-store::after {
+  content: attr(data-store-names);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.8);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 100;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  pointer-events: none;
+  margin-bottom: 6px;
+}
+.opening-calendar-day.has-store::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: rgba(0,0,0,0.8);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  margin-bottom: -6px;
+}
+.opening-calendar-day.has-store:hover::after,
+.opening-calendar-day.has-store:hover::before {
+  opacity: 1;
+  visibility: visible;
+}
+.opening-calendar-date {
+  font-size: 10px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1px;
+}
+.opening-calendar-stores {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 100%;
+  overflow: hidden;
+}
+.opening-calendar-store {
+  font-size: 9px;
+  padding: 0px 2px;
+  background: rgba(19, 194, 194, 0.15);
+  color: #08979c;
+  border-radius: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+.opening-calendar-more {
+  font-size: 9px;
+  color: #08979c;
+  text-align: center;
+  line-height: 1.1;
+}
+.opening-calendar-nav {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 12px;
+  gap: 15px;
   padding: 10px 15px;
-  background: #fff;
-  border-radius: 10px;
+  background: #f8f9fa;
+  border-radius: 6px;
   margin-bottom: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
-.opening-store-list-nav-btn {
-  padding: 6px 16px;
+.opening-calendar-nav-btn {
+  padding: 5px 12px;
   background: #13c2c2;
   color: #fff;
   border: none;
-  border-radius: 6px;
-  font-size: 13px;
+  border-radius: 4px;
+  font-size: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
-.opening-store-list-nav-btn:hover {
+.opening-calendar-nav-btn:hover {
   background: #08979c;
 }
-.opening-store-list-nav-range {
-  font-size: 16px;
-  font-weight: 700;
-  color: #333;
-  min-width: 120px;
-  text-align: center;
-}
-.opening-store-list-filters {
-  display: flex;
-  gap: 12px;
-  padding: 12px 15px;
-  background: #fff;
-  border-radius: 10px;
-  margin-bottom: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  flex-wrap: wrap;
-  align-items: center;
-}
-.opening-store-list-filter-group {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.opening-store-list-filter-group label {
-  font-size: 13px;
-  color: #666;
-  white-space: nowrap;
-}
-.opening-store-list-filter-group select {
-  padding: 6px 10px;
-  border: 1px solid #d9d9d9;
-  border-radius: 6px;
-  font-size: 13px;
-  color: #333;
-  background: #fff;
-  cursor: pointer;
-  min-width: 100px;
-}
-.opening-store-list-filter-group select:hover {
-  border-color: #13c2c2;
-}
-.opening-store-list-filter-group select:focus {
-  outline: none;
-  border-color: #13c2c2;
-  box-shadow: 0 0 0 2px rgba(19, 194, 194, 0.2);
-}
-.opening-store-list-filter-reset {
-  padding: 6px 14px;
-  background: #f5f5f5;
-  border: 1px solid #d9d9d9;
-  border-radius: 6px;
-  font-size: 13px;
-  color: #666;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  margin-left: auto;
-}
-.opening-store-list-filter-reset:hover {
-  background: #ff4d4f;
-  color: #fff;
-  border-color: #ff4d4f;
-}
-.opening-store-list-stats {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
-}
-.opening-store-list-stat-card {
-  flex: 1;
-  min-width: 100px;
-  background: #fff;
-  padding: 12px 15px;
-  border-radius: 10px;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-.opening-store-list-stat-card .stat-value {
-  font-size: 24px;
-  font-weight: 700;
-  color: #13c2c2;
-}
-.opening-store-list-stat-card .stat-label {
+.opening-calendar-nav-range {
   font-size: 12px;
-  color: #666;
-  margin-top: 2px;
-}
-.opening-store-list-days {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.opening-store-list-month-title {
-  font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
   color: #333;
-  padding: 12px 15px;
-  background: linear-gradient(135deg, #e6fffb 0%, #b5f5ec 100%);
-  border-radius: 8px;
-  margin: 15px 0 10px 0;
-  border-left: 4px solid #13c2c2;
-}
-.opening-store-list-month-title:first-child {
-  margin-top: 0;
-}
-.opening-store-list-day {
+  padding: 4px 12px;
   background: #fff;
-  border-radius: 12px;
-  padding: 12px 15px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  border-left: 4px solid #13c2c2;
-  margin-bottom: 10px;
-}
-.opening-store-list-day.today {
-  border-left-color: #ff4d4f;
-  background: linear-gradient(135deg, #fff 0%, #fff1f0 100%);
-}
-.opening-store-list-day-content {
-  display: flex;
-  gap: 15px;
-  align-items: flex-start;
-}
-.opening-store-list-day-date-col {
-  flex-shrink: 0;
-}
-.opening-store-list-day-stores-col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.opening-store-list-store-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-.opening-store-list-items {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-.opening-store-list-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0;
-  background: transparent;
-  border-radius: 0;
-  transition: all 0.2s ease;
-  border: none;
-}
-.opening-store-list-item-date-section {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  background: linear-gradient(135deg, #fff7e6 0%, #ffd591 100%);
-  border-radius: 8px;
-  border: 1px solid #faad14;
-  flex-shrink: 0;
-}
-.opening-store-list-item-store-section {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: #f8f9fa;
-  border-radius: 8px;
+  border-radius: 4px;
   border: 1px solid #e8e8e8;
 }
-.opening-store-list-item:hover {
-  background: #e6fffb;
-  border-color: #13c2c2;
+.opening-calendar-months-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
 }
-.opening-store-list-item-date {
-  font-size: 22px;
-  font-weight: 700;
-  color: #fa8c16;
-  flex-shrink: 0;
-  min-width: 42px;
+.opening-calendar-month-block {
+  margin-bottom: 0;
 }
-.opening-store-list-item-weekday {
-  font-size: 14px;
-  color: #666;
-  background: #fff;
-  padding: 5px 12px;
-  border-radius: 4px;
-  flex-shrink: 0;
-  min-width: 56px;
-  text-align: center;
-  border: 1px solid #d9d9d9;
+@media (max-width: 1400px) {
+  .opening-calendar-months-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
-.opening-store-list-item-daycount {
+@media (max-width: 900px) {
+  .opening-calendar-months-container {
+    grid-template-columns: 1fr;
+  }
+}
+.opening-calendar-month-title {
   font-size: 14px;
   font-weight: 600;
-  color: #ff4d4f;
-  background: #fff;
-  padding: 5px 12px;
-  border-radius: 4px;
-  flex-shrink: 0;
-  border: 1px solid #ff4d4f;
-  min-width: 44px;
-  text-align: center;
-}
-.opening-store-list-item-badge {
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-.opening-store-list-item-badge.direct {
-  background: #1677ff;
-  color: #fff;
-}
-.opening-store-list-item-badge.franchise {
-  background: #faad14;
-  color: #fff;
-}
-.opening-store-list-item-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-  white-space: nowrap;
-}
-.opening-store-list-item-region {
-  font-size: 12px;
-  flex-shrink: 0;
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-weight: 600;
-}
-/* 区域颜色定义 - 同一区域使用相同颜色 */
-.opening-store-list-item-region.region-苏州 {
-  color: #1677ff;
-  background: #e8f4ff;
-  border: 1px solid #1677ff;
-}
-.opening-store-list-item-region.region-深圳 {
-  color: #52c41a;
-  background: #f6ffed;
-  border: 1px solid #52c41a;
-}
-.opening-store-list-item-region.region-东莞 {
-  color: #fa8c16;
-  background: #fff7e6;
-  border: 1px solid #fa8c16;
-}
-.opening-store-list-item-region.region-泰州 {
-  color: #eb2f96;
-  background: #fff0f6;
-  border: 1px solid #eb2f96;
-}
-.opening-store-list-item-region.region-嘉兴 {
-  color: #722ed1;
-  background: #f9f0ff;
-  border: 1px solid #722ed1;
-}
-.opening-store-list-item-region.region-南京 {
   color: #13c2c2;
-  background: #e6fffb;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #e6fffb 0%, #b5f5ec 100%);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  display: inline-block;
+}
+.opening-calendar-day.has-store {
+  background: #f0fffe;
   border: 1px solid #13c2c2;
-}
-.opening-store-list-item-region.region-淮安 {
-  color: #fa541c;
-  background: #fff2e8;
-  border: 1px solid #fa541c;
-}
-.opening-store-list-item-region.region-南通 {
-  color: #1890ff;
-  background: #e6f7ff;
-  border: 1px solid #1890ff;
-}
-.opening-store-list-item-region.region-上海 {
-  color: #faad14;
-  background: #fffbe6;
-  border: 1px solid #faad14;
-}
-.opening-store-list-item-region.region-马鞍山 {
-  color: #2f54eb;
-  background: #f0f5ff;
-  border: 1px solid #2f54eb;
-}
-.opening-store-list-item-region.region-常州 {
-  color: #a0d911;
-  background: #fcffe6;
-  border: 1px solid #a0d911;
-}
-.opening-store-list-item-region.region-昆山 {
-  color: #f5222d;
-  background: #fff1f0;
-  border: 1px solid #f5222d;
-}
-.opening-store-list-item-region.region-张家港 {
-  color: #531dab;
-  background: #f3e8ff;
-  border: 1px solid #531dab;
-}
-.opening-store-list-item-region.region-靖江 {
-  color: #cf1322;
-  background: #fff1f0;
-  border: 1px solid #cf1322;
-}
-/* 默认区域颜色 */
-.opening-store-list-item-region.region-default {
-  color: #666;
-  background: #f5f5f5;
-  border: 1px solid #d9d9d9;
-}
-.opening-store-list-empty {
-  text-align: center;
-  padding: 50px 20px;
-  color: #999;
-  font-size: 15px;
-}
-.opening-store-list-empty-icon {
-  font-size: 56px;
-  margin-bottom: 15px;
 }
 .cycle-stats-grid {
   display:grid;
@@ -919,17 +745,15 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
   display:flex; flex-direction:column; justify-content:center;
 }
 .store-name { font-size:13px; font-weight:700; color:#222; line-height:1.3; }
-.store-sub  { font-size:11px; color:#888; margin-top:3px; display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
-.region-tag { background:#e8f4ff; color:#1677ff; padding:1px 6px; border-radius:3px; font-size:11px; white-space:nowrap; }
-.status-tag { padding:1px 6px; border-radius:3px; font-size:11px; white-space:nowrap; }
+.store-sub  { font-size:11px; color:#888; margin-top:3px; display:flex; gap:6px; align-items:center; }
+.region-tag { background:#e8f4ff; color:#1677ff; padding:1px 6px; border-radius:3px; font-size:11px; }
+.status-tag { padding:1px 6px; border-radius:3px; font-size:11px; }
 .basic-field-tag { background:#f0f0f0; color:#666; padding:1px 6px; border-radius:3px; font-size:11px; white-space:nowrap; }
 .current-step-tag { background:linear-gradient(135deg, #fff7e6 0%, #ffe7ba 100%); color:#d46b08; padding:3px 8px; border-radius:4px; font-size:12px; font-weight:600; white-space:normal; word-break:break-all; max-width:100%; display:inline-block; border:1px solid #ffa940; box-shadow:0 2px 4px rgba(212,107,8,0.15); }
-.type-tag { background:#f6ffed; color:#389e0d; padding:1px 6px; border-radius:3px; font-size:11px; white-space:nowrap; }
-.engineer-tag { background:#fff2f0; color:#cf1322; padding:1px 6px; border-radius:3px; font-size:11px; white-space:nowrap; }
-.renovation-tag { background:#fff7e6; color:#d46b08; padding:1px 6px; border-radius:3px; font-size:11px; white-space:nowrap; }
-.area-tag { background:#f9f0ff; color:#722ed1; padding:1px 6px; border-radius:3px; font-size:11px; white-space:nowrap; }
-.team-tag { background:#e6fffb; color:#08979c; padding:1px 6px; border-radius:3px; font-size:11px; white-space:nowrap; }
-.manager-tag { background:#fff0f6; color:#c41d7f; padding:1px 6px; border-radius:3px; font-size:11px; white-space:nowrap; }
+.type-tag { background:#f6ffed; color:#389e0d; padding:1px 6px; border-radius:3px; font-size:11px; }
+.engineer-tag { background:#fff2f0; color:#cf1322; padding:1px 6px; border-radius:3px; font-size:11px; }
+.renovation-tag { background:#fff7e6; color:#d46b08; padding:1px 6px; border-radius:3px; font-size:11px; }
+.area-tag { background:#f9f0ff; color:#722ed1; padding:1px 6px; border-radius:3px; font-size:11px; }
 .status-site { background:#e8f4ff; color:#1677ff; }
 .status-designing { background:#f0ebff; color:#722ed1; }
 .status-prep { background:#e6fffb; color:#08979c; }
@@ -1004,7 +828,6 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
   padding:6px 2px;
   font-size:12px;
   margin-top:4px;
-  flex-wrap:wrap;
 }
 .info-title {
   font-weight:600;
@@ -1019,8 +842,6 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
   color:#666;
   background:#fafafa;
   border-radius:4px;
-  white-space:nowrap;
-  flex-shrink:0;
 }
 .info-item.completed {
   color:#52c41a;
@@ -1193,23 +1014,6 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
   border-color:#ff4d4f !important;
   box-shadow:0 0 0 2px rgba(255,77,79,0.15) !important;
 }
-.engineering-change-input-wrapper {
-  display:none;
-  align-items:center;
-  gap:8px;
-  flex:1;
-}
-.engineering-change-input-wrapper.show {
-  display:flex;
-}
-.engineering-change-input {
-  border-color:#1890ff !important;
-  background:#e6f7ff !important;
-}
-.engineering-change-input:focus {
-  border-color:#1890ff !important;
-  box-shadow:0 0 0 2px rgba(24,144,255,0.15) !important;
-}
 .risk-overview {
   background:#fff;
   border-radius:12px;
@@ -1278,124 +1082,7 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
   border-radius:8px;
   border:1px dashed #e0e0e0;
 }
-
-/* ── 工程增减项看板样式 ─────────────────────────────────────────────────────── */
-.engineering-change-section-wrapper {
-  padding:0;
-  margin-top:16px;
 }
-.engineering-change-section-content {
-  display:flex;
-  flex-direction:column;
-  gap:16px;
-}
-.stats-section-title.engineering-change {
-  background:linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
-  border-left-color:#1890ff;
-}
-.engineering-change-count-card {
-  background:linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
-  border-radius:12px;
-  padding:20px 24px;
-  display:flex;
-  align-items:center;
-  gap:16px;
-  border:1px solid #91d5ff;
-  box-shadow:0 2px 8px rgba(24,144,255,0.08);
-}
-.engineering-change-count-icon {
-  width:48px;
-  height:48px;
-  border-radius:12px;
-  background:#1890ff;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:24px;
-  flex-shrink:0;
-  box-shadow:0 4px 12px rgba(24,144,255,0.3);
-}
-.engineering-change-count-num {
-  font-size:36px;
-  font-weight:800;
-  color:#1890ff;
-  line-height:1;
-}
-.engineering-change-count-label {
-  font-size:14px;
-  color:#096dd9;
-  font-weight:500;
-  margin-left:auto;
-}
-.engineering-change-overview {
-  background:#fff;
-  border-radius:12px;
-  padding:16px;
-  box-shadow:0 2px 8px rgba(0,0,0,.06);
-  border:1px solid #f0f0f0;
-}
-.engineering-change-overview-title {
-  font-size:14px;
-  font-weight:600;
-  color:#1f2937;
-  margin-bottom:12px;
-  padding-bottom:10px;
-  border-bottom:1px solid #f0f0f0;
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-.engineering-change-overview-title::before {
-  content:'';
-  width:4px;
-  height:16px;
-  background:#1890ff;
-  border-radius:2px;
-}
-.engineering-change-overview-list {
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
-.engineering-change-overview-item {
-  display:flex;
-  align-items:flex-start;
-  gap:12px;
-  padding:12px 14px;
-  background:#e6f7ff;
-  border-radius:8px;
-  border-left:4px solid #1890ff;
-  transition:all .2s;
-}
-.engineering-change-overview-item:hover {
-  background:#bae7ff;
-  transform:translateX(2px);
-}
-.engineering-change-overview-store {
-  font-weight:600;
-  color:#1f2937;
-  font-size:13px;
-  white-space:nowrap;
-  flex-shrink:0;
-  min-width:120px;
-}
-.engineering-change-overview-content {
-  color:#595959;
-  font-size:13px;
-  flex:1;
-  word-break:break-all;
-  line-height:1.5;
-}
-.engineering-change-overview-empty {
-  color:#999;
-  font-size:13px;
-  text-align:center;
-  padding:24px;
-  background:#fafafa;
-  border-radius:8px;
-  border:1px dashed #e0e0e0;
-}
-
 @keyframes pulse-warning {
   0%,100% { box-shadow:0 0 0 0 rgba(255,77,79,0.4); }
   50% { box-shadow:0 0 0 4px rgba(255,77,79,0.1); }
@@ -1516,83 +1203,6 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
   color:#fff;
 }
 .date-picker-actions .btn-secondary {
-  background:#f0f0f0;
-  color:#333;
-}
-
-/* 停工天数输入弹窗样式 */
-.stop-work-modal {
-  position:fixed;
-  top:50%;
-  left:50%;
-  transform:translate(-50%, -50%);
-  background:#fff;
-  border-radius:12px;
-  box-shadow:0 8px 32px rgba(0,0,0,.2);
-  z-index:300;
-  width:320px;
-  display:none;
-}
-.stop-work-modal.show { display:block; }
-.stop-work-hd {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:16px 20px;
-  border-bottom:1px solid #e8e8e8;
-  font-weight:600;
-  font-size:16px;
-}
-.stop-work-close {
-  background:none;
-  border:none;
-  font-size:18px;
-  cursor:pointer;
-  color:#999;
-}
-.stop-work-close:hover { color:#333; }
-.stop-work-bd { padding:24px 20px; }
-.stop-work-input-wrapper {
-  margin-bottom:20px;
-}
-.stop-work-label {
-  display:block;
-  font-size:14px;
-  color:#333;
-  margin-bottom:10px;
-  font-weight:500;
-}
-.stop-work-input {
-  width:100%;
-  padding:12px 16px;
-  border:2px solid #d9d9d9;
-  border-radius:8px;
-  font-size:16px;
-  text-align:center;
-  transition:all .2s;
-}
-.stop-work-input:focus {
-  outline:none;
-  border-color:#1677ff;
-  box-shadow:0 0 0 3px rgba(22,119,255,0.1);
-}
-.stop-work-actions {
-  display:flex;
-  gap:10px;
-}
-.stop-work-actions .btn {
-  flex:1;
-  padding:10px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-  font-size:14px;
-}
-.stop-work-actions .btn-primary {
-  background:#1677ff;
-  color:#fff;
-}
-.stop-work-actions .btn-secondary {
   background:#f0f0f0;
   color:#333;
 }
@@ -1844,7 +1454,7 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
   .store-info { width:140px; padding:8px 10px; }
   .store-name { font-size:12px; }
   .store-sub { font-size:10px; flex-wrap:wrap; }
-  .region-tag, .status-tag, .type-tag, .engineer-tag, .renovation-tag, .area-tag, .team-tag, .manager-tag { font-size:10px; padding:1px 4px; }
+  .region-tag, .status-tag, .type-tag, .engineer-tag, .renovation-tag, .area-tag { font-size:10px; padding:1px 4px; }
   .current-step-tag { font-size:11px; padding:2px 6px; }
 
   /* 阶段表头 */
@@ -1947,8 +1557,37 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
 
 <!-- 左侧边栏 -->
 <div class="sidebar" id="sidebar">
-  <div class="sidebar-menu" id="sidebarMenu">
-    <!-- 动态生成，根据角色显示不同选项 -->
+  <div class="sidebar-menu">
+    <div class="sidebar-item" onclick="openStoreEditor(); toggleSidebar();">
+      <span class="sidebar-icon">➕</span>
+      <span>添加门店</span>
+    </div>
+    <div class="sidebar-item" onclick="openNodeEditor(); toggleSidebar();">
+      <span class="sidebar-icon">⚙️</span>
+      <span>编辑节点</span>
+    </div>
+    <div class="sidebar-item" onclick="openBasicFieldSettings(); toggleSidebar();">
+      <span class="sidebar-icon">📋</span>
+      <span>基本信息设置</span>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-item" onclick="openImportModal(); toggleSidebar();">
+      <span class="sidebar-icon">📥</span>
+      <span>导入数据</span>
+    </div>
+    <div class="sidebar-item" onclick="exportData(); toggleSidebar();">
+      <span class="sidebar-icon">📤</span>
+      <span>导出数据</span>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-item" onclick="openDashboardPanel(); toggleSidebar();">
+      <span class="sidebar-icon">📊</span>
+      <span>数据看板</span>
+    </div>
+    <div class="sidebar-item" onclick="openSecuritySettings(); toggleSidebar();">
+      <span class="sidebar-icon">🔒</span>
+      <span>安全设置</span>
+    </div>
   </div>
 </div>
 
@@ -2057,34 +1696,12 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
       </div>
     </div>
 
-    <!-- 工程增减项看板 -->
-    <div class="engineering-change-section-wrapper collapsible-section">
-      <div class="stats-section-title engineering-change collapsible-header" onclick="toggleSection(this)">
-        <span class="collapse-icon">▶</span> 🔧 工程增减项看板
-      </div>
-      <div class="engineering-change-section-content collapsible-content collapsed">
-        <!-- 上方：工程增减项门店数量卡片 -->
-        <div class="engineering-change-count-card">
-          <div class="engineering-change-count-icon">🔧</div>
-          <div class="engineering-change-count-num" id="cnt-engineering-change-stores">0</div>
-          <div class="engineering-change-count-label">工程增减项门店数量</div>
-        </div>
-        <!-- 下方：工程增减项概况列表 -->
-        <div class="engineering-change-overview" id="engineeringChangeOverview">
-          <div class="engineering-change-overview-title">工程增减项概况</div>
-          <div class="engineering-change-overview-list" id="engineeringChangeOverviewList">
-            <!-- 动态填充 -->
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- 区域门店及类型统计 -->
     <div class="region-stats-section-wrapper collapsible-section">
       <div class="collapsible-header" style="display:flex;align-items:center;gap:15px;margin-bottom:0;background:linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%);border-radius:8px;border-left:4px solid #52c41a;padding:0 16px 0 0;cursor:pointer;" onclick="toggleSection(this)">
-        <div class="stats-section-title region" style="margin:0;background:transparent;border:none;flex:1;padding:12px 0 12px 16px;pointer-events:none;"><span class="collapse-icon">▶</span> 📊 区域门店及类型统计</div>
+        <div class="stats-section-title region" style="margin:0;background:transparent;border:none;flex:0 0 auto;padding:12px 0 12px 16px;"><span class="collapse-icon">▶</span> 📊 区域门店及类型统计</div>
         <!-- 筛选控件 -->
-        <div style="display:flex;gap:10px;align-items:center;flex:0 0 auto;justify-content:flex-end;padding:10px 0;" onclick="event.stopPropagation();">
+        <div style="display:flex;gap:10px;align-items:center;flex:1;justify-content:flex-end;padding:10px 0;" onclick="event.stopPropagation();">
           <select id="regionStatsRegion" style="padding:6px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;background:#fff;cursor:pointer;min-width:100px;" onchange="updateDashboardFilters()">
             <option value="all">全部区域</option>
           </select>
@@ -2119,7 +1736,7 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
     <!-- 门店周期统计看板 -->
     <div class="cycle-stats-section-wrapper collapsible-section">
       <div class="collapsible-header" style="display:flex;align-items:center;gap:15px;margin-bottom:0;background:linear-gradient(135deg, #fff7e6 0%, #ffe7ba 100%);border-radius:8px;border-left:4px solid #faad14;padding:0 16px 0 0;cursor:pointer;" onclick="toggleSection(this)">
-        <div class="stats-section-title cycle" style="margin:0;background:transparent;border:none;flex:1;padding:12px 0 12px 16px;pointer-events:none;"><span class="collapse-icon">▶</span> 📈 门店周期统计</div>
+        <div class="stats-section-title cycle" style="margin:0;background:transparent;border:none;flex:0 0 auto;padding:12px 0 12px 16px;"><span class="collapse-icon">▶</span> 📈 门店周期统计</div>
         <!-- 筛选控件 -->
         <div style="display:flex;gap:10px;align-items:center;flex:1;justify-content:flex-end;padding:10px 0;" onclick="event.stopPropagation();">
           <select id="cycleStatsRegion" style="padding:6px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;background:#fff;cursor:pointer;min-width:100px;" onchange="updateDashboardFilters()">
@@ -2149,8 +1766,8 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
     <!-- 预估开业门店时间看板 -->
     <div class="opening-calendar-section-wrapper collapsible-section">
       <div class="collapsible-header" style="display:flex;align-items:center;gap:15px;margin-bottom:0;background:linear-gradient(135deg, #e6fffb 0%, #b5f5ec 100%);border-radius:8px;border-left:4px solid #13c2c2;padding:0 16px 0 0;cursor:pointer;" onclick="toggleSection(this)">
-        <div class="stats-section-title opening" style="margin:0;background:transparent;border:none;flex:1;padding:12px 0 12px 16px;pointer-events:none;"><span class="collapse-icon">▶</span> 📅 预估开业门店时间</div>
-        <div style="font-size:12px;color:#666;padding:10px 0;flex:0 0 auto;pointer-events:none;">展示所有有预估开业日期的月份</div>
+        <div class="stats-section-title opening" style="margin:0;background:transparent;border:none;flex:0 0 auto;padding:12px 0 12px 16px;"><span class="collapse-icon">▶</span> 📅 预估开业门店时间</div>
+        <div style="font-size:12px;color:#666;padding:10px 0;">展示所有有预估开业日期的月份</div>
       </div>
       <div id="openingCalendarInDashboard" class="collapsible-content collapsed" style="padding:15px 0;">
         <!-- 动态填充日历 -->
@@ -2212,13 +1829,6 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
     <button class="filter-btn" onclick="toggleRenovationTypeDropdown()">装修形式：全部 ▼</button>
     <div id="renovationTypeDropdownMenu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:200;min-width:120px;max-height:300px;overflow-y:auto;">
       <div id="renovationTypeDropdownItems" style="padding:4px;"></div>
-    </div>
-  </div>
-  <!-- 施工队伍名称下拉 -->
-  <div class="dropdown-filter" id="teamDropdown" style="position:relative;">
-    <button class="filter-btn" onclick="toggleTeamDropdown()">施工队伍：全部 ▼</button>
-    <div id="teamDropdownMenu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:200;min-width:120px;max-height:300px;overflow-y:auto;">
-      <div id="teamDropdownItems" style="padding:4px;"></div>
     </div>
   </div>
 </div>
@@ -2328,25 +1938,6 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
   </div>
 </div>
 
-<!-- 停工天数输入弹窗 -->
-<div class="panel-overlay" id="stopWorkOverlay" onclick="closeStopWorkDialog()"></div>
-<div class="stop-work-modal" id="stopWorkModal">
-  <div class="stop-work-hd">
-    <span>请输入停工天数</span>
-    <button class="stop-work-close" onclick="closeStopWorkDialog()">✕</button>
-  </div>
-  <div class="stop-work-bd">
-    <div class="stop-work-input-wrapper">
-      <label class="stop-work-label">停工天数（天）：</label>
-      <input type="number" class="stop-work-input" id="stopWorkDaysInput" min="0" placeholder="请输入数字" onkeydown="if(event.key==='Enter')confirmStopWorkDialog()">
-    </div>
-    <div class="stop-work-actions">
-      <button class="btn btn-secondary" onclick="closeStopWorkDialog()">取消</button>
-      <button class="btn btn-primary" onclick="confirmStopWorkDialog()">是否保存</button>
-    </div>
-  </div>
-</div>
-
 <script>
 // ── 阶段定义（可编辑）──────────────────────────────────────────────────────────
 // 默认阶段配置
@@ -2401,7 +1992,6 @@ const DEFAULT_PHASES = [
       { name: '新提醒约食药监老师看现场', requireDate: false },
       { name: '门店广告物料已安装', requireDate: false },
       { name: '预估验收日期', requireDate: true },
-      { name: '门店是否有停工情况', requireDate: false },
       { name: '门店已验收', requireDate: true, requireConfirm: true, confirmText: '门店是否已填验收表并按照验收表整改好？' },
     ]
   },
@@ -2435,30 +2025,22 @@ const DEFAULT_PHASES = [
   },
 ];
 
-// 阶段配置版本号（仅用于标记，不再强制重置用户数据）
+// 阶段配置版本号，修改 DEFAULT_PHASES 后需要更新此版本号
 const PHASES_VERSION = '2026-04-20-v1';
 
 // 从 localStorage 读取阶段配置
-// 优先使用用户保存的数据，不会强制重置
+// 如果版本号不匹配或没有保存过，则使用新的默认值
 let savedPhases = localStorage.getItem('storePhases');
+let savedVersion = localStorage.getItem('storePhasesVersion');
 let PHASES;
 
-if (savedPhases) {
-  // 使用用户保存的阶段配置
-  try {
-    PHASES = JSON.parse(savedPhases);
-  } catch (e) {
-    // 解析失败时使用默认值
-    PHASES = JSON.parse(JSON.stringify(DEFAULT_PHASES));
-    localStorage.setItem('storePhases', JSON.stringify(PHASES));
-  }
+if (savedPhases && savedVersion === PHASES_VERSION) {
+  PHASES = JSON.parse(savedPhases);
 } else {
-  // 首次使用，使用默认值
   PHASES = JSON.parse(JSON.stringify(DEFAULT_PHASES));
   localStorage.setItem('storePhases', JSON.stringify(PHASES));
+  localStorage.setItem('storePhasesVersion', PHASES_VERSION);
 }
-// 保存当前版本号（用于参考，不用于强制重置）
-localStorage.setItem('storePhasesVersion', PHASES_VERSION);
 
 // 所有步骤扁平列表（使用 concat + map 替代 flatMap 以兼容 iOS Safari）
 let ALL_STEPS = [].concat.apply([], PHASES.map(p => p.steps.map(s => ({step: s.name, phase: p, requireDate: s.requireDate}))));
@@ -2676,15 +2258,15 @@ function isDesignCompleted(store) {
   return designPhase.steps.every(stepObj => store[stepObj.name]);
 }
 
-// ── 计算施工前准备天数 ─────────────────────────────────────────────────────────
-function calcPrepDays(store) {
-  // 查找施工前准备阶段（兼容"施工前准备阶段"全称）
-  const prepPhase = PHASES.find(p => p.name === '施工前准备阶段') || PHASES.find(p => p.name === '施工前准备');
-  if (!prepPhase) return null;
+// ── 计算施工天数 ───────────────────────────────────────────────────────────────
+function calcConstructionDays(store) {
+  // 查找装修阶段（兼容"施工阶段"别名）
+  const constructionPhase = PHASES.find(p => p.name === '装修阶段') || PHASES.find(p => p.name === '施工阶段');
+  if (!constructionPhase) return null;
   
-  // 查找施工前准备阶段第一个需要日期且已设置日期的节点
+  // 查找装修阶段第一个需要日期且已设置日期的节点
   let startDateStr = null;
-  for (const stepObj of prepPhase.steps) {
+  for (const stepObj of constructionPhase.steps) {
     if (stepObj.requireDate) {
       const val = store[stepObj.name];
       if (val && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
@@ -2704,90 +2286,14 @@ function calcPrepDays(store) {
   return diffDays >= 0 ? diffDays : 0;
 }
 
-// ── 计算施工前准备实际完成天数 ─────────────────────────────────────────────────
-function calcPrepActualDays(store) {
-  const prepPhase = PHASES.find(p => p.name === '施工前准备阶段') || PHASES.find(p => p.name === '施工前准备');
-  if (!prepPhase || prepPhase.steps.length === 0) return null;
-  
-  let startDateStr = null;
-  
-  // 查找施工前准备阶段第一个节点（工程报价已出具）的日期
-  const firstStep = prepPhase.steps[0];
-  const firstVal = store[firstStep.name];
-  if (firstVal && /^\d{4}-\d{2}-\d{2}$/.test(firstVal)) {
-    startDateStr = firstVal;
-  }
-  
-  // 查找施工前准备阶段最后一个节点（工程进场报备已结束）的日期
-  const lastStep = prepPhase.steps[prepPhase.steps.length - 1];
-  const lastVal = store[lastStep.name];
-  let endDateStr = null;
-  if (lastVal && /^\d{4}-\d{2}-\d{2}$/.test(lastVal)) {
-    endDateStr = lastVal;
-  }
-  
-  if (!startDateStr || !endDateStr) return null;
-  
-  const startDate = new Date(startDateStr);
-  const endDate = new Date(endDateStr);
-  const diffTime = endDate - startDate;
-  return Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // 包含首尾两天
-}
-
-// ── 检查施工前准备阶段是否全部完成（以最后一个节点为准）──────────────────────────
-function isPrepCompleted(store) {
-  const prepPhase = PHASES.find(p => p.name === '施工前准备阶段') || PHASES.find(p => p.name === '施工前准备');
-  if (!prepPhase || prepPhase.steps.length === 0) return false;
-  // 以最后一个节点是否有日期为准
-  const lastStep = prepPhase.steps[prepPhase.steps.length - 1];
-  const val = store[lastStep.name];
-  return val && /^\d{4}-\d{2}-\d{2}$/.test(val);
-}
-
-// ── 计算施工天数 ───────────────────────────────────────────────────────────────
-function calcConstructionDays(store) {
-  // 查找装修阶段（兼容"施工阶段"别名）
-  const constructionPhase = PHASES.find(p => p.name === '装修阶段') || PHASES.find(p => p.name === '施工阶段');
-  if (!constructionPhase) return null;
-
-  // 查找装修阶段第一个需要日期且已设置日期的节点
-  let startDateStr = null;
-  for (const stepObj of constructionPhase.steps) {
-    if (stepObj.requireDate) {
-      const val = store[stepObj.name];
-      if (val && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
-        startDateStr = val;
-        break;
-      }
-    }
-  }
-
-  if (!startDateStr) {
-    return null; // 未设置开始日期
-  }
-  const startDate = new Date(startDateStr);
-  const today = new Date();
-  const diffTime = today - startDate;
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  let constructionDays = diffDays >= 0 ? diffDays : 0;
-
-  // 减去停工天数（如果有）
-  const stopWorkDays = store['停工天数'];
-  if (stopWorkDays && !isNaN(parseInt(stopWorkDays, 10))) {
-    constructionDays = Math.max(0, constructionDays - parseInt(stopWorkDays, 10));
-  }
-
-  return constructionDays;
-}
-
 // ── 计算施工实际完成天数（装修阶段第一个节点到最后一个节点）────────────────────────
 function calcConstructionActualDays(store) {
   const constructionPhase = PHASES.find(p => p.name === '装修阶段') || PHASES.find(p => p.name === '施工阶段');
   if (!constructionPhase) return null;
-
+  
   let startDateStr = null;
   let endDateStr = null;
-
+  
   // 查找装修阶段第一个需要日期且已设置日期的节点
   for (const stepObj of constructionPhase.steps) {
     if (stepObj.requireDate) {
@@ -2798,7 +2304,7 @@ function calcConstructionActualDays(store) {
       }
     }
   }
-
+  
   // 查找装修阶段最后一个设置了日期的节点
   for (let i = constructionPhase.steps.length - 1; i >= 0; i--) {
     const stepObj = constructionPhase.steps[i];
@@ -2808,21 +2314,13 @@ function calcConstructionActualDays(store) {
       break;
     }
   }
-
+  
   if (!startDateStr || !endDateStr) return null;
-
+  
   const startDate = new Date(startDateStr);
   const endDate = new Date(endDateStr);
   const diffTime = endDate - startDate;
-  let actualDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // 包含首尾两天
-
-  // 减去停工天数（如果有）
-  const stopWorkDays = store['停工天数'];
-  if (stopWorkDays && !isNaN(parseInt(stopWorkDays, 10))) {
-    actualDays = Math.max(0, actualDays - parseInt(stopWorkDays, 10));
-  }
-
-  return actualDays;
+  return Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // 包含首尾两天
 }
 
 // ── 检查装修阶段是否全部完成 ───────────────────────────────────────────────────
@@ -2900,7 +2398,7 @@ function calcRectificationActualDays(store) {
 }
 
 // ── 过滤状态 ──────────────────────────────────────────────────────────────────
-let curRegion = 'all', curStatus = 'all', curStoreType = 'all', curEngineer = 'all', curRenovationType = 'all', curTeam = 'all';
+let curRegion = 'all', curStatus = 'all', curStoreType = 'all', curEngineer = 'all', curRenovationType = 'all';
 
 function filtered() {
   const q = document.getElementById('searchInput').value.trim().toLowerCase();
@@ -2923,8 +2421,7 @@ function filtered() {
     const mt = curStoreType === 'all' || s['门店类型'] === curStoreType;
     const me = curEngineer === 'all' || s['工程负责人'] === curEngineer;
     const mrt = curRenovationType === 'all' || s['装修形式'] === curRenovationType;
-    const mteam = curTeam === 'all' || s['施工队伍名称'] === curTeam || s['推荐队伍名称'] === curTeam;
-    return mq && mr && ms && mt && me && mrt && mteam;
+    return mq && mr && ms && mt && me && mrt;
   });
   
   // 按"确认门店测量时间"日期从早到晚排序（设计阶段第一个节点）
@@ -3033,32 +2530,13 @@ function updateStats() {
       </div>
     `).join('');
   }
-  
-  // 工程增减项门店统计
-  const engineeringChangeStores = STORES.filter(s => s['工程增减项备注'] && s['工程增减项备注'].trim());
-  document.getElementById('cnt-engineering-change-stores').textContent = engineeringChangeStores.length;
-  
-  // 工程增减项概况列表
-  const engineeringChangeListEl = document.getElementById('engineeringChangeOverviewList');
-  if (engineeringChangeListEl) {
-    if (engineeringChangeStores.length === 0) {
-      engineeringChangeListEl.innerHTML = '<div class="engineering-change-overview-empty">暂无工程增减项门店</div>';
-    } else {
-      engineeringChangeListEl.innerHTML = engineeringChangeStores.map(s => `
-        <div class="engineering-change-overview-item">
-          <span class="engineering-change-overview-store">${s['门店']}</span>
-          <span class="engineering-change-overview-content">${s['工程增减项备注']}</span>
-        </div>
-      `).join('');
-    }
-  }
 
   // 区域门店及类型统计（筹建进度概述看板内）
   const regionStatsEl = document.getElementById('regionStatsInDashboard');
   if (regionStatsEl) {
     const regionFilters = dashboardFilters.regionStats;
     const regionData = calculateRegionData(regionFilters);
-    const entries = Object.entries(regionData).sort((a, b) => b[1] - a[1]);
+    const entries = Object.entries(regionData).sort((a, b) => b[1] - a[1]).slice(0, 6);
     const max = Math.max(...entries.map(e => e[1]), 1);
     const colors = ['#1677ff', '#52c41a', '#faad14', '#722ed1', '#13c2c2', '#eb2f96'];
 
@@ -3227,22 +2705,6 @@ function render() {
     })();
     const designDaysCls = isDesignDone ? 'info-item completed' : (designDaysOverdue ? 'info-item overdue' : 'info-item');
     
-    // 施工前准备天数信息（阈值：5天）
-    const isPrepDone = isPrepCompleted(store);
-    const prepDays = calcPrepDays(store);
-    const prepDaysOverdue = !isPrepDone && prepDays !== null && prepDays > 5;
-    const prepDaysText = (() => {
-      if (isPrepDone) {
-        const actualDays = calcPrepActualDays(store);
-        return actualDays ? `门店施工前准备已完成（实际完成天数${actualDays}天）` : '门店施工前准备已完成';
-      }
-      if (prepDays === null) {
-        return '施工前准备中：门店已准备天数0天';
-      }
-      return `${prepDaysOverdue ? '⚠️ ' : ''}施工前准备中：门店已准备天数${prepDays}天`;
-    })();
-    const prepDaysCls = isPrepDone ? 'info-item completed' : (prepDaysOverdue ? 'info-item overdue' : 'info-item');
-    
     // 施工天数信息（阈值：18天）
     const isConstructionDone = isConstructionCompleted(store);
     const constructionDays = calcConstructionDays(store);
@@ -3293,24 +2755,15 @@ function render() {
     })();
     const rowHighlightClass = !isToday ? 'gantt-row-highlight' : '';
     
-    // 根据角色控制编辑权限
-    const role = checkRole();
-    const canEdit = role === 'superadmin' || role === 'admin';
-    
-    // 编辑/删除按钮（仅超管和管理员可见）
-    const editButtons = canEdit ? `
-      <div style="display:flex;gap:4px;">
-        <button class="btn-store-edit" onclick="event.stopPropagation();openStoreEditor(${storeIdx})" title="编辑">✏️</button>
-        <button class="btn-store-del" onclick="event.stopPropagation();deleteStore(${storeIdx})" title="删除">🗑️</button>
-      </div>
-    ` : '';
-    
     return `
       <div class="gantt-row ${rowHighlightClass}" onclick="openPanel(${ri},${storeIdx})">
         <div class="store-info">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;">
             <div class="store-name">${store['门店']}</div>
-            ${editButtons}
+            <div style="display:flex;gap:4px;">
+              <button class="btn-store-edit" onclick="event.stopPropagation();openStoreEditor(${storeIdx})" title="编辑">✏️</button>
+              <button class="btn-store-del" onclick="event.stopPropagation();deleteStore(${storeIdx})" title="删除">🗑️</button>
+            </div>
           </div>
           <div class="store-sub">
             <span class="region-tag">${store['区域']}</span>
@@ -3319,8 +2772,6 @@ function render() {
             <span class="engineer-tag">${store['工程负责人'] || '未分配'}</span>
             <span class="renovation-tag">${store['装修形式'] || '未设置'}</span>
             <span class="area-tag">${store['门店面积'] ? store['门店面积'] + '㎡' : '面积未设置'}</span>
-            <span class="team-tag">${store['施工队伍名称'] || store['推荐队伍名称'] || '未分配'}</span>
-            <span class="manager-tag">${store['姓名'] || '未分配'}</span>
           </div>
           <div class="store-sub" style="margin-top:2px;">${currentStepTag}</div>
         </div>
@@ -3330,7 +2781,6 @@ function render() {
             <div class="info-title">门店进度概要</div>
             <div class="${buildDaysCls}">${buildDaysText}</div>
             <div class="${designDaysCls}">${designDaysText}</div>
-            <div class="${prepDaysCls}">${prepDaysText}</div>
             <div class="${constructionDaysCls}">${constructionDaysText}</div>
             <div class="${rectificationDaysCls}">${rectificationDaysText}</div>
           </div>
@@ -3338,7 +2788,7 @@ function render() {
             <div class="info-title">今日门店最新进展</div>
             <div class="auto-progress-field">
               <span class="auto-progress-text">${prog.lastDoneStep ? ALL_STEPS.find(s => s.step === prog.lastDoneStep)?.phase?.name + ' - ' + prog.lastDoneStep : '暂无进展'}</span>
-              ${canEdit ? `<input type="date" class="editable-date progress-date" id="progress-date-${storeIdx}" value="${store['最新进展日期'] || ''}" onchange="saveStoreField(${storeIdx}, '最新进展日期', this.value)" title="选择更新日期">` : `<span style="color:#666;font-size:13px;">${store['最新进展日期'] || '未设置'}</span>`}
+              <input type="date" class="editable-date progress-date" id="progress-date-${storeIdx}" value="${store['最新进展日期'] || ''}" onchange="saveStoreField(${storeIdx}, '最新进展日期', this.value)" title="选择更新日期">
             </div>
           </div>
           <div class="info-row">
@@ -3355,33 +2805,16 @@ function render() {
             </div>
           </div>
           <div class="info-row editable-row" onclick="event.stopPropagation()">
-            <div class="info-title">是否有工程增减项</div>
-            <div class="editable-field">
-              ${canEdit ? `
-                <select class="editable-select" id="engineering-change-flag-${storeIdx}" onchange="toggleEngineeringChangeInput(${storeIdx})">
-                  <option value="无" ${store['工程增减项备注'] ? '' : 'selected'}>无</option>
-                  <option value="有" ${store['工程增减项备注'] ? 'selected' : ''}>有</option>
-                </select>
-                <div class="engineering-change-input-wrapper ${store['工程增减项备注'] ? 'show' : ''}" id="engineering-change-wrapper-${storeIdx}">
-                  <input type="text" class="editable-input engineering-change-input" id="engineering-change-${storeIdx}" value="${store['工程增减项备注'] || ''}" placeholder="请输入工程增减项详情...">
-                  <button class="btn-save-field" onclick="event.stopPropagation();saveStoreField(${storeIdx}, '工程增减项备注', document.getElementById('engineering-change-${storeIdx}').value)">💾</button>
-                </div>
-              ` : `<span style="color:#666;font-size:13px;">${store['工程增减项备注'] || '无'}</span>`}
-            </div>
-          </div>
-          <div class="info-row editable-row" onclick="event.stopPropagation()">
             <div class="info-title">风险情况备注</div>
             <div class="editable-field">
-              ${canEdit ? `
-                <select class="editable-select" id="risk-flag-${storeIdx}" onchange="toggleRiskInput(${storeIdx})">
-                  <option value="无" ${store['风险情况备注'] ? '' : 'selected'}>无</option>
-                  <option value="有" ${store['风险情况备注'] ? 'selected' : ''}>有</option>
-                </select>
-                <div class="risk-input-wrapper ${store['风险情况备注'] ? 'show' : ''}" id="risk-wrapper-${storeIdx}">
-                  <input type="text" class="editable-input risk-input" id="risk-${storeIdx}" value="${store['风险情况备注'] || ''}" placeholder="请输入风险情况备注...">
-                  <button class="btn-save-field" onclick="event.stopPropagation();saveStoreField(${storeIdx}, '风险情况备注', document.getElementById('risk-${storeIdx}').value)">💾</button>
-                </div>
-              ` : `<span style="color:#666;font-size:13px;">${store['风险情况备注'] || '无'}</span>`}
+              <select class="editable-select" id="risk-flag-${storeIdx}" onchange="toggleRiskInput(${storeIdx})">
+                <option value="无" ${store['风险情况备注'] ? '' : 'selected'}>无</option>
+                <option value="有" ${store['风险情况备注'] ? 'selected' : ''}>有</option>
+              </select>
+              <div class="risk-input-wrapper ${store['风险情况备注'] ? 'show' : ''}" id="risk-wrapper-${storeIdx}">
+                <input type="text" class="editable-input risk-input" id="risk-${storeIdx}" value="${store['风险情况备注'] || ''}" placeholder="请输入风险情况备注...">
+                <button class="btn-save-field" onclick="event.stopPropagation();saveStoreField(${storeIdx}, '风险情况备注', document.getElementById('risk-${storeIdx}').value)">💾</button>
+              </div>
             </div>
           </div>
         </div>
@@ -3468,67 +2901,10 @@ function closeDatePicker() {
   _datePickerSelectedDate = null;
 }
 
-// ── 停工天数输入对话框相关变量 ───────────────────────────────────────────────────
-let _stopWorkStoreIdx = null;
-
-// ── 打开停工天数输入对话框 ───────────────────────────────────────────────────────
-function openStopWorkDialog(storeIdx) {
-  _stopWorkStoreIdx = storeIdx;
-  const store = STORES[storeIdx];
-  const currentDays = store['停工天数'] || '';
-  
-  document.getElementById('stopWorkDaysInput').value = currentDays;
-  document.getElementById('stopWorkModal').classList.add('show');
-  document.getElementById('stopWorkOverlay').classList.add('show');
-  
-  // 自动聚焦输入框
-  setTimeout(() => {
-    document.getElementById('stopWorkDaysInput').focus();
-  }, 100);
-}
-
-// ── 关闭停工天数输入对话框 ───────────────────────────────────────────────────────
-function closeStopWorkDialog() {
-  document.getElementById('stopWorkModal').classList.remove('show');
-  document.getElementById('stopWorkOverlay').classList.remove('show');
-  _stopWorkStoreIdx = null;
-}
-
-// ── 确认停工天数输入 ─────────────────────────────────────────────────────────────
-function confirmStopWorkDialog() {
-  if (_stopWorkStoreIdx !== null) {
-    const daysInput = document.getElementById('stopWorkDaysInput').value;
-    const days = parseInt(daysInput, 10);
-    
-    if (isNaN(days) || days < 0) {
-      alert('请输入有效的停工天数（非负整数）');
-      return;
-    }
-    
-    // 保存停工天数到门店数据
-    if (days === 0) {
-      delete STORES[_stopWorkStoreIdx]['停工天数'];
-      delete STORES[_stopWorkStoreIdx]['门店是否有停工情况'];
-    } else {
-      STORES[_stopWorkStoreIdx]['停工天数'] = days;
-      STORES[_stopWorkStoreIdx]['门店是否有停工情况'] = '已完成';
-    }
-    
-    saveStores();
-    render();
-    showToast(`已保存停工天数：${days}天`);
-  }
-  closeStopWorkDialog();
-}
-
 // ── 确认日期选择 ───────────────────────────────────────────────────────────────
 function confirmDatePicker() {
   if (_datePickerStoreIdx !== null && _datePickerStep && _datePickerSelectedDate) {
-    // 使用本地时间格式化，避免时区问题
-    const year = _datePickerSelectedDate.getFullYear();
-    const month = String(_datePickerSelectedDate.getMonth() + 1).padStart(2, '0');
-    const day = String(_datePickerSelectedDate.getDate()).padStart(2, '0');
-    const dateStr = `${year}-${month}-${day}`;
+    const dateStr = _datePickerSelectedDate.toISOString().split('T')[0];
     STORES[_datePickerStoreIdx][_datePickerStep] = dateStr;
     
     // 同步预估日期到门店字段
@@ -3639,12 +3015,6 @@ function selectDatePickerDate(year, month, day) {
 // ── 点击节点切换完成状态 ───────────────────────────────────────────────────────
 function toggleNode(storeIdx, step, event) {
   event.stopPropagation(); // 防止触发行的点击
-  
-  // 权限检查：访客不能编辑节点
-  if (isVisitor()) {
-    return;
-  }
-  
   const store = STORES[storeIdx];
   const currentVal = store[step];
   
@@ -3672,12 +3042,12 @@ function toggleNode(storeIdx, step, event) {
   
   // 如果是装修阶段的第一个节点，检查必填字段
   if (isConstructionPhaseFirstStep && (!currentVal || currentVal === '待完成' || currentVal === '待启动')) {
-    // 检查门店类型、工程负责人、装修形式、施工队伍名称是否已填写
+    // 检查门店类型、工程负责人、装修形式、推荐队伍名称是否已填写
     const missingFields = [];
     if (!store['门店类型'] || store['门店类型'].trim() === '') missingFields.push('门店类型');
     if (!store['工程负责人'] || store['工程负责人'].trim() === '') missingFields.push('工程负责人');
     if (!store['装修形式'] || store['装修形式'].trim() === '') missingFields.push('装修形式');
-    if (!store['施工队伍名称'] || store['施工队伍名称'].trim() === '') missingFields.push('施工队伍名称');
+    if (!store['推荐队伍名称'] || store['推荐队伍名称'].trim() === '') missingFields.push('推荐队伍名称');
     
     if (missingFields.length > 0) {
       // 有未填写的必填字段，打开编辑页面
@@ -3693,12 +3063,6 @@ function toggleNode(storeIdx, step, event) {
       return;
     }
     // 用户点击"是"，继续执行后续操作
-  }
-  
-  // 如果是"门店是否有停工情况"节点，弹出停工天数输入对话框
-  if (step === '门店是否有停工情况') {
-    openStopWorkDialog(storeIdx);
-    return;
   }
   
   // 如果该节点需要日期，弹出日期选择
@@ -3967,12 +3331,6 @@ function closePanel() {
 let _editingPhases = null;
 
 function openNodeEditor() {
-  // 权限检查：只有超管可以编辑节点
-  if (!isSuperAdmin()) {
-    alert('只有超级管理员可以编辑节点');
-    return;
-  }
-  
   // 深拷贝当前 PHASES 用于编辑
   _editingPhases = JSON.parse(JSON.stringify(PHASES));
   renderNodeEditor();
@@ -4105,12 +3463,6 @@ function saveNodeChanges() {
 
 // ── 保存门店字段 ───────────────────────────────────────────────────────────────
 function saveStoreField(storeIdx, fieldName, value) {
-  // 权限检查：访客不能保存字段
-  if (isVisitor()) {
-    alert('访客账号无编辑权限');
-    return;
-  }
-  
   const store = STORES[storeIdx];
   if (!store) return;
   
@@ -4126,11 +3478,6 @@ function saveStoreField(storeIdx, fieldName, value) {
   
   // 如果是风险情况备注，更新风险门店统计
   if (fieldName === '风险情况备注') {
-    updateStats();
-  }
-  
-  // 如果是工程增减项备注，更新工程增减项统计
-  if (fieldName === '工程增减项备注') {
     updateStats();
   }
   
@@ -4155,21 +3502,6 @@ function toggleRiskInput(storeIdx) {
     // 清空输入框并保存
     document.getElementById(`risk-${storeIdx}`).value = '';
     saveStoreField(storeIdx, '风险情况备注', '');
-  }
-}
-
-// ── 切换工程增减项输入框显示 ───────────────────────────────────────────────────
-function toggleEngineeringChangeInput(storeIdx) {
-  const flag = document.getElementById(`engineering-change-flag-${storeIdx}`).value;
-  const wrapper = document.getElementById(`engineering-change-wrapper-${storeIdx}`);
-  if (flag === '有') {
-    wrapper.classList.add('show');
-    document.getElementById(`engineering-change-${storeIdx}`).focus();
-  } else {
-    wrapper.classList.remove('show');
-    // 清空输入框并保存
-    document.getElementById(`engineering-change-${storeIdx}`).value = '';
-    saveStoreField(storeIdx, '工程增减项备注', '');
   }
 }
 
@@ -4405,12 +3737,6 @@ function toggleSidebar() {
 
 // ── 数据导入导出 ────────────────────────────────────────────────────────────────
 function openImportModal() {
-  // 权限检查：只有超管可以导入数据
-  if (!isSuperAdmin()) {
-    alert('只有超级管理员可以导入数据');
-    return;
-  }
-  
   const modal = document.createElement('div');
   modal.id = 'importModal';
   modal.className = 'modal-overlay';
@@ -4755,12 +4081,6 @@ let _editingFields = []; // 当前编辑的字段列表
 let _editingGroups = []; // 当前编辑的分组列表
 
 function openStoreEditor(storeIdx = null) {
-  // 权限检查：访客不能打开门店编辑器
-  if (isVisitor()) {
-    alert('访客账号无编辑权限');
-    return;
-  }
-  
   initDefaultStoreFields();
   _editingStoreIdx = storeIdx;
   const isEdit = storeIdx !== null;
@@ -4814,18 +4134,12 @@ function renderStoreEditorContent(store, regionOptions) {
           </div>
           <!-- 动态字段 -->
           ${renderBasicFields(store)}
-          <!-- 固定字段：门店状态（可手动选择，包括已弃店） -->
+          <!-- 固定字段：门店状态（只读） -->
           <div class="basic-field-item" data-field-key="门店状态">
             <label style="display:block;font-size:12px;color:#666;margin-bottom:4px;">门店状态</label>
-            <select id="seStatus" style="width:100%;padding:8px 12px;border:1px solid #d0d0d0;border-radius:6px;font-size:14px;background:#fff;">
-              <option value="测量中" ${(store['门店状态'] || '测量中') === '测量中' ? 'selected' : ''}>测量中（自动）</option>
-              <option value="设计中" ${store['门店状态'] === '设计中' ? 'selected' : ''}>设计中（自动）</option>
-              <option value="施工中" ${store['门店状态'] === '施工中' ? 'selected' : ''}>施工中（自动）</option>
-              <option value="整改中" ${store['门店状态'] === '整改中' ? 'selected' : ''}>整改中（自动）</option>
-              <option value="已完成" ${store['门店状态'] === '已完成' ? 'selected' : ''}>已完成（自动）</option>
-              <option value="已弃店" ${store['门店状态'] === '已弃店' ? 'selected' : ''}>已弃店（手动）</option>
-            </select>
-            <div style="font-size:11px;color:#999;margin-top:4px;">选择"已弃店"将手动设置状态，其他状态会根据进度自动计算</div>
+            <div id="seStatusDisplay" style="padding:8px 12px;border:1px solid #e0e0e0;border-radius:6px;font-size:14px;background:#f5f5f5;color:#666;">
+              ${store['门店状态'] || '测量中'}（根据进度自动计算）
+            </div>
           </div>
         </div>
       </div>
@@ -4889,9 +4203,9 @@ function saveStoreWithRequiredCheck(btn, requiredFields) {
       } else if (fieldName === '装修形式') {
         const el = document.getElementById('seRenovationType');
         value = el ? el.value : '';
-      } else if (fieldName === '施工队伍名称' || fieldName === '推荐队伍名称') {
-        // 施工队伍名称是动态字段，在 BASIC_FIELDS 中查找（兼容新旧字段名）
-        const fieldDef = BASIC_FIELDS.find(f => f.name === '施工队伍名称') || BASIC_FIELDS.find(f => f.name === '推荐队伍名称');
+      } else if (fieldName === '推荐队伍名称') {
+        // 推荐队伍名称是动态字段，在 BASIC_FIELDS 中查找
+        const fieldDef = BASIC_FIELDS.find(f => f.name === '推荐队伍名称');
         if (fieldDef) {
           const el = document.getElementById(`bf_${fieldDef.id}`);
           value = el ? el.value.trim() : '';
@@ -5054,12 +4368,6 @@ function closeStoreEditor() {
 let _editingBasicFields = []; // 当前编辑的基础信息字段列表
 
 function openBasicFieldSettings() {
-  // 权限检查：只有超管可以设置基本信息
-  if (!isSuperAdmin()) {
-    alert('只有超级管理员可以设置基本信息');
-    return;
-  }
-  
   // 确保默认字段已初始化
   initDefaultBasicFields();
   
@@ -5252,15 +4560,8 @@ function saveStore() {
     return;
   }
   
-  // 获取手动选择的门店状态
-  const statusEl = document.getElementById('seStatus');
-  let status;
-  if (statusEl && statusEl.value === '已弃店') {
-    status = '已弃店';
-  } else {
-    // 根据当前进度计算门店状态
-    status = calculateStoreStatus(_editingStoreIdx);
-  }
+  // 根据当前进度计算门店状态
+  const status = calculateStoreStatus(_editingStoreIdx);
   
   // 收集动态字段值
   const basicFieldValues = {};
@@ -5449,12 +4750,6 @@ function initRegionButtons() {
 }
 
 function deleteStore(storeIdx) {
-  // 权限检查：访客不能删除门店
-  if (isVisitor()) {
-    alert('访客账号无删除权限');
-    return;
-  }
-  
   if (confirm(`确定删除门店「${STORES[storeIdx]['门店']}」吗？此操作不可恢复。`)) {
     STORES.splice(storeIdx, 1);
     saveStores();
@@ -5914,41 +5209,6 @@ function setRenovationTypeFilter(renovationType) {
   render();
 }
 
-// 施工队伍名称下拉菜单
-function toggleTeamDropdown() {
-  const menu = document.getElementById('teamDropdownMenu');
-  const isVisible = menu.style.display === 'block';
-  // 关闭所有下拉
-  closeAllDropdowns();
-  // 切换当前
-  if (!isVisible) {
-    menu.style.display = 'block';
-    refreshTeamDropdown();
-  }
-}
-
-function refreshTeamDropdown() {
-  const container = document.getElementById('teamDropdownItems');
-  // 兼容新旧字段名，合并去重
-  const teamsFromNew = STORES.map(s => s['施工队伍名称']).filter(t => t);
-  const teamsFromOld = STORES.map(s => s['推荐队伍名称']).filter(t => t);
-  const teams = [...new Set([...teamsFromNew, ...teamsFromOld])].sort();
-  
-  let html = '<div class="dropdown-item' + (curTeam === 'all' ? ' active' : '') + '" onclick="setTeamFilter(\'all\')" data-team="all">全部</div>';
-  teams.forEach(team => {
-    html += '<div class="dropdown-item' + (curTeam === team ? ' active' : '') + '" onclick="setTeamFilter(\'' + team + '\')" data-team="' + team + '">' + team + '</div>';
-  });
-  container.innerHTML = html;
-}
-
-function setTeamFilter(team) {
-  curTeam = team;
-  const btn = document.querySelector('#teamDropdown .filter-btn');
-  btn.textContent = '施工队伍：' + (team === 'all' ? '全部' : team) + ' ▼';
-  document.getElementById('teamDropdownMenu').style.display = 'none';
-  render();
-}
-
 // 关闭所有下拉菜单
 function closeAllDropdowns() {
   document.getElementById('regionDropdownMenu').style.display = 'none';
@@ -5956,11 +5216,10 @@ function closeAllDropdowns() {
   document.getElementById('storeTypeDropdownMenu').style.display = 'none';
   document.getElementById('engineerDropdownMenu').style.display = 'none';
   document.getElementById('renovationTypeDropdownMenu').style.display = 'none';
-  document.getElementById('teamDropdownMenu').style.display = 'none';
 }
 
-// ── 初始化页面内容（登录后调用）────────────────────────────────────────────────
-function initPageContent() {
+// ── 初始化 ────────────────────────────────────────────────────────────────────
+function init() {
   // 初始化默认字段
   initDefaultStoreFields();
   initDefaultBasicFields();
@@ -5971,9 +5230,6 @@ function initPageContent() {
   initDashboardRegionFilters();
   renderPhaseHeaders();
   render();
-  
-  // 渲染侧边栏菜单
-  renderSidebarMenu();
 
   // ── 横向滚动同步：让表头跟随内容区横向滚动 ──
   const ganttWrap = document.getElementById('ganttWrap');
@@ -5981,103 +5237,6 @@ function initPageContent() {
   ganttWrap.addEventListener('scroll', function() {
     headerSticky.scrollLeft = ganttWrap.scrollLeft;
   });
-}
-
-// ── 渲染侧边栏菜单 ────────────────────────────────────────────────────────────
-function renderSidebarMenu() {
-  const role = checkRole();
-  const menu = document.getElementById('sidebarMenu');
-  
-  let html = '';
-  
-  // 超级管理员菜单
-  if (role === 'superadmin') {
-    html += `
-      <div class="sidebar-item" onclick="openStoreEditor(); toggleSidebar();">
-        <span class="sidebar-icon">➕</span>
-        <span>添加门店</span>
-      </div>
-      <div class="sidebar-item" onclick="openNodeEditor(); toggleSidebar();">
-        <span class="sidebar-icon">📝</span>
-        <span>编辑节点</span>
-      </div>
-      <div class="sidebar-item" onclick="openBasicFieldSettings(); toggleSidebar();">
-        <span class="sidebar-icon">⚙️</span>
-        <span>基本信息设置</span>
-      </div>
-      <div class="sidebar-item" onclick="openImportModal(); toggleSidebar();">
-        <span class="sidebar-icon">📥</span>
-        <span>导入数据</span>
-      </div>
-      <div class="sidebar-divider"></div>
-    `;
-  }
-  
-  // 超管和管理员共有的菜单
-  if (role === 'superadmin' || role === 'admin') {
-    html += `
-      <div class="sidebar-item" onclick="exportData(); toggleSidebar();">
-        <span class="sidebar-icon">📤</span>
-        <span>导出数据</span>
-      </div>
-      <div class="sidebar-divider"></div>
-    `;
-  }
-  
-  // 所有角色都有的菜单
-  html += `
-    <div class="sidebar-item" onclick="openDashboardPanel(); toggleSidebar();">
-      <span class="sidebar-icon">📊</span>
-      <span>数据看板</span>
-    </div>
-    <div class="sidebar-item" onclick="openSecuritySettings(); toggleSidebar();">
-      <span class="sidebar-icon">🔒</span>
-      <span>安全设置</span>
-    </div>
-  `;
-  
-  menu.innerHTML = html;
-}
-
-// ── 角色权限检查函数 ───────────────────────────────────────────────────────────
-function checkRole() {
-  const currentUser = JSON.parse(localStorage.getItem('auth_current_user') || '{}');
-  return currentUser.role || 'visitor';
-}
-
-function isSuperAdmin() {
-  return checkRole() === 'superadmin';
-}
-
-function isAdmin() {
-  return checkRole() === 'admin';
-}
-
-function isVisitor() {
-  return checkRole() === 'guest' || checkRole() === 'visitor';
-}
-
-// ── 初始化 ────────────────────────────────────────────────────────────────────
-function init() {
-  // 先初始化账号系统
-  initAuthSystem();
-  
-  // 检查登录状态，未登录则只显示登录界面
-  const currentUser = localStorage.getItem('auth_current_user');
-  if (!currentUser) {
-    showLoginModal();
-    // 隐藏主内容区
-    document.getElementById('mainContent').style.display = 'none';
-    return;
-  }
-  
-  // 已登录，隐藏登录界面并加载页面内容
-  hideLoginModal();
-  // 显示主内容区
-  document.getElementById('mainContent').style.display = 'block';
-  
-  // 初始化页面内容
-  initPageContent();
   
   // 点击外部关闭下拉菜单
   document.addEventListener('click', function(e) {
@@ -6111,38 +5270,30 @@ function init() {
 
 // ── 账号安全管理功能 ───────────────────────────────────────────────────────────
 
-// API 基础配置 - 自动检测当前域名
-const API_BASE_URL = window.location.origin;
-
-// 超级管理员账号配置（仅用于前端显示默认值）
+// 超级管理员账号配置
 const SUPER_ADMIN = {
-  username: 'admin',
-  password: 'admin123',
+  username: '13162098878',
+  password: '13162098878',
   role: 'superadmin'
 };
 
 // 初始化账号系统
 function initAuthSystem() {
+  // 检查是否已初始化账号数据
+  let accounts = JSON.parse(localStorage.getItem('auth_accounts') || '[]');
+  
+  // 如果没有账号数据，初始化超级管理员
+  if (accounts.length === 0) {
+    accounts = [SUPER_ADMIN];
+    localStorage.setItem('auth_accounts', JSON.stringify(accounts));
+  }
+  
   // 检查登录状态
   const currentUser = localStorage.getItem('auth_current_user');
   if (!currentUser) {
     showLoginModal();
   } else {
     hideLoginModal();
-  }
-}
-
-// 检查后端服务是否可用
-async function checkBackendHealth() {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/health`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    return response.ok;
-  } catch (e) {
-    console.warn('后端服务检查失败:', e);
-    return false;
   }
 }
 
@@ -6161,11 +5312,6 @@ function hideLoginModal() {
   if (modal) {
     modal.style.display = 'none';
     document.body.style.overflow = '';
-  }
-  // 显示主内容区
-  const mainContent = document.getElementById('mainContent');
-  if (mainContent) {
-    mainContent.style.display = 'block';
   }
   // 更新用户身份显示
   updateUserRoleDisplay();
@@ -6193,8 +5339,8 @@ function updateUserRoleDisplay() {
   }
 }
 
-// 处理登录 - 调用后端API
-async function handleLogin() {
+// 处理登录
+function handleLogin() {
   const username = document.getElementById('loginUsername').value.trim();
   const password = document.getElementById('loginPassword').value;
   const errorDiv = document.getElementById('loginError');
@@ -6205,37 +5351,25 @@ async function handleLogin() {
     return;
   }
   
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
-    });
-    
-    const result = await response.json();
-    
-    if (result.success) {
-      // 登录成功
-      localStorage.setItem('auth_current_user', JSON.stringify({
-        username: result.user.username,
-        role: result.user.role,
-        loginTime: new Date().toISOString()
-      }));
-      errorDiv.style.display = 'none';
-      hideLoginModal();
-      // 登录成功后重新初始化页面内容
-      initPageContent();
-      // 刷新安全设置面板
-      if (document.getElementById('securitySettingsPanel').classList.contains('open')) {
-        renderSecuritySettings();
-      }
-    } else {
-      errorDiv.textContent = result.message || '账号或密码错误';
-      errorDiv.style.display = 'block';
+  // 验证账号
+  const accounts = JSON.parse(localStorage.getItem('auth_accounts') || '[]');
+  const account = accounts.find(acc => acc.username === username && acc.password === password);
+  
+  if (account) {
+    // 登录成功
+    localStorage.setItem('auth_current_user', JSON.stringify({
+      username: account.username,
+      role: account.role || 'user',
+      loginTime: new Date().toISOString()
+    }));
+    errorDiv.style.display = 'none';
+    hideLoginModal();
+    // 刷新安全设置面板
+    if (document.getElementById('securitySettingsPanel').classList.contains('open')) {
+      renderSecuritySettings();
     }
-  } catch (error) {
-    console.error('登录请求失败:', error);
-    errorDiv.textContent = '登录服务暂时不可用，请稍后重试';
+  } else {
+    errorDiv.textContent = '账号或密码错误';
     errorDiv.style.display = 'block';
   }
 }
@@ -6737,10 +5871,8 @@ function calculateRegionData(filters = {}) {
     }
 
     // 时间筛选（基于所有阶段的日期）
-    // 只有当用户明确设置了日期范围，且门店有日期字段时，才进行筛选
     if (filters.startDate || filters.endDate) {
       let hasDateInRange = false;
-      let hasAnyDate = false;
       // 使用本地日期字符串比较，避免时区问题
       const startStr = filters.startDate ? filters.startDate : null;
       const endStr = filters.endDate ? filters.endDate : null;
@@ -6750,7 +5882,6 @@ function calculateRegionData(filters = {}) {
         phase.steps.forEach(step => {
           const value = store[step.name];
           if (value && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
-            hasAnyDate = true;
             let inRange = true;
             if (startStr && value < startStr) inRange = false;
             if (endStr && value > endStr) inRange = false;
@@ -6759,9 +5890,7 @@ function calculateRegionData(filters = {}) {
         });
       });
 
-      // 只有当门店有日期字段，且没有日期在范围内时，才过滤掉
-      // 如果门店没有日期字段，不应用时间筛选（保留该门店）
-      if (hasAnyDate && !hasDateInRange) return;
+      if (!hasDateInRange) return;
     }
 
     const region = store['区域'] || '未知';
@@ -6799,10 +5928,10 @@ function updateDashboardFilters() {
   const regionStatus = document.getElementById('regionStatsStatus');
 
   if (regionSelect && regionStartDate && regionEndDate && regionStatus) {
-    dashboardFilters.regionStats.region = regionSelect.value || 'all';
-    dashboardFilters.regionStats.startDate = regionStartDate.value || '';
-    dashboardFilters.regionStats.endDate = regionEndDate.value || '';
-    dashboardFilters.regionStats.storeStatus = regionStatus.value || 'all';
+    dashboardFilters.regionStats.region = regionSelect.value;
+    dashboardFilters.regionStats.startDate = regionStartDate.value;
+    dashboardFilters.regionStats.endDate = regionEndDate.value;
+    dashboardFilters.regionStats.storeStatus = regionStatus.value;
   }
 
   // 门店类型与周期统计筛选
@@ -6842,29 +5971,6 @@ function initDashboardRegionFilters() {
     cycleStatsRegion.innerHTML = '<option value="all">全部区域</option>' +
       regions.map(r => `<option value="${r}">${r}</option>`).join('');
     cycleStatsRegion.value = currentValue || 'all';
-  }
-
-  // 同步 dashboardFilters 与 DOM 元素的值
-  const regionStartDate = document.getElementById('regionStatsStartDate');
-  const regionEndDate = document.getElementById('regionStatsEndDate');
-  const regionStatus = document.getElementById('regionStatsStatus');
-
-  if (regionStatsRegion && regionStartDate && regionEndDate && regionStatus) {
-    dashboardFilters.regionStats.region = regionStatsRegion.value || 'all';
-    dashboardFilters.regionStats.startDate = regionStartDate.value || '';
-    dashboardFilters.regionStats.endDate = regionEndDate.value || '';
-    dashboardFilters.regionStats.storeStatus = regionStatus.value || 'all';
-  }
-
-  const cycleStartDate = document.getElementById('cycleStatsStartDate');
-  const cycleEndDate = document.getElementById('cycleStatsEndDate');
-  const cycleStatus = document.getElementById('cycleStatsStatus');
-
-  if (cycleStatsRegion && cycleStartDate && cycleEndDate && cycleStatus) {
-    dashboardFilters.cycleStats.region = cycleStatsRegion.value || 'all';
-    dashboardFilters.cycleStats.startDate = cycleStartDate.value || '';
-    dashboardFilters.cycleStats.endDate = cycleEndDate.value || '';
-    dashboardFilters.cycleStats.storeStatus = cycleStatus.value || 'all';
   }
 }
 
@@ -7628,54 +6734,20 @@ function generateCycleWidgetForDashboard(data, title, icon, color) {
 // 预估开业日历当前月份（用于导航，存储当前显示的第一个月份）
 let _openingCalendarCurrentMonth = new Date();
 
-// 预估开业日历筛选条件
-let _openingCalendarFilters = {
-  region: '', // 区域筛选
-  type: ''    // 门店类型筛选
-};
-
-// 切换预估开业日历月份（一次切换3个月）
+// 切换预估开业日历月份
 function changeOpeningCalendarMonth(delta) {
-  _openingCalendarCurrentMonth.setMonth(_openingCalendarCurrentMonth.getMonth() + delta * 3);
+  _openingCalendarCurrentMonth.setMonth(_openingCalendarCurrentMonth.getMonth() + delta);
   const openingCalendarEl = document.getElementById('openingCalendarInDashboard');
   if (openingCalendarEl) {
     openingCalendarEl.innerHTML = generateOpeningCalendarWidget();
   }
 }
 
-// 设置预估开业日历筛选条件
-function setOpeningCalendarFilter(filterType, value) {
-  _openingCalendarFilters[filterType] = value;
-  const openingCalendarEl = document.getElementById('openingCalendarInDashboard');
-  if (openingCalendarEl) {
-    openingCalendarEl.innerHTML = generateOpeningCalendarWidget();
-  }
-}
-
-// 重置预估开业日历筛选条件
-function resetOpeningCalendarFilters() {
-  _openingCalendarFilters = { region: '', type: '' };
-  // 重置下拉框
-  const regionSelect = document.getElementById('openingCalendarRegionFilter');
-  const typeSelect = document.getElementById('openingCalendarTypeFilter');
-  if (regionSelect) regionSelect.value = '';
-  if (typeSelect) typeSelect.value = '';
-  const openingCalendarEl = document.getElementById('openingCalendarInDashboard');
-  if (openingCalendarEl) {
-    openingCalendarEl.innerHTML = generateOpeningCalendarWidget();
-  }
-}
-
-// 生成预估开业门店列表组件（用于筹建进度概述看板）
-// 按日期分组展示，只显示有门店的日期，更清晰
+// 生成预估开业日历组件（用于筹建进度概述看板）
+// 展示从当前月起连续3个月的预估开业门店
 function generateOpeningCalendarWidget() {
   // 收集所有有预估开业日期的门店，按年月分组
   const storesByMonth = {};
-  
-  // 收集所有区域和门店类型用于筛选选项
-  const allRegions = new Set();
-  const allTypes = new Set();
-  
   STORES.forEach(store => {
     const openingDate = store['预估开业日期'];
     if (openingDate) {
@@ -7683,16 +6755,6 @@ function generateOpeningCalendarWidget() {
       const year = date.getFullYear();
       const month = date.getMonth();
       const monthKey = `${year}-${month}`;
-      
-      // 收集筛选选项
-      if (store['区域']) allRegions.add(store['区域']);
-      if (store['门店类型']) allTypes.add(store['门店类型']);
-      
-      // 应用筛选条件
-      const matchRegion = !_openingCalendarFilters.region || store['区域'] === _openingCalendarFilters.region;
-      const matchType = !_openingCalendarFilters.type || store['门店类型'] === _openingCalendarFilters.type;
-      
-      if (!matchRegion || !matchType) return;
       
       if (!storesByMonth[monthKey]) {
         storesByMonth[monthKey] = {
@@ -7709,208 +6771,124 @@ function generateOpeningCalendarWidget() {
       storesByMonth[monthKey].storesByDay[day].push({
         name: store['门店'],
         region: store['区域'],
-        type: store['门店类型'] || '未设置',
         date: openingDate
       });
     }
   });
   
-  // 获取当前显示的月份范围（3个月）
+  // 获取当前显示的第一个月份，生成连续3个月的key
   const baseYear = _openingCalendarCurrentMonth.getFullYear();
   const baseMonth = _openingCalendarCurrentMonth.getMonth();
   
-  // 计算3个月的范围
-  const monthsToShow = [];
+  const targetMonths = [];
   for (let i = 0; i < 3; i++) {
-    const d = new Date(baseYear, baseMonth + i, 1);
-    monthsToShow.push({
-      year: d.getFullYear(),
-      month: d.getMonth(),
-      key: `${d.getFullYear()}-${d.getMonth()}`
-    });
+    const targetDate = new Date(baseYear, baseMonth + i, 1);
+    const year = targetDate.getFullYear();
+    const month = targetDate.getMonth();
+    targetMonths.push(`${year}-${month}`);
   }
   
-  // 导航显示的月份范围
-  const startMonthStr = `${monthsToShow[0].year}年${monthsToShow[0].month + 1}月`;
-  const endMonthStr = `${monthsToShow[2].year}年${monthsToShow[2].month + 1}月`;
-  const monthRangeStr = startMonthStr === endMonthStr ? startMonthStr : `${startMonthStr} - ${endMonthStr}`;
+  // 计算导航显示的月份范围
+  const startMonthStr = `${baseYear}年${baseMonth + 1}月`;
+  const endDate = new Date(baseYear, baseMonth + 2, 1);
+  const endMonthStr = `${endDate.getFullYear()}年${endDate.getMonth() + 1}月`;
   
+  // 生成每个月的日历
   const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
   const today = new Date();
   
-  // 合并3个月的门店数据
-  let allDaysHTML = '';
-  let totalStores = 0;
-  let totalDirectStores = 0;
-  let totalFranchiseStores = 0;
-  let hasAnyStore = false;
-  
-  monthsToShow.forEach(({ year, month, key }) => {
-    const monthData = storesByMonth[key];
+  const monthsHTML = targetMonths.map(monthKey => {
+    // 解析年月
+    const [yearStr, monthStr] = monthKey.split('-');
+    const year = parseInt(yearStr);
+    const month = parseInt(monthStr);
+    const monthData = storesByMonth[monthKey];
     const storesByDay = monthData ? monthData.storesByDay : {};
     
-    // 统计
-    const monthTotal = Object.values(storesByDay).reduce((sum, stores) => sum + stores.length, 0);
-    const monthDirect = Object.values(storesByDay).flat().filter(s => s.type === '直营店').length;
-    const monthFranchise = Object.values(storesByDay).flat().filter(s => s.type === '加盟店').length;
-    totalStores += monthTotal;
-    totalDirectStores += monthDirect;
-    totalFranchiseStores += monthFranchise;
+    // 获取该月第一天和最后一天
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startPadding = firstDay.getDay();
+    const daysInMonth = lastDay.getDate();
     
-    if (monthTotal > 0) {
-      hasAnyStore = true;
+    // 星期标题
+    const weekdayHeaders = weekdays.map(day => 
+      `<div class="opening-calendar-header">${day}</div>`
+    ).join('');
+    
+    // 生成日历格子
+    let calendarDays = '';
+    
+    // 上个月的填充日
+    const prevMonthLastDay = new Date(year, month, 0).getDate();
+    for (let i = startPadding - 1; i >= 0; i--) {
+      const day = prevMonthLastDay - i;
+      calendarDays += `<div class="opening-calendar-day other-month"><div class="opening-calendar-date">${day}</div></div>`;
+    }
+    
+    // 当月日期
+    for (let day = 1; day <= daysInMonth; day++) {
+      const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
+      const todayClass = isToday ? 'today' : '';
+      const hasStores = storesByDay[day] && storesByDay[day].length > 0;
+      const stores = storesByDay[day] || [];
       
-      // 生成该月的月份标题（带门店数量详情）
-      const monthTitle = `${year}年${month + 1}月（${monthTotal}家，直营店${monthDirect}家、加盟店${monthFranchise}家）`;
-      allDaysHTML += `<div class="opening-store-list-month-title">${monthTitle}</div>`;
+      // 构建门店名称列表用于tooltip
+      const storeNames = stores.map(s => s.name).join('、');
+      const storeNamesAttr = storeNames ? `data-store-names="${storeNames}"` : '';
       
-      // 生成有门店的日期列表（按日期排序）
-      const daysWithStores = Object.keys(storesByDay)
-        .map(day => parseInt(day))
-        .sort((a, b) => a - b);
+      // 有门店的日期高亮显示
+      const hasStoreClass = hasStores ? 'has-store' : '';
       
-      allDaysHTML += `<div class="opening-store-list-days">`;
-      daysWithStores.forEach(day => {
-        const stores = storesByDay[day];
-        const date = new Date(year, month, day);
-        const weekday = weekdays[date.getDay()];
-        const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
-        const todayClass = isToday ? 'today' : '';
-        
-        allDaysHTML += `
-          <div class="opening-store-list-day ${todayClass}">
-            <div class="opening-store-list-items">
-                ${(() => {
-                // 分离直营店和加盟店
-                const directStores = stores.filter(s => s.type === '直营店');
-                const franchiseStores = stores.filter(s => s.type === '加盟店');
-                
-                // 生成单行门店HTML
-                const generateStoreItemHTML = (s) => {
-                  const isDirect = s.type === '直营店';
-                  const typeClass = isDirect ? 'direct' : 'franchise';
-                  const typeBadge = isDirect ? '直营' : '加盟';
-                  // 根据区域生成对应的class
-                  const region = s.region || '';
-                  const regionClass = region ? `region-${region}` : 'region-default';
-                  return `
-                    <div class="opening-store-list-item-store-section">
-                      <span class="opening-store-list-item-badge ${typeClass}">${typeBadge}</span>
-                      <span class="opening-store-list-item-name">${s.name}</span>
-                      <span class="opening-store-list-item-region ${regionClass}">${region}</span>
-                    </div>
-                  `;
-                };
-                
-                let storesHtml = '';
-                
-                // 先排直营店（一行）
-                if (directStores.length > 0) {
-                  storesHtml += `<div class="opening-store-list-store-row">`;
-                  directStores.forEach(s => {
-                    storesHtml += generateStoreItemHTML(s);
-                  });
-                  storesHtml += `</div>`;
-                }
-                
-                // 再排加盟店（另起一行）
-                if (franchiseStores.length > 0) {
-                  storesHtml += `<div class="opening-store-list-store-row">`;
-                  franchiseStores.forEach(s => {
-                    storesHtml += generateStoreItemHTML(s);
-                  });
-                  storesHtml += `</div>`;
-                }
-                
-                return `
-                  <div class="opening-store-list-day-content">
-                    <div class="opening-store-list-day-date-col">
-                      <div class="opening-store-list-item-date-section">
-                        <span class="opening-store-list-item-date">${day}日</span>
-                        <span class="opening-store-list-item-weekday">星期${weekday}</span>
-                        <span class="opening-store-list-item-daycount">${stores.length}家</span>
-                      </div>
-                    </div>
-                    <div class="opening-store-list-day-stores-col">
-                      ${storesHtml}
-                    </div>
-                  </div>
-                `;
-              })()}
-            </div>
+      // 构建门店名称HTML（最多显示3个，超出显示...）
+      let storesHTML = '';
+      if (stores.length > 0) {
+        const displayStores = stores.slice(0, 3);
+        const hasMore = stores.length > 3;
+        storesHTML = `
+          <div class="opening-calendar-stores">
+            ${displayStores.map(s => `<div class="opening-calendar-store">${s.name}</div>`).join('')}
+            ${hasMore ? '<div class="opening-calendar-more">...</div>' : ''}
           </div>
         `;
-      });
-      allDaysHTML += `</div>`;
+      }
+      
+      calendarDays += `
+        <div class="opening-calendar-day ${todayClass} ${hasStoreClass}" ${storeNamesAttr}>
+          <div class="opening-calendar-date">${day}</div>
+          ${storesHTML}
+        </div>
+      `;
     }
-  });
-  
-  // 如果没有门店
-  if (!hasAnyStore) {
-    allDaysHTML = `
-      <div class="opening-store-list-empty">
-        <div class="opening-store-list-empty-icon">📅</div>
-        <div>这3个月暂无预估开业门店</div>
-        <div style="font-size:12px;color:#999;margin-top:8px;">请尝试调整筛选条件</div>
+    
+    // 下个月的填充日
+    const totalCells = startPadding + daysInMonth;
+    const remainingCells = (7 - (totalCells % 7)) % 7;
+    for (let day = 1; day <= remainingCells; day++) {
+      calendarDays += `<div class="opening-calendar-day other-month"><div class="opening-calendar-date">${day}</div></div>`;
+    }
+    
+    return `
+      <div class="opening-calendar-month-block">
+        <div class="opening-calendar-month-title">${year}年${month + 1}月</div>
+        <div class="opening-calendar-grid">
+          ${weekdayHeaders}
+          ${calendarDays}
+        </div>
       </div>
     `;
-  }
+  }).join('');
   
-  // 生成筛选器HTML
-  const regionOptions = Array.from(allRegions).sort().map(r => 
-    `<option value="${r}" ${_openingCalendarFilters.region === r ? 'selected' : ''}>${r}</option>`
-  ).join('');
-  const typeOptions = Array.from(allTypes).sort().map(t => 
-    `<option value="${t}" ${_openingCalendarFilters.type === t ? 'selected' : ''}>${t}</option>`
-  ).join('');
-  
-  const filterHTML = `
-    <div class="opening-store-list-filters">
-      <div class="opening-store-list-filter-group">
-        <label>区域：</label>
-        <select id="openingCalendarRegionFilter" onchange="setOpeningCalendarFilter('region', this.value)">
-          <option value="">全部区域</option>
-          ${regionOptions}
-        </select>
-      </div>
-      <div class="opening-store-list-filter-group">
-        <label>门店类型：</label>
-        <select id="openingCalendarTypeFilter" onchange="setOpeningCalendarFilter('type', this.value)">
-          <option value="">全部类型</option>
-          ${typeOptions}
-        </select>
-      </div>
-      <button class="opening-store-list-filter-reset" onclick="resetOpeningCalendarFilters()">重置筛选</button>
-    </div>
-  `;
-  
-  // 生成导航和统计
+  // 生成导航按钮
   const navHTML = `
-    <div class="opening-store-list-nav">
-      <button class="opening-store-list-nav-btn" onclick="changeOpeningCalendarMonth(-1)">◀ 前3个月</button>
-      <span class="opening-store-list-nav-range">${monthRangeStr}</span>
-      <button class="opening-store-list-nav-btn" onclick="changeOpeningCalendarMonth(1)">后3个月 ▶</button>
+    <div class="opening-calendar-nav">
+      <button class="opening-calendar-nav-btn" onclick="changeOpeningCalendarMonth(-3)">◀ 前3个月</button>
+      <span class="opening-calendar-nav-range">${startMonthStr} - ${endMonthStr}</span>
+      <button class="opening-calendar-nav-btn" onclick="changeOpeningCalendarMonth(3)">后3个月 ▶</button>
     </div>
   `;
   
-  const statsHTML = `
-    <div class="opening-store-list-stats">
-      <div class="opening-store-list-stat-card">
-        <div class="stat-value">${totalStores}</div>
-        <div class="stat-label">开业门店</div>
-      </div>
-      <div class="opening-store-list-stat-card">
-        <div class="stat-value" style="color:#1677ff;">${totalDirectStores}</div>
-        <div class="stat-label">直营店</div>
-      </div>
-      <div class="opening-store-list-stat-card">
-        <div class="stat-value" style="color:#faad14;">${totalFranchiseStores}</div>
-        <div class="stat-label">加盟店</div>
-      </div>
-    </div>
-  `;
-  
-  return `${navHTML}${filterHTML}${statsHTML}<div class="opening-store-list-container">${allDaysHTML}</div>`;
+  return `${navHTML}<div class="opening-calendar-months-container">${monthsHTML}</div>`;
 }
 
 // 生成月度趋势组件
@@ -8015,194 +6993,42 @@ function resetDashboardConfig() {
 // 渲染安全设置面板
 function renderSecuritySettings() {
   const currentUser = JSON.parse(localStorage.getItem('auth_current_user') || '{}');
-  const isLoggedIn = !!currentUser.username;
-  
-  // 根据登录状态渲染不同内容
-  const container = document.getElementById('securitySettingsBd');
-  
-  if (!isLoggedIn) {
-    // 未登录状态
-    container.innerHTML = `
-      <!-- 未登录提示 -->
-      <div style="padding:40px 20px;text-align:center;">
-        <div style="font-size:48px;margin-bottom:16px;">🔒</div>
-        <div style="font-size:16px;color:#333;margin-bottom:8px;">您尚未登录</div>
-        <div style="font-size:13px;color:#999;margin-bottom:24px;">请先登录后再进行安全设置</div>
-        <button onclick="closeSecuritySettings(); showLoginModal();" style="padding:10px 32px;background:#1677ff;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">去登录</button>
-      </div>
-    `;
-  } else {
-    // 已登录状态 - 恢复原始内容
-    container.innerHTML = `
-      <!-- 当前登录信息 -->
-      <div style="padding:16px;background:#f6ffed;border:1px solid #b7eb8f;border-radius:8px;margin-bottom:20px;">
-        <div style="font-size:13px;color:#52c41a;font-weight:500;margin-bottom:4px;">✓ 已登录</div>
-        <div style="font-size:14px;color:#333;">当前账号：<span id="currentUserDisplay">${currentUser.username}</span></div>
-      </div>
-      
-      <!-- 修改密码 -->
-      <div style="margin-bottom:24px;">
-        <h4 style="font-size:15px;font-weight:600;color:#333;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #e8e8e8;">修改当前账号密码</h4>
-        <div style="margin-bottom:12px;">
-          <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">当前密码</label>
-          <input type="password" id="currentPassword" placeholder="请输入当前密码" style="width:100%;padding:10px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;box-sizing:border-box;">
-        </div>
-        <div style="margin-bottom:12px;">
-          <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">新密码</label>
-          <input type="password" id="newPassword" placeholder="请输入新密码（至少6位）" style="width:100%;padding:10px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;box-sizing:border-box;">
-        </div>
-        <div style="margin-bottom:16px;">
-          <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">确认新密码</label>
-          <input type="password" id="confirmNewPassword" placeholder="请再次输入新密码" style="width:100%;padding:10px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;box-sizing:border-box;">
-        </div>
-        <button onclick="changePassword()" style="width:100%;padding:12px;background:#1677ff;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;">修改密码</button>
-      </div>
-      
-      <!-- 授权新账号（仅超级管理员可见） -->
-      ${currentUser.role === 'superadmin' ? `
-      <div style="margin-bottom:24px;">
-        <h4 style="font-size:15px;font-weight:600;color:#333;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #e8e8e8;">授权新账号</h4>
-        <div style="margin-bottom:12px;">
-          <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">新账号</label>
-          <input type="text" id="newAuthUsername" placeholder="请输入新账号用户名" style="width:100%;padding:10px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;box-sizing:border-box;">
-        </div>
-        <div style="margin-bottom:16px;">
-          <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">设置密码</label>
-          <input type="password" id="newAuthPassword" placeholder="请输入密码（至少6位）" style="width:100%;padding:10px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;box-sizing:border-box;">
-        </div>
-        <div style="margin-bottom:16px;">
-          <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">选择角色</label>
-          <select id="newAuthRole" style="width:100%;padding:10px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;box-sizing:border-box;background:#fff;">
-            <option value="admin">管理员（可编辑主界面，不可编辑设置）</option>
-            <option value="visitor">访客（仅可查看）</option>
-          </select>
-        </div>
-        <button onclick="authorizeNewAccount()" style="width:100%;padding:12px;background:#52c41a;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;">授权账号</button>
-      </div>
-      ` : ''}
-      
-      <!-- 已授权账号列表（仅超级管理员可见） -->
-      ${currentUser.role === 'superadmin' ? `
-      <div style="margin-bottom:24px;">
-        <h4 style="font-size:15px;font-weight:600;color:#333;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #e8e8e8;">已授权账号</h4>
-        <div id="authorizedAccountsList" style="max-height:200px;overflow-y:auto;">
-          <!-- 动态生成 -->
-        </div>
-      </div>
-      ` : ''}
-      
-      <!-- 退出登录 -->
-      <div style="margin-top:24px;padding-top:20px;border-top:2px solid #e8e8e8;">
-        <button onclick="logout()" style="width:100%;padding:12px;background:#ff4d4f;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;">退出登录</button>
-      </div>
-    `;
-    
-    // 渲染账号列表
-    if (currentUser.role === 'superadmin') {
-      renderAuthorizedAccountsList();
-    }
-  }
+  document.getElementById('currentUserDisplay').textContent = currentUser.username || '-';
+  renderAuthorizedAccountsList();
 }
 
-// 授权新账号 - 调用后端API
-async function authorizeNewAccount() {
-  const username = document.getElementById('newAuthUsername').value.trim();
-  const password = document.getElementById('newAuthPassword').value;
-  const role = document.getElementById('newAuthRole').value;
-  
-  if (!username || !password) {
-    alert('请填写账号和密码');
-    return;
-  }
-  
-  if (password.length < 6) {
-    alert('密码长度不能少于6位');
-    return;
-  }
-  
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/accounts`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password, role })
-    });
-    
-    const result = await response.json();
-    
-    if (result.success) {
-      alert('账号授权成功');
-      // 清空表单
-      document.getElementById('newAuthUsername').value = '';
-      document.getElementById('newAuthPassword').value = '';
-      document.getElementById('newAuthRole').value = 'admin';
-      // 刷新账号列表
-      renderAuthorizedAccountsList();
-    } else {
-      alert(result.message || '账号授权失败');
-    }
-  } catch (error) {
-    console.error('授权账号请求失败:', error);
-    alert('授权服务暂时不可用，请稍后重试');
-  }
-}
-
-// 渲染已授权账号列表 - 从后端API获取
-async function renderAuthorizedAccountsList() {
+// 渲染已授权账号列表
+function renderAuthorizedAccountsList() {
   const container = document.getElementById('authorizedAccountsList');
-  if (!container) return;
+  const accounts = JSON.parse(localStorage.getItem('auth_accounts') || '[]');
+  const currentUser = JSON.parse(localStorage.getItem('auth_current_user') || '{}');
   
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/accounts`);
-    const result = await response.json();
-    
-    if (!result.success) {
-      container.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">获取账号列表失败</div>';
-      return;
-    }
-    
-    const accounts = result.accounts || [];
-    const currentUser = JSON.parse(localStorage.getItem('auth_current_user') || '{}');
-    
-    if (accounts.length === 0) {
-      container.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">暂无授权账号</div>';
-      return;
-    }
-    
-    container.innerHTML = accounts.map(acc => {
+  if (accounts.length === 0) {
+    container.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">暂无授权账号</div>';
+    return;
+  }
+  
+  container.innerHTML = accounts.map(acc => {
     const isCurrentUser = acc.username === currentUser.username;
     const isSuperAdmin = acc.role === 'superadmin';
     const canDelete = currentUser.role === 'superadmin' && !isSuperAdmin;
     
-    // 角色显示文本
-    let roleText = '';
-    if (acc.role === 'superadmin') {
-      roleText = '<span style="color:#1677ff;font-size:12px;">[超管]</span>';
-    } else if (acc.role === 'admin') {
-      roleText = '<span style="color:#52c41a;font-size:12px;">[管理员]</span>';
-    } else if (acc.role === 'guest') {
-      roleText = '<span style="color:#999;font-size:12px;">[访客]</span>';
-    }
-    
     return `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid #e8e8e8;border-radius:6px;margin-bottom:8px;background:#fff;">
         <div>
-          <div style="font-size:14px;font-weight:500;color:#333;">${acc.username} ${roleText} ${isCurrentUser ? '<span style="color:#52c41a;font-size:12px;">[当前]</span>' : ''}</div>
+          <div style="font-size:14px;font-weight:500;color:#333;">${acc.username} ${isSuperAdmin ? '<span style="color:#1677ff;font-size:12px;">[超管]</span>' : ''} ${isCurrentUser ? '<span style="color:#52c41a;font-size:12px;">[当前]</span>' : ''}</div>
         </div>
         ${canDelete ? `<button onclick="deleteAccount('${acc.username}')" style="padding:4px 12px;background:#ff4d4f;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;">删除</button>` : ''}
       </div>
     `;
-    }).join('');
-  } catch (error) {
-    console.error('获取账号列表失败:', error);
-    container.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">获取账号列表失败，请检查网络连接</div>';
-  }
+  }).join('');
 }
 
-// 修改密码 - 调用后端API
-async function changePassword() {
-  const oldPassword = document.getElementById('currentPassword').value;
+// 修改密码
+function changePassword() {
+  const oldPassword = document.getElementById('oldPassword').value;
   const newPassword = document.getElementById('newPassword').value;
-  const confirmPassword = document.getElementById('confirmNewPassword').value;
+  const confirmPassword = document.getElementById('confirmPassword').value;
   
   if (!oldPassword || !newPassword || !confirmPassword) {
     alert('请填写所有密码字段');
@@ -8220,33 +7046,80 @@ async function changePassword() {
   }
   
   const currentUser = JSON.parse(localStorage.getItem('auth_current_user') || '{}');
+  let accounts = JSON.parse(localStorage.getItem('auth_accounts') || '[]');
   
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/accounts/${encodeURIComponent(currentUser.username)}/password`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ newPassword })
-    });
-    
-    const result = await response.json();
-    
-    if (result.success) {
-      // 清空表单
-      document.getElementById('currentPassword').value = '';
-      document.getElementById('newPassword').value = '';
-      document.getElementById('confirmNewPassword').value = '';
-      alert('密码修改成功');
-    } else {
-      alert(result.message || '密码修改失败');
-    }
-  } catch (error) {
-    console.error('修改密码请求失败:', error);
-    alert('修改密码服务暂时不可用，请稍后重试');
+  const accountIndex = accounts.findIndex(acc => acc.username === currentUser.username);
+  if (accountIndex === -1) {
+    alert('账号异常，请重新登录');
+    return;
   }
+  
+  if (accounts[accountIndex].password !== oldPassword) {
+    alert('原密码错误');
+    return;
+  }
+  
+  // 更新密码
+  accounts[accountIndex].password = newPassword;
+  localStorage.setItem('auth_accounts', JSON.stringify(accounts));
+  
+  // 清空表单
+  document.getElementById('oldPassword').value = '';
+  document.getElementById('newPassword').value = '';
+  document.getElementById('confirmPassword').value = '';
+  
+  alert('密码修改成功');
 }
 
-// 删除账号 - 调用后端API
-async function deleteAccount(username) {
+// 授权新账号
+function authorizeNewAccount() {
+  const currentUser = JSON.parse(localStorage.getItem('auth_current_user') || '{}');
+  
+  // 只有超级管理员可以授权新账号
+  if (currentUser.role !== 'superadmin') {
+    alert('只有超级管理员可以授权新账号');
+    return;
+  }
+  
+  const username = document.getElementById('newAuthUsername').value.trim();
+  const password = document.getElementById('newAuthPassword').value;
+  
+  if (!username || !password) {
+    alert('请输入账号和密码');
+    return;
+  }
+  
+  if (password.length < 6) {
+    alert('密码长度不能少于6位');
+    return;
+  }
+  
+  let accounts = JSON.parse(localStorage.getItem('auth_accounts') || '[]');
+  
+  // 检查账号是否已存在
+  if (accounts.find(acc => acc.username === username)) {
+    alert('该账号已存在');
+    return;
+  }
+  
+  // 添加新账号
+  accounts.push({
+    username: username,
+    password: password,
+    role: 'user'
+  });
+  localStorage.setItem('auth_accounts', JSON.stringify(accounts));
+  
+  // 清空表单
+  document.getElementById('newAuthUsername').value = '';
+  document.getElementById('newAuthPassword').value = '';
+  
+  alert('账号授权成功');
+  renderAuthorizedAccountsList();
+}
+
+// 删除账号
+function deleteAccount(username) {
   const currentUser = JSON.parse(localStorage.getItem('auth_current_user') || '{}');
   
   if (currentUser.role !== 'superadmin') {
@@ -8258,22 +7131,11 @@ async function deleteAccount(username) {
     return;
   }
   
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/accounts/${encodeURIComponent(username)}`, {
-      method: 'DELETE'
-    });
-    
-    const result = await response.json();
-    
-    if (result.success) {
-      renderAuthorizedAccountsList();
-    } else {
-      alert(result.message || '删除账号失败');
-    }
-  } catch (error) {
-    console.error('删除账号请求失败:', error);
-    alert('删除服务暂时不可用，请稍后重试');
-  }
+  let accounts = JSON.parse(localStorage.getItem('auth_accounts') || '[]');
+  accounts = accounts.filter(acc => acc.username !== username);
+  localStorage.setItem('auth_accounts', JSON.stringify(accounts));
+  
+  renderAuthorizedAccountsList();
 }
 
 // 监听回车键登录
@@ -8288,10 +7150,14 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-// 页面加载完成后执行初始化
-document.addEventListener('DOMContentLoaded', function() {
-  init();
-});
+// 重写init函数，添加登录检查
+const originalInit = init;
+init = function() {
+  initAuthSystem();
+  originalInit();
+};
+
+init();
 </script>
 
 </div><!-- 主内容区结束 -->
@@ -8507,7 +7373,56 @@ document.addEventListener('DOMContentLoaded', function() {
     <button class="panel-close" onclick="closeSecuritySettings()">✕</button>
   </div>
   <div class="panel-bd" id="securitySettingsBd">
-    <!-- 动态生成内容 -->
+    <!-- 当前登录信息 -->
+    <div style="padding:16px;background:#f6ffed;border:1px solid #b7eb8f;border-radius:8px;margin-bottom:20px;">
+      <div style="font-size:13px;color:#52c41a;font-weight:500;margin-bottom:4px;">✓ 已登录</div>
+      <div style="font-size:14px;color:#333;">当前账号：<span id="currentUserDisplay">-</span></div>
+    </div>
+    
+    <!-- 修改密码 -->
+    <div style="margin-bottom:24px;">
+      <h4 style="font-size:15px;font-weight:600;color:#333;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #e8e8e8;">修改当前账号密码</h4>
+      <div style="margin-bottom:12px;">
+        <label style="display:block;font-size:12px;color:#666;margin-bottom:4px;">原密码</label>
+        <input type="password" id="oldPassword" placeholder="请输入原密码" style="width:100%;padding:10px 12px;border:1px solid #d0d0d0;border-radius:6px;font-size:14px;">
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="display:block;font-size:12px;color:#666;margin-bottom:4px;">新密码</label>
+        <input type="password" id="newPassword" placeholder="请输入新密码" style="width:100%;padding:10px 12px;border:1px solid #d0d0d0;border-radius:6px;font-size:14px;">
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="display:block;font-size:12px;color:#666;margin-bottom:4px;">确认新密码</label>
+        <input type="password" id="confirmPassword" placeholder="请再次输入新密码" style="width:100%;padding:10px 12px;border:1px solid #d0d0d0;border-radius:6px;font-size:14px;">
+      </div>
+      <button onclick="changePassword()" style="width:100%;padding:12px;background:#1677ff;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;">修改密码</button>
+    </div>
+    
+    <!-- 授权新账号 -->
+    <div style="margin-bottom:24px;">
+      <h4 style="font-size:15px;font-weight:600;color:#333;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #e8e8e8;">授权新账号</h4>
+      <div style="margin-bottom:12px;">
+        <label style="display:block;font-size:12px;color:#666;margin-bottom:4px;">新账号</label>
+        <input type="text" id="newAuthUsername" placeholder="请输入新账号" style="width:100%;padding:10px 12px;border:1px solid #d0d0d0;border-radius:6px;font-size:14px;">
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="display:block;font-size:12px;color:#666;margin-bottom:4px;">设置密码</label>
+        <input type="password" id="newAuthPassword" placeholder="请设置密码" style="width:100%;padding:10px 12px;border:1px solid #d0d0d0;border-radius:6px;font-size:14px;">
+      </div>
+      <button onclick="authorizeNewAccount()" style="width:100%;padding:12px;background:#52c41a;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;">授权账号</button>
+    </div>
+    
+    <!-- 已授权账号列表 -->
+    <div>
+      <h4 style="font-size:15px;font-weight:600;color:#333;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #e8e8e8;">已授权账号</h4>
+      <div id="authorizedAccountsList" style="max-height:200px;overflow-y:auto;">
+        <!-- 动态生成 -->
+      </div>
+    </div>
+    
+    <!-- 退出登录 -->
+    <div style="margin-top:24px;padding-top:20px;border-top:2px solid #e8e8e8;">
+      <button onclick="logout()" style="width:100%;padding:12px;background:#ff4d4f;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;">退出登录</button>
+    </div>
   </div>
 </div>
 
