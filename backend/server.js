@@ -187,7 +187,7 @@ app.get('/api/health', (req, res) => {
 // 静态文件服务
 app.use(express.static(path.join(__dirname, '..')));
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
     console.log(`服务器运行在端口 ${PORT}`);
     console.log(`认证文件: ${AUTH_FILE}`);
