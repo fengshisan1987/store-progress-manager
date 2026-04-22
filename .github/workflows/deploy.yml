@@ -11,9 +11,9 @@ jobs:
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: 47.114.120.73
-          username: admin
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          HOST: 47.114.120.73
+          USERNAME: admin
+          KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /var/www/store-progress-manager
             git pull origin main
