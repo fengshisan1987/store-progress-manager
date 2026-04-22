@@ -2509,37 +2509,98 @@ const API_BASE = '/api';
 let STORES = JSON.parse(JSON.stringify(DEFAULT_STORES));
 let dataLoaded = false;
 
-// 从后端加载数据
+// 从后端加载数据（优先从服务器，服务器为空时从 localStorage 回退）
 async function loadStoresFromServer() {
+  let serverDataLoaded = false;
+  
   try {
     const response = await fetch(`${API_BASE}/data`);
     if (response.ok) {
       const data = await response.json();
+      
+      // 优先从服务器加载门店数据
       if (data.stores && data.stores.length > 0) {
         STORES = data.stores;
         dataLoaded = true;
-        console.log('数据已从服务器加载');
+        serverDataLoaded = true;
+        console.log('门店数据已从服务器加载');
+      } else {
+        // 服务器数据为空，尝试从 localStorage 回退
+        const localStores = localStorage.getItem('storeData');
+        if (localStores) {
+          STORES = JSON.parse(localStores);
+          dataLoaded = true;
+          console.log('门店数据从 localStorage 加载（服务器为空）');
+        }
       }
-      // 加载基本信息字段配置
+      
+      // 优先从服务器加载基本信息字段配置
       if (data.basicFields && data.basicFields.length > 0) {
         BASIC_FIELDS = data.basicFields;
         localStorage.setItem('basicFields', JSON.stringify(BASIC_FIELDS));
         console.log('基本信息字段配置已从服务器加载');
+      } else {
+        // 服务器数据为空，尝试从 localStorage 回退
+        const localBasicFields = localStorage.getItem('basicFields');
+        if (localBasicFields) {
+          BASIC_FIELDS = JSON.parse(localBasicFields);
+          console.log('基本信息字段配置从 localStorage 加载（服务器为空）');
+        }
       }
-      // 加载阶段节点配置
+      
+      // 优先从服务器加载阶段节点配置
       if (data.storePhases && data.storePhases.length > 0) {
         PHASES = data.storePhases;
         localStorage.setItem('storePhases', JSON.stringify(PHASES));
         // 重新计算 ALL_STEPS
         ALL_STEPS = [].concat.apply([], PHASES.map(p => p.steps.map(s => ({step:s.name, phase:p, requireDate:s.requireDate}))));
         console.log('阶段节点配置已从服务器加载');
+      } else {
+        // 服务器数据为空，尝试从 localStorage 回退
+        const localPhases = localStorage.getItem('storePhases');
+        if (localPhases) {
+          PHASES = JSON.parse(localPhases);
+          ALL_STEPS = [].concat.apply([], PHASES.map(p => p.steps.map(s => ({step:s.name, phase:p, requireDate:s.requireDate}))));
+          console.log('阶段节点配置从 localStorage 加载（服务器为空）');
+        }
       }
+      
+      // 如果服务器有数据，同步到 localStorage 作为备份
+      if (serverDataLoaded) {
+        localStorage.setItem('storeData', JSON.stringify(STORES));
+      }
+      
       return true;
     }
   } catch (e) {
-    console.log('从服务器加载数据失败，使用默认数据:', e);
+    console.log('从服务器加载数据失败，使用 localStorage 数据:', e);
+    // 网络错误时从 localStorage 加载
+    loadFromLocalStorage();
   }
   return false;
+}
+
+// 从 localStorage 加载数据（作为备份）
+function loadFromLocalStorage() {
+  const localStores = localStorage.getItem('storeData');
+  if (localStores) {
+    STORES = JSON.parse(localStores);
+    dataLoaded = true;
+    console.log('门店数据从 localStorage 加载');
+  }
+  
+  const localBasicFields = localStorage.getItem('basicFields');
+  if (localBasicFields) {
+    BASIC_FIELDS = JSON.parse(localBasicFields);
+    console.log('基本信息字段配置从 localStorage 加载');
+  }
+  
+  const localPhases = localStorage.getItem('storePhases');
+  if (localPhases) {
+    PHASES = JSON.parse(localPhases);
+    ALL_STEPS = [].concat.apply([], PHASES.map(p => p.steps.map(s => ({step:s.name, phase:p, requireDate:s.requireDate}))));
+    console.log('阶段节点配置从 localStorage 加载');
+  }
 }
 
 // 保存门店数据到后端
