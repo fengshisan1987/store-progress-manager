@@ -2387,11 +2387,25 @@ const DEFAULT_PHASES = [
     ]
   },
   {
-    name:'施工阶段', short:'施工', cls:'ph-4',
+    name:'各个小事对接', short:'事项对接', cls:'ph-4',
+    color:'#7c3aed',
+    steps:[
+      { name: '开业预期甘特图发出', requireDate: false },
+      { name: '后续注意相关事项发出', requireDate: false },
+      { name: '收集身份证及门店手机号', requireDate: false },
+      { name: '提交美团建店材料', requireDate: false },
+      { name: '门店冰柜数量已完成', requireDate: false },
+      { name: '预估进度', requireDate: false },
+      { name: '监控已安装完成', requireDate: false },
+      { name: '提醒约食药监老师看现场', requireDate: false },
+      { name: '确认税务开通，发送外票所需材料', requireDate: false },
+    ]
+  },
+  {
+    name:'施工阶段', short:'施工', cls:'ph-5',
     color:'#d97706',
     steps:[
       { name: '工程已进场', requireDate: true },
-      { name: '开业预期甘特图发出', requireDate: false },
       { name: '门头报备已完成', requireDate: false },
       { name: '门店灯具已安装', requireDate: false },
       { name: '门店电箱已安装', requireDate: false },
@@ -2409,7 +2423,7 @@ const DEFAULT_PHASES = [
     ]
   },
   {
-    name:'人员阶段', short:'人员', cls:'ph-5',
+    name:'人员阶段', short:'人员', cls:'ph-6',
     color:'#059669',
     steps:[
       { name: '招聘须知已发送', requireDate: false },
@@ -2417,7 +2431,7 @@ const DEFAULT_PHASES = [
     ]
   },
   {
-    name:'整改阶段', short:'整改', cls:'ph-6',
+    name:'整改阶段', short:'整改', cls:'ph-7',
     color:'#7c3aed',
     steps:[
       { name: '确认整改日期', requireDate: true },
@@ -2425,7 +2439,7 @@ const DEFAULT_PHASES = [
     ]
   },
   {
-    name:'开业阶段', short:'开业', cls:'ph-7',
+    name:'开业阶段', short:'开业', cls:'ph-8',
     color:'#16a34a',
     steps:[
       { name: '首配', requireDate: false },
