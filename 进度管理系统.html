@@ -3550,7 +3550,7 @@ function closeStopWorkDialog() {
 }
 
 // ── 确认停工天数输入 ─────────────────────────────────────────────────────────────
-function confirmStopWorkDialog() {
+async function confirmStopWorkDialog() {
   if (_stopWorkStoreIdx !== null) {
     const daysInput = document.getElementById('stopWorkDaysInput').value;
     const days = parseInt(daysInput, 10);
@@ -3569,7 +3569,7 @@ function confirmStopWorkDialog() {
       STORES[_stopWorkStoreIdx]['门店是否有停工情况'] = '已完成';
     }
     
-    saveStores();
+    await saveStores();
     render();
     showToast(`已保存停工天数：${days}天`);
   }
@@ -3577,7 +3577,7 @@ function confirmStopWorkDialog() {
 }
 
 // ── 确认日期选择 ───────────────────────────────────────────────────────────────
-function confirmDatePicker() {
+async function confirmDatePicker() {
   if (_datePickerStoreIdx !== null && _datePickerStep && _datePickerSelectedDate) {
     // 使用本地时间格式化，避免时区问题
     const year = _datePickerSelectedDate.getFullYear();
@@ -3594,7 +3594,7 @@ function confirmDatePicker() {
       STORES[_datePickerStoreIdx]['预估开业日期'] = dateStr;
     }
     
-    saveStores();
+    await saveStores();
     checkAndCompleteStore(_datePickerStoreIdx);
     render();
   }
@@ -3762,7 +3762,7 @@ async function toggleNode(storeIdx, step, event) {
       // 已设置日期，询问是否清除
       if (confirm('已设置日期：' + currentVal + '，是否清除？')) {
         delete store[step];
-        saveStores();
+        await saveStores();
         checkAndCompleteStore(storeIdx);
         render();
       }
@@ -3818,9 +3818,8 @@ function updateAllStoresStatus() {
       }
     }
   });
-  
-  // 保存到 localStorage
-  saveStores();
+  // 注意：此函数只更新内存中的状态，不自动保存到服务器
+  // 保存操作由调用方（如 toggleNode）在适当时候统一执行
 }
 
 // ── 检查门店是否全部完成，如果是则标记为已完成并隐藏 ─────────────────────────────
@@ -5286,7 +5285,7 @@ function saveBasicFieldSettings() {
   alert('基本信息设置已保存！');
 }
 
-function saveStore() {
+async function saveStore() {
   const nameEl = document.getElementById('seName');
   const personEl = document.getElementById('sePerson');
   const regionSelectEl = document.getElementById('seRegion');
@@ -5367,8 +5366,8 @@ function saveStore() {
     STORES.push(storeData);
   }
   
-  // 保存到 localStorage
-  saveStores();
+  // 保存到服务器
+  await saveStores();
   
   // 重新初始化区域按钮
   initRegionButtons();
@@ -5377,7 +5376,7 @@ function saveStore() {
 }
 
 // 保存门店（带按钮反馈）
-function saveStoreWithFeedback(btn) {
+async function saveStoreWithFeedback(btn) {
   // 按钮点击反馈效果
   btn.style.transform = 'scale(0.95)';
   btn.style.background = '#389e0d';
@@ -5385,9 +5384,9 @@ function saveStoreWithFeedback(btn) {
   btn.disabled = true;
   
   // 延迟执行保存，让用户看到反馈
-  setTimeout(() => {
+  setTimeout(async () => {
     try {
-      saveStore();
+      await saveStore();
       // 保存成功后页面已关闭，不需要恢复按钮状态
     } catch (e) {
       // 保存失败时按钮还存在，恢复按钮状态
