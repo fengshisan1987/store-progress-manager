@@ -3285,7 +3285,7 @@ function render() {
         return actualDays ? `门店设计已完成（实际完成天数${actualDays}天）` : '门店设计已完成';
       }
       if (designDays === null) {
-        return '设计阶段：未开始';
+        return '设计中：未设置日期';
       }
       return `${designDaysOverdue ? '⚠️ ' : ''}设计中：门店已设计天数${designDays}天`;
     })();
@@ -3301,7 +3301,7 @@ function render() {
         return actualDays ? `门店施工前准备已完成（实际完成天数${actualDays}天）` : '门店施工前准备已完成';
       }
       if (prepDays === null) {
-        return '施工前准备阶段：未开始';
+        return '施工前准备中：未设置日期';
       }
       return `${prepDaysOverdue ? '⚠️ ' : ''}施工前准备中：门店已准备天数${prepDays}天`;
     })();
@@ -3316,7 +3316,7 @@ function render() {
         return '门店施工已完成';
       }
       if (constructionDays === null) {
-        return '施工中：门店已施工天数0天';
+        return '施工中：未设置日期';
       }
       return `${constructionDaysOverdue ? '⚠️ ' : ''}施工中：门店已施工天数${constructionDays}天`;
     })();
@@ -3332,7 +3332,7 @@ function render() {
         return actualDays ? `门店整改已完成（实际完成天数${actualDays}天）` : '门店整改已完成';
       }
       if (rectificationDays === null) {
-        return '整改阶段：未开始';
+        return '整改中：未设置日期';
       }
       return `${rectificationDaysOverdue ? '⚠️ ' : ''}整改中：门店已整改天数${rectificationDays}天`;
     })();
