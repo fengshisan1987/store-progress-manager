@@ -4292,8 +4292,8 @@ async function saveBasicFields() {
 }
 
 // 渲染基本信息动态字段
-async function renderBasicFields(store) {
-  await initDefaultBasicFields();
+function renderBasicFields(store) {
+  initDefaultBasicFields();
   const sortedFields = BASIC_FIELDS.sort((a, b) => a.sort - b.sort);
   
   return sortedFields.map(field => {
