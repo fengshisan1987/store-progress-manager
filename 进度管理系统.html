@@ -4266,8 +4266,11 @@ if (!Array.isArray(BASIC_FIELDS)) {
 function initDefaultBasicFields() {
   if (!Array.isArray(BASIC_FIELDS) || BASIC_FIELDS.length === 0) {
     BASIC_FIELDS = [
-      { id: 'bf_1', name: '装修报价', sort: 1 },
-      { id: 'bf_2', name: '装修款', sort: 2 }
+      { id: 'bf_1', name: '门店类型', sort: 1 },
+      { id: 'bf_2', name: '装修形式', sort: 2 },
+      { id: 'bf_3', name: '工程负责人', sort: 3 },
+      { id: 'bf_4', name: '施工队伍名称', sort: 4 },
+      { id: 'bf_5', name: '门店面积', sort: 5 }
     ];
     saveBasicFields();
   }
