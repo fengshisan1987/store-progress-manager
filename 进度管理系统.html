@@ -2551,8 +2551,8 @@ async function saveStores() {
   localStorage.setItem('storeData', JSON.stringify(STORES));
 }
 
-// 页面加载时从服务器获取数据
-loadStoresFromServer().then(() => {
+// 页面加载时从服务器获取数据（返回 Promise 供 init 使用）
+let dataLoadPromise = loadStoresFromServer().then(() => {
   // 数据加载完成后刷新页面显示
   if (typeof renderOverview === 'function') {
     renderOverview();
@@ -6014,7 +6014,10 @@ function closeAllDropdowns() {
 }
 
 // ── 初始化页面内容（登录后调用）────────────────────────────────────────────────
-function initPageContent() {
+async function initPageContent() {
+  // 等待数据从服务器加载完成
+  await dataLoadPromise;
+  
   // 初始化默认字段
   initDefaultStoreFields();
   initDefaultBasicFields();
@@ -6112,7 +6115,7 @@ function isVisitor() {
 }
 
 // ── 初始化 ────────────────────────────────────────────────────────────────────
-function init() {
+async function init() {
   // 先初始化账号系统
   initAuthSystem();
   
@@ -6130,8 +6133,8 @@ function init() {
   // 显示主内容区
   document.getElementById('mainContent').style.display = 'block';
   
-  // 初始化页面内容
-  initPageContent();
+  // 初始化页面内容（等待数据加载完成）
+  await initPageContent();
   
   // 点击外部关闭下拉菜单
   document.addEventListener('click', function(e) {
