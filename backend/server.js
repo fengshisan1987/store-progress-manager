@@ -188,8 +188,23 @@ app.get('/api/health', (req, res) => {
 app.use(express.static(path.join(__dirname, '..')));
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-    console.log(`服务器运行在端口 ${PORT}`);
-    console.log(`认证文件: ${AUTH_FILE}`);
-    console.log(`数据文件: ${DATA_FILE}`);
-});
+
+// 启动服务器，如果端口被占用则尝试下一个端口
+function startServer(port) {
+    const server = app.listen(port, () => {
+        console.log(`服务器运行在端口 ${port}`);
+        console.log(`认证文件: ${AUTH_FILE}`);
+        console.log(`数据文件: ${DATA_FILE}`);
+    });
+
+    server.on('error', (err) => {
+        if (err.code === 'EADDRINUSE') {
+            console.log(`端口 ${port} 被占用，尝试端口 ${port + 1}`);
+            startServer(port + 1);
+        } else {
+            console.error('服务器启动错误:', err);
+        }
+    });
+}
+
+startServer(PORT);
