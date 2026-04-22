@@ -2526,6 +2526,14 @@ async function loadStoresFromServer() {
         localStorage.setItem('basicFields', JSON.stringify(BASIC_FIELDS));
         console.log('基本信息字段配置已从服务器加载');
       }
+      // 加载阶段节点配置
+      if (data.storePhases && data.storePhases.length > 0) {
+        PHASES = data.storePhases;
+        localStorage.setItem('storePhases', JSON.stringify(PHASES));
+        // 重新计算 ALL_STEPS
+        ALL_STEPS = [].concat.apply([], PHASES.map(p => p.steps.map(s => ({step:s.name, phase:p, requireDate:s.requireDate}))));
+        console.log('阶段节点配置已从服务器加载');
+      }
       return true;
     }
   } catch (e) {
@@ -2540,7 +2548,7 @@ async function saveStoresToServer() {
     const response = await fetch(`${API_BASE}/data`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ stores: STORES, basicFields: BASIC_FIELDS })
+      body: JSON.stringify({ stores: STORES, basicFields: BASIC_FIELDS, storePhases: PHASES })
     });
     if (response.ok) {
       console.log('数据已保存到服务器');
@@ -4151,12 +4159,14 @@ function addPhase() {
   });
   renderNodeEditor();
 }
-function saveNodeChanges() {
+async function saveNodeChanges() {
   // 更新 PHASES
   PHASES = _editingPhases;
   // 保存到 localStorage
   localStorage.setItem('storePhases', JSON.stringify(PHASES));
   localStorage.setItem('storePhasesVersion', PHASES_VERSION);
+  // 同步到服务器
+  await saveStoresToServer();
   // 重新计算 ALL_STEPS
   ALL_STEPS = [].concat.apply([], PHASES.map(p => p.steps.map(s => ({step:s.name, phase:p, requireDate:s.requireDate}))));
   // 重新渲染
