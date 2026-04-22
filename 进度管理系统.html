@@ -4182,6 +4182,7 @@ function renderNodeEditor() {
     <div style="display:flex;gap:10px;margin-top:20px;padding-top:20px;border-top:2px solid #e8e8e8;">
       <button class="btn btn-primary" onclick="addPhase()">+ 添加新阶段</button>
       <button class="btn btn-primary" onclick="saveNodeChanges()">💾 保存修改</button>
+      <button class="btn btn-secondary" onclick="exportNodeConfig()">📋 导出配置</button>
       <button class="btn btn-secondary" onclick="closeNodeEditor()">取消</button>
     </div>
   `;
@@ -4249,6 +4250,34 @@ async function saveNodeChanges() {
   render();
   closeNodeEditor();
   alert('节点配置已保存，所有门店已同步更新！');
+}
+
+// 导出进度节点配置
+function exportNodeConfig() {
+  const config = {
+    phases: _editingPhases,
+    exportTime: new Date().toISOString(),
+    version: '1.0'
+  };
+
+  const jsonStr = JSON.stringify(config, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `node-config-${new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  // 同时复制到剪贴板
+  navigator.clipboard.writeText(jsonStr).then(() => {
+    alert('配置已导出并复制到剪贴板！\n\n你可以：\n1. 下载 JSON 文件\n2. 直接粘贴发送给我更新代码');
+  }).catch(() => {
+    alert('配置已导出！\n\nJSON 文件已下载，请发送给我更新代码。');
+  });
 }
 
 // ── 保存门店字段 ───────────────────────────────────────────────────────────────
@@ -5291,6 +5320,7 @@ function renderBasicFieldSettings() {
     '<div style="max-height:400px;overflow-y:auto;">' + fieldsHtml + '</div>' +
     '<div style="display:flex;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid #e8e8e8;">' +
       '<button onclick="saveBasicFieldSettings()" style="flex:1;padding:12px;background:#52c41a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:15px;font-weight:500;">💾 保存设置</button>' +
+      '<button onclick="exportBasicFieldConfig()" style="padding:12px 24px;background:#1890ff;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:15px;">📋 导出配置</button>' +
       '<button onclick="closeBasicFieldSettings()" style="padding:12px 24px;background:#f0f0f0;color:#333;border:none;border-radius:8px;cursor:pointer;font-size:15px;">取消</button>' +
     '</div>' +
   '</div>';
@@ -5382,6 +5412,34 @@ async function saveBasicFieldSettings() {
   closeBasicFieldSettings();
   render(); // 刷新主页面
   alert('基本信息设置已保存！');
+}
+
+// 导出基本信息字段配置
+function exportBasicFieldConfig() {
+  const config = {
+    basicFields: _editingBasicFields,
+    exportTime: new Date().toISOString(),
+    version: '1.0'
+  };
+  
+  const jsonStr = JSON.stringify(config, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `basic-fields-config-${new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  // 同时复制到剪贴板
+  navigator.clipboard.writeText(jsonStr).then(() => {
+    alert('配置已导出并复制到剪贴板！\n\n你可以：\n1. 下载 JSON 文件\n2. 直接粘贴发送给我更新代码');
+  }).catch(() => {
+    alert('配置已导出！\n\nJSON 文件已下载，请发送给我更新代码。');
+  });
 }
 
 async function saveStore() {
