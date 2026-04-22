@@ -2570,9 +2570,9 @@ function calcProgress(store) {
   });
   const done = lastDoneIdx + 1;
   const pct  = Math.round(done / ALL_STEPS.length * 100);
-  // currentStep 改为"最后完成节点的下一个节点"（即即将进行的节点）
-  const nextIdx = lastDoneIdx + 1;
-  const currentStep = nextIdx < ALL_STEPS.length ? ALL_STEPS[nextIdx].step : null;
+  // currentStep 改为"整排节点的第一个空白节点"（没有任何点击的节点）
+  const firstEmptyIdx = ALL_STEPS.findIndex(item => !store[item.step]);
+  const currentStep = firstEmptyIdx >= 0 ? ALL_STEPS[firstEmptyIdx].step : null;
   const lastDoneStep = lastDoneIdx >= 0 ? ALL_STEPS[lastDoneIdx].step : null;
   return { done, total: ALL_STEPS.length, pct, currentStep, lastDoneIdx, lastDoneStep };
 }
