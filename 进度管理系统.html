@@ -2499,13 +2499,67 @@ const DEFAULT_STORES = [
   {"姓名":"直营店","区域":"苏州","门店":"张家港中联铂悦店","门店状态":"测量中"}
 ];
 
-// 从 localStorage 读取门店数据，如果没有则使用默认值
-let STORES = JSON.parse(localStorage.getItem('storeData') || 'null') || JSON.parse(JSON.stringify(DEFAULT_STORES));
+// API 基础地址 - 统一使用相对路径，通过 Nginx 反向代理
+const API_BASE = '/api';
 
-// 保存门店数据到 localStorage
+// 从后端 API 读取门店数据
+let STORES = JSON.parse(JSON.stringify(DEFAULT_STORES));
+let dataLoaded = false;
+
+// 从后端加载数据
+async function loadStoresFromServer() {
+  try {
+    const response = await fetch(`${API_BASE}/data`);
+    if (response.ok) {
+      const data = await response.json();
+      if (data.stores && data.stores.length > 0) {
+        STORES = data.stores;
+        dataLoaded = true;
+        console.log('数据已从服务器加载');
+        return true;
+      }
+    }
+  } catch (e) {
+    console.log('从服务器加载数据失败，使用默认数据:', e);
+  }
+  return false;
+}
+
+// 保存门店数据到后端
+async function saveStoresToServer() {
+  try {
+    const response = await fetch(`${API_BASE}/data`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stores: STORES })
+    });
+    if (response.ok) {
+      console.log('数据已保存到服务器');
+      return true;
+    }
+  } catch (e) {
+    console.error('保存数据到服务器失败:', e);
+  }
+  return false;
+}
+
+// 兼容旧代码的 saveStores 函数
 function saveStores() {
+  saveStoresToServer();
+  // 同时保存到 localStorage 作为备份
   localStorage.setItem('storeData', JSON.stringify(STORES));
 }
+
+// 页面加载时从服务器获取数据
+loadStoresFromServer().then(() => {
+  // 数据加载完成后刷新页面显示
+  if (typeof renderOverview === 'function') {
+    renderOverview();
+  }
+  if (typeof renderDetail === 'function') {
+    renderDetail();
+  }
+});
 
 // ── 进度计算 ──────────────────────────────────────────────────────────────────
 function calcProgress(store) {
