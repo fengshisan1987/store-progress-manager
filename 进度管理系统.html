@@ -3692,7 +3692,7 @@ function selectDatePickerDate(year, month, day) {
 }
 
 // ── 点击节点切换完成状态 ───────────────────────────────────────────────────────
-function toggleNode(storeIdx, step, event) {
+async function toggleNode(storeIdx, step, event) {
   event.stopPropagation(); // 防止触发行的点击
   
   // 权限检查：访客不能编辑节点
@@ -3781,11 +3781,8 @@ function toggleNode(storeIdx, step, event) {
     store[step] = '已完成';
   }
   
-  // 保存到 localStorage
-  saveStores();
-  
-  // 保存到后端服务器（多用户同步）
-  saveStoresToServer();
+  // 保存到 localStorage 和服务器（多用户同步）
+  await saveStores();
   
   // 检查是否所有节点都已完成
   checkAndCompleteStore(storeIdx);
