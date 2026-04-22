@@ -42,17 +42,18 @@ function saveAuthData(data) {
 // 初始化数据文件
 function initDataFile() {
     if (!fs.existsSync(DATA_FILE)) {
-        fs.writeFileSync(DATA_FILE, JSON.stringify({ stores: [] }, null, 2));
+        fs.writeFileSync(DATA_FILE, JSON.stringify({ stores: [], basicFields: [] }, null, 2));
     }
 }
 
 // 读取数据
 function readData() {
     try {
+        initDataFile();
         const content = fs.readFileSync(DATA_FILE, 'utf8');
         return JSON.parse(content);
     } catch (e) {
-        return { stores: [] };
+        return { stores: [], basicFields: [] };
     }
 }
 

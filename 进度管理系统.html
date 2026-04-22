@@ -2519,8 +2519,14 @@ async function loadStoresFromServer() {
         STORES = data.stores;
         dataLoaded = true;
         console.log('数据已从服务器加载');
-        return true;
       }
+      // 加载基本信息字段配置
+      if (data.basicFields && data.basicFields.length > 0) {
+        BASIC_FIELDS = data.basicFields;
+        localStorage.setItem('basicFields', JSON.stringify(BASIC_FIELDS));
+        console.log('基本信息字段配置已从服务器加载');
+      }
+      return true;
     }
   } catch (e) {
     console.log('从服务器加载数据失败，使用默认数据:', e);
@@ -2534,7 +2540,7 @@ async function saveStoresToServer() {
     const response = await fetch(`${API_BASE}/data`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ stores: STORES })
+      body: JSON.stringify({ stores: STORES, basicFields: BASIC_FIELDS })
     });
     if (response.ok) {
       console.log('数据已保存到服务器');
@@ -4266,7 +4272,7 @@ if (!Array.isArray(BASIC_FIELDS)) {
 }
 
 // 初始化默认基本信息字段
-function initDefaultBasicFields() {
+async function initDefaultBasicFields() {
   if (!Array.isArray(BASIC_FIELDS) || BASIC_FIELDS.length === 0) {
     BASIC_FIELDS = [
       { id: 'bf_1', name: '门店类型', sort: 1 },
@@ -4275,17 +4281,19 @@ function initDefaultBasicFields() {
       { id: 'bf_4', name: '施工队伍名称', sort: 4 },
       { id: 'bf_5', name: '门店面积', sort: 5 }
     ];
-    saveBasicFields();
+    await saveBasicFields();
   }
 }
 
-function saveBasicFields() {
+async function saveBasicFields() {
   localStorage.setItem('basicFields', JSON.stringify(BASIC_FIELDS));
+  // 同步到服务器
+  await saveStoresToServer();
 }
 
 // 渲染基本信息动态字段
-function renderBasicFields(store) {
-  initDefaultBasicFields();
+async function renderBasicFields(store) {
+  await initDefaultBasicFields();
   const sortedFields = BASIC_FIELDS.sort((a, b) => a.sort - b.sort);
   
   return sortedFields.map(field => {
@@ -4348,8 +4356,8 @@ function renderBasicFields(store) {
 }
 
 // 添加基本信息字段
-function addBasicField() {
-  initDefaultBasicFields();
+async function addBasicField() {
+  await initDefaultBasicFields();
   const newId = 'bf_' + Date.now();
   const maxSort = BASIC_FIELDS.length > 0 ? Math.max(...BASIC_FIELDS.map(f => f.sort)) : 0;
   BASIC_FIELDS.push({
@@ -4357,12 +4365,12 @@ function addBasicField() {
     name: '新字段',
     sort: maxSort + 1
   });
-  saveBasicFields();
+  await saveBasicFields();
   refreshStoreEditorFields();
 }
 
 // 更新基本信息字段名称
-function updateBasicFieldName(fieldId, newName) {
+async function updateBasicFieldName(fieldId, newName) {
   const field = BASIC_FIELDS.find(f => f.id === fieldId);
   if (field && newName.trim()) {
     // 更新所有门店中的字段名
@@ -4374,13 +4382,13 @@ function updateBasicFieldName(fieldId, newName) {
       }
     });
     field.name = newName.trim();
-    saveBasicFields();
+    await saveBasicFields();
     refreshStoreEditorFields();
   }
 }
 
 // 删除基本信息字段
-function deleteBasicField(fieldId) {
+async function deleteBasicField(fieldId) {
   if (confirm('确定删除此字段吗？该字段在所有门店中的数据也将被删除。')) {
     const field = BASIC_FIELDS.find(f => f.id === fieldId);
     if (field) {
@@ -4390,27 +4398,27 @@ function deleteBasicField(fieldId) {
       });
     }
     BASIC_FIELDS = BASIC_FIELDS.filter(f => f.id !== fieldId);
-    saveBasicFields();
+    await saveBasicFields();
     refreshStoreEditorFields();
   }
 }
 
 // 更新基本信息字段类型
-function updateBasicFieldType(fieldId, type) {
+async function updateBasicFieldType(fieldId, type) {
   const field = BASIC_FIELDS.find(f => f.id === fieldId);
   if (field) {
     field.type = type;
-    saveBasicFields();
+    await saveBasicFields();
     refreshStoreEditorFields();
   }
 }
 
 // 更新基本信息字段选项
-function updateBasicFieldOptions(fieldId, options) {
+async function updateBasicFieldOptions(fieldId, options) {
   const field = BASIC_FIELDS.find(f => f.id === fieldId);
   if (field) {
     field.options = options;
-    saveBasicFields();
+    await saveBasicFields();
   }
 }
 
@@ -5283,9 +5291,9 @@ function moveBasicFieldSetting(index, direction) {
   renderBasicFieldSettings();
 }
 
-function saveBasicFieldSettings() {
+async function saveBasicFieldSettings() {
   BASIC_FIELDS = JSON.parse(JSON.stringify(_editingBasicFields));
-  saveBasicFields();
+  await saveBasicFields();
   closeBasicFieldSettings();
   render(); // 刷新主页面
   alert('基本信息设置已保存！');
