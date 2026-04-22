@@ -2544,8 +2544,9 @@ async function saveStoresToServer() {
 }
 
 // 兼容旧代码的 saveStores 函数
-function saveStores() {
-  saveStoresToServer();
+async function saveStores() {
+  // 先保存到服务器
+  await saveStoresToServer();
   // 同时保存到 localStorage 作为备份
   localStorage.setItem('storeData', JSON.stringify(STORES));
 }
@@ -3782,6 +3783,9 @@ function toggleNode(storeIdx, step, event) {
   
   // 保存到 localStorage
   saveStores();
+  
+  // 保存到后端服务器（多用户同步）
+  saveStoresToServer();
   
   // 检查是否所有节点都已完成
   checkAndCompleteStore(storeIdx);
