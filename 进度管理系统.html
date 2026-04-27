@@ -789,6 +789,7 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
 .stat-icon.red    { background:#fff2f0; }
 .stat-icon.teal   { background:#e6fffb; }
 .stat-icon.cyan   { background:#e6f7ff; }
+.stat-icon.gold   { background:#fffbe6; }
 .stat-num { font-size:24px; font-weight:700; line-height:1; }
 .stat-label { font-size:12px; color:#888; margin-top:3px; }
 .num-blue   { color:#1677ff; }
@@ -799,6 +800,7 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
 .num-gray   { color:#6b7280; }
 .num-teal   { color:#08979c; }
 .num-cyan   { color:#0891b2; }
+.num-gold   { color:#d48806; }
 
 /* ── 工具栏 ── */
 .toolbar {
@@ -2138,6 +2140,10 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
             <div class="stat-icon cyan">📝</div>
             <div><div class="stat-num num-cyan" id="cnt-prep">0</div><div class="stat-label">施工前准备中</div></div>
           </div>
+          <div class="stat-card">
+            <div class="stat-icon gold">🎉</div>
+            <div><div class="stat-num num-gold" id="cnt-ready">0</div><div class="stat-label">待开业</div></div>
+          </div>
         </div>
       </div>
       <!-- 中间：逾期门店概要 -->
@@ -3465,8 +3471,6 @@ function renderPhaseHeaders() {
 
 // ── 更新统计栏数量 ────────────────────────────────────────────────────────────
 function updateStats() {
-  const total = STORES.length;
-  
   // 使用 calculateStoreStatus 统一计算状态
   let siteSelecting = 0, designing = 0, prep = 0, constructing = 0, rectifying = 0, ready = 0, completed = 0;
   let overdueBuild = 0, overdueDesign = 0, overdueConstruction = 0, overdueRectification = 0;
@@ -3520,12 +3524,15 @@ function updateStats() {
     }
   });
   
+  const total = siteSelecting + designing + prep + constructing + rectifying + ready;
+  
   document.getElementById('cnt-total').textContent = total;
   document.getElementById('cnt-designing').textContent = designing;
   document.getElementById('cnt-constructing').textContent = constructing;
   document.getElementById('cnt-rectifying').textContent = rectifying;
   document.getElementById('cnt-site').textContent = siteSelecting;
   document.getElementById('cnt-prep').textContent = prep;
+  document.getElementById('cnt-ready').textContent = ready;
   
   // 逾期统计
   document.getElementById('cnt-overdue-build').textContent = overdueBuild;
