@@ -7311,10 +7311,16 @@ function calculateStoreStatusData() {
   return stats;
 }
 
-// 计算区域数据（支持筛选，region/storeStatus 为数组，空=全部）
+// 默认排除的门店状态（已完成、已弃店不算筹建中）
+const EXCLUDED_STORE_STATUSES = ['已完成', '已弃店'];
+
+// 计算区域数据（支持筛选，region/storeStatus 为数组，空=全部筹建中）
 function calculateRegionData(filters = {}) {
   const stats = {};
   STORES.forEach(store => {
+    // 默认排除非筹建中状态（已完成、已弃店）
+    if (EXCLUDED_STORE_STATUSES.includes(store['门店状态'])) return;
+
     // 区域筛选（多选）
     if (!matchMultiValue(filters.regions, store['区域'])) return;
 
@@ -7412,7 +7418,7 @@ function updateDashboardFilters() {
 // 初始化看板区域筛选多选框
 function initDashboardRegionFilters() {
   const regions = [...new Set(STORES.map(s => s['区域']).filter(Boolean))].sort();
-  const statusOptions = ['选址中', '设计中', '施工前准备中', '施工中', '整改中', '待开业', '已完成', '已弃店'];
+  const statusOptions = ['选址中', '设计中', '施工前准备中', '施工中', '整改中', '待开业'];
 
   const regionItems = regions.map(r => ({ value: r, label: r }));
   const statusItems = statusOptions.map(s => ({ value: s, label: s }));
@@ -7551,8 +7557,11 @@ function calculateConstructionPreparationCycle(store) {
 function calculateConstructionPreparationCycleData(filters = {}) {
   const cycles = [];
   const storeDetails = [];
-  
+
   STORES.forEach(store => {
+    // 默认排除非筹建中状态（已完成、已弃店）
+    if (EXCLUDED_STORE_STATUSES.includes(store['门店状态'])) return;
+
     // 区域筛选（多选）
     if (!matchMultiValue(filters.regions, store['区域'])) return;
 
@@ -8046,6 +8055,9 @@ function generateStoreTypeWidgetForDashboard(filters = {}) {
   // 根据门店类型字段判断
   const stats = { '直营店': 0, '加盟店': 0 };
   STORES.forEach(store => {
+    // 默认排除非筹建中状态（已完成、已弃店）
+    if (EXCLUDED_STORE_STATUSES.includes(store['门店状态'])) return;
+
     // 区域筛选（多选）
     if (!matchMultiValue(filters.regions, store['区域'])) return;
 
@@ -8249,6 +8261,9 @@ function generateOpeningCalendarWidget() {
   allTypes_static = allTypes;
   
   STORES.forEach(store => {
+    // 默认排除非筹建中状态（已完成、已弃店）
+    if (EXCLUDED_STORE_STATUSES.includes(store['门店状态'])) return;
+
     const openingDate = store['预估开业日期'];
     if (openingDate) {
       const date = new Date(openingDate);
