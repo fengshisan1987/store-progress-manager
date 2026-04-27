@@ -2483,6 +2483,7 @@ class MultiSelect {
 
     const hasSelection = this.selected.length > 0;
 
+    container.className = 'multi-select-wrap';
     container.innerHTML = `
       <div class="multi-select-trigger ${hasSelection ? '' : ''}">
         <span class="multi-select-label ${hasSelection ? 'has-selection' : 'no-selection'}">${triggerText}</span>
@@ -2501,6 +2502,8 @@ class MultiSelect {
         </div>
       </div>
     `;
+    // 每次渲染后重新绑定事件（因为 innerHTML 会销毁旧 DOM）
+    this._bindEvents();
   }
 
   _bindEvents() {
@@ -2508,6 +2511,7 @@ class MultiSelect {
     if (!container) return;
     const trigger = container.querySelector('.multi-select-trigger');
     const dropdown = container.querySelector('.multi-select-dropdown');
+    if (!trigger || !dropdown) return;
 
     trigger.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -2533,7 +2537,7 @@ class MultiSelect {
         } else {
           this.selected.push(value);
         }
-        this._render();
+        this._updateUI();
         if (this.onChange) this.onChange([...this.selected]);
         return;
       }
@@ -2545,8 +2549,40 @@ class MultiSelect {
         } else if (action === 'clear') {
           this.selected = [];
         }
-        this._render();
+        this._updateUI();
         if (this.onChange) this.onChange([...this.selected]);
+      }
+    });
+  }
+
+  // 只更新选中状态和触发器文字，不重建整个 dropdown DOM（保持下拉框打开）
+  _updateUI() {
+    const container = document.getElementById(this.containerId);
+    if (!container) return;
+
+    // 更新 trigger 文字
+    const selectedLabels = this.selected.map(v => {
+      const item = this.items.find(i => i.value === v);
+      return item ? item.label : v;
+    });
+    const triggerText = selectedLabels.length === 0
+      ? this.placeholder
+      : selectedLabels.length === this.items.length
+        ? '全部'
+        : selectedLabels.join('、');
+    const labelEl = container.querySelector('.multi-select-label');
+    if (labelEl) {
+      labelEl.textContent = triggerText;
+      labelEl.className = 'multi-select-label ' + (this.selected.length > 0 ? 'has-selection' : 'no-selection');
+    }
+
+    // 更新每个选项的选中状态
+    container.querySelectorAll('.multi-select-item').forEach(itemEl => {
+      const val = itemEl.dataset.value;
+      if (this.selected.includes(val)) {
+        itemEl.classList.add('selected');
+      } else {
+        itemEl.classList.remove('selected');
       }
     });
   }
