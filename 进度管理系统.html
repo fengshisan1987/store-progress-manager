@@ -1940,6 +1940,132 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
   .phase-header-sticky { top:44px; }
   .stats-bar { padding:8px 12px; }
 }
+
+/* ═══ 多选下拉框组件样式 ═══ */
+.multi-select-wrap {
+  position: relative;
+  display: inline-block;
+  min-width: 100px;
+  font-size: 13px;
+  z-index: 100;
+}
+.multi-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 6px 10px;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.multi-select-trigger:hover {
+  border-color: #4096ff;
+}
+.multi-select-trigger.active {
+  border-color: #4096ff;
+  box-shadow: 0 0 0 2px rgba(24,144,255,0.1);
+}
+.multi-select-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.multi-select-label.has-selection {
+  color: #333;
+  font-weight: 500;
+}
+.multi-select-label.no-selection {
+  color: #999;
+}
+.multi-select-arrow {
+  font-size: 10px;
+  color: #999;
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+.multi-select-trigger.active .multi-select-arrow {
+  transform: rotate(180deg);
+}
+.multi-select-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 100%;
+  max-height: 240px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  z-index: 200;
+  padding: 4px 0;
+}
+.multi-select-dropdown.show {
+  display: block;
+}
+.multi-select-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.multi-select-item:hover {
+  background: #f0f5ff;
+}
+.multi-select-item.selected {
+  background: #e6f4ff;
+}
+.multi-select-check {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #d9d9d9;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 11px;
+  color: transparent;
+  transition: all 0.15s;
+}
+.multi-select-item.selected .multi-select-check {
+  background: #1677ff;
+  border-color: #1677ff;
+  color: #fff;
+}
+.multi-select-item-text {
+  flex: 1;
+  font-size: 13px;
+}
+.multi-select-actions {
+  display: flex;
+  gap: 0;
+  border-top: 1px solid #f0f0f0;
+  padding: 4px 0 0;
+}
+.multi-select-action-btn {
+  flex: 1;
+  text-align: center;
+  padding: 6px 0;
+  cursor: pointer;
+  font-size: 12px;
+  color: #1677ff;
+  border-right: 1px solid #f0f0f0;
+}
+.multi-select-action-btn:last-child {
+  border-right: none;
+}
+.multi-select-action-btn:hover {
+  background: #f0f5ff;
+}
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 </head>
@@ -2088,23 +2214,11 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
         <div class="stats-section-title region" style="margin:0;background:transparent;border:none;flex:1;padding:12px 0 12px 16px;pointer-events:none;"><span class="collapse-icon">▶</span> 📊 区域门店及类型统计</div>
         <!-- 筛选控件 -->
         <div style="display:flex;gap:10px;align-items:center;flex:0 0 auto;justify-content:flex-end;padding:10px 0;" onclick="event.stopPropagation();">
-          <select id="regionStatsRegion" style="padding:6px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;background:#fff;cursor:pointer;min-width:100px;" onchange="updateDashboardFilters()">
-            <option value="all">全部区域</option>
-          </select>
+          <div id="regionStatsRegion" style="display:inline-block;"></div>
           <input type="date" id="regionStatsStartDate" placeholder="开始日期" style="padding:6px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;" onchange="updateDashboardFilters()">
           <span style="color:#999;">至</span>
           <input type="date" id="regionStatsEndDate" placeholder="结束日期" style="padding:6px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;" onchange="updateDashboardFilters()">
-          <select id="regionStatsStatus" style="padding:6px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;background:#fff;cursor:pointer;" onchange="updateDashboardFilters()">
-            <option value="all">全部状态</option>
-            <option value="选址中">选址中</option>
-            <option value="设计中">设计中</option>
-            <option value="施工前准备中">施工前准备中</option>
-            <option value="施工中">施工中</option>
-            <option value="整改中">整改中</option>
-            <option value="待开业">待开业</option>
-            <option value="已完成">已完成</option>
-            <option value="已弃店">已弃店</option>
-          </select>
+          <div id="regionStatsStatus" style="display:inline-block;min-width:100px;"></div>
         </div>
       </div>
       <!-- 左右结构：左侧区域统计，右侧门店类型分布 -->
@@ -2125,23 +2239,11 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
         <div class="stats-section-title cycle" style="margin:0;background:transparent;border:none;flex:1;padding:12px 0 12px 16px;pointer-events:none;"><span class="collapse-icon">▶</span> 📈 门店周期统计</div>
         <!-- 筛选控件 -->
         <div style="display:flex;gap:10px;align-items:center;flex:1;justify-content:flex-end;padding:10px 0;" onclick="event.stopPropagation();">
-          <select id="cycleStatsRegion" style="padding:6px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;background:#fff;cursor:pointer;min-width:100px;" onchange="updateDashboardFilters()">
-            <option value="all">全部区域</option>
-          </select>
+          <div id="cycleStatsRegion" style="display:inline-block;"></div>
           <input type="date" id="cycleStatsStartDate" placeholder="开始日期" style="padding:6px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;" onchange="updateDashboardFilters()">
           <span style="color:#999;">至</span>
           <input type="date" id="cycleStatsEndDate" placeholder="结束日期" style="padding:6px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;" onchange="updateDashboardFilters()">
-          <select id="cycleStatsStatus" style="padding:6px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;background:#fff;cursor:pointer;" onchange="updateDashboardFilters()">
-            <option value="all">全部状态</option>
-            <option value="选址中">选址中</option>
-            <option value="设计中">设计中</option>
-            <option value="施工前准备中">施工前准备中</option>
-            <option value="施工中">施工中</option>
-            <option value="整改中">整改中</option>
-            <option value="待开业">待开业</option>
-            <option value="已完成">已完成</option>
-            <option value="已弃店">已弃店</option>
-          </select>
+          <div id="cycleStatsStatus" style="display:inline-block;min-width:100px;"></div>
         </div>
       </div>
       <div id="cycleStatsInDashboard" class="collapsible-content collapsed" style="padding:15px 0;">
@@ -2351,6 +2453,140 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
 </div>
 
 <script>
+// ═════════════════════════════════════════════════════════════════════════════
+// 多选下拉框通用组件
+// ═════════════════════════════════════════════════════════════════════════════
+class MultiSelect {
+  constructor(containerId, options = {}) {
+    this.containerId = containerId;
+    this.placeholder = options.placeholder || '全部';
+    this.items = options.items || [];        // [{value, label}]
+    this.selected = options.selected || [];   // 已选的 value 数组
+    this.onChange = options.onChange || null;  // function(selectedValues)
+    this._render();
+    this._bindEvents();
+  }
+
+  _render() {
+    const container = document.getElementById(this.containerId);
+    if (!container) return;
+
+    const selectedLabels = this.selected.map(v => {
+      const item = this.items.find(i => i.value === v);
+      return item ? item.label : v;
+    });
+    const triggerText = selectedLabels.length === 0
+      ? this.placeholder
+      : selectedLabels.length === this.items.length
+        ? '全部'
+        : selectedLabels.join('、');
+
+    const hasSelection = this.selected.length > 0;
+
+    container.innerHTML = `
+      <div class="multi-select-trigger ${hasSelection ? '' : ''}">
+        <span class="multi-select-label ${hasSelection ? 'has-selection' : 'no-selection'}">${triggerText}</span>
+        <span class="multi-select-arrow">▼</span>
+      </div>
+      <div class="multi-select-dropdown">
+        ${this.items.map(item => `
+          <div class="multi-select-item ${this.selected.includes(item.value) ? 'selected' : ''}" data-value="${item.value}">
+            <span class="multi-select-check">✓</span>
+            <span class="multi-select-item-text">${item.label}</span>
+          </div>
+        `).join('')}
+        <div class="multi-select-actions">
+          <div class="multi-select-action-btn" data-action="all">全选</div>
+          <div class="multi-select-action-btn" data-action="clear">清空</div>
+        </div>
+      </div>
+    `;
+  }
+
+  _bindEvents() {
+    const container = document.getElementById(this.containerId);
+    if (!container) return;
+    const trigger = container.querySelector('.multi-select-trigger');
+    const dropdown = container.querySelector('.multi-select-dropdown');
+
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      // 先关闭其他已打开的 MultiSelect
+      document.querySelectorAll('.multi-select-dropdown.show').forEach(d => {
+        if (d !== dropdown) d.classList.remove('show');
+      });
+      document.querySelectorAll('.multi-select-trigger.active').forEach(t => {
+        if (t !== trigger) t.classList.remove('active');
+      });
+      dropdown.classList.toggle('show');
+      trigger.classList.toggle('active');
+    });
+
+    dropdown.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const itemEl = e.target.closest('.multi-select-item');
+      if (itemEl) {
+        const value = itemEl.dataset.value;
+        const idx = this.selected.indexOf(value);
+        if (idx >= 0) {
+          this.selected.splice(idx, 1);
+        } else {
+          this.selected.push(value);
+        }
+        this._render();
+        if (this.onChange) this.onChange([...this.selected]);
+        return;
+      }
+      const actionEl = e.target.closest('.multi-select-action-btn');
+      if (actionEl) {
+        const action = actionEl.dataset.action;
+        if (action === 'all') {
+          this.selected = this.items.map(i => i.value);
+        } else if (action === 'clear') {
+          this.selected = [];
+        }
+        this._render();
+        if (this.onChange) this.onChange([...this.selected]);
+      }
+    });
+  }
+
+  close() {
+    const container = document.getElementById(this.containerId);
+    if (!container) return;
+    container.querySelector('.multi-select-dropdown')?.classList.remove('show');
+    container.querySelector('.multi-select-trigger')?.classList.remove('active');
+  }
+
+  updateItems(items) {
+    this.items = items;
+    this.selected = this.selected.filter(v => items.some(i => i.value === v));
+    this._render();
+  }
+
+  setSelected(values) {
+    this.selected = values ? [...values] : [];
+    this._render();
+  }
+
+  getSelected() {
+    return [...this.selected];
+  }
+}
+
+// 点击页面其他区域关闭所有多选下拉框
+document.addEventListener('click', () => {
+  document.querySelectorAll('.multi-select-dropdown.show').forEach(d => d.classList.remove('show'));
+  document.querySelectorAll('.multi-select-trigger.active').forEach(t => t.classList.remove('active'));
+});
+
+// 筛选辅助函数：判断门店是否匹配多选值
+// multiValues 为空数组表示不筛选（全选），否则要求 store[field] 在 multiValues 中
+function matchMultiValue(multiValues, storeValue) {
+  if (!multiValues || multiValues.length === 0) return true;
+  return multiValues.includes(storeValue);
+}
+
 // ── 阶段定义（可编辑）──────────────────────────────────────────────────────────
 // 默认阶段配置
 const DEFAULT_PHASES = [
@@ -3363,6 +3599,7 @@ function updateStats() {
   const openingCalendarEl = document.getElementById('openingCalendarInDashboard');
   if (openingCalendarEl) {
     openingCalendarEl.innerHTML = generateOpeningCalendarWidget();
+    initOpeningCalendarMultiSelects();
   }
 }
 
@@ -7023,23 +7260,15 @@ function calculateStoreStatusData() {
   return stats;
 }
 
-// 计算区域数据（支持筛选）
+// 计算区域数据（支持筛选，region/storeStatus 为数组，空=全部）
 function calculateRegionData(filters = {}) {
   const stats = {};
   STORES.forEach(store => {
-    // 区域筛选
-    if (filters.region && filters.region !== 'all') {
-      if (store['区域'] !== filters.region) return;
-    }
+    // 区域筛选（多选）
+    if (!matchMultiValue(filters.regions, store['区域'])) return;
 
-    // 门店状态筛选
-    if (filters.storeStatus && filters.storeStatus !== 'all') {
-      if (filters.storeStatus === '测量中') {
-        if (store['门店状态'] && store['门店状态'] !== '测量中') return;
-      } else if (store['门店状态'] !== filters.storeStatus) {
-        return;
-      }
-    }
+    // 门店状态筛选（多选）
+    if (!matchMultiValue(filters.storeStatuses, store['门店状态'])) return;
 
     // 时间筛选（基于所有阶段的日期）
     // 只有当用户明确设置了日期范围，且门店有日期字段时，才进行筛选
@@ -7079,97 +7308,102 @@ function calculateRegionData(filters = {}) {
 // 周期统计看板功能
 // ═════════════════════════════════════════════════════════════════════════════
 
-// 筹建进度概述看板筛选配置
+// 筹建进度概述看板筛选配置（region/storeStatus 改为数组支持多选）
 let dashboardFilters = {
   regionStats: {
-    region: 'all',
+    regions: [],     // 区域多选，空数组=全部
     startDate: '',
     endDate: '',
-    storeStatus: 'all'
+    storeStatuses: [] // 状态多选，空数组=全部
   },
   cycleStats: {
-    region: 'all',
+    regions: [],
     startDate: '',
     endDate: '',
-    storeStatus: 'all'
+    storeStatuses: []
   }
 };
+
+// MultiSelect 实例引用
+let _msRegionStatsRegion = null;
+let _msRegionStatsStatus = null;
+let _msCycleStatsRegion = null;
+let _msCycleStatsStatus = null;
 
 // 更新看板筛选条件
 function updateDashboardFilters() {
   // 区域门店统计筛选
-  const regionSelect = document.getElementById('regionStatsRegion');
   const regionStartDate = document.getElementById('regionStatsStartDate');
   const regionEndDate = document.getElementById('regionStatsEndDate');
-  const regionStatus = document.getElementById('regionStatsStatus');
 
-  if (regionSelect && regionStartDate && regionEndDate && regionStatus) {
-    dashboardFilters.regionStats.region = regionSelect.value || 'all';
+  if (regionStartDate && regionEndDate) {
+    dashboardFilters.regionStats.regions = _msRegionStatsRegion ? _msRegionStatsRegion.getSelected() : [];
     dashboardFilters.regionStats.startDate = regionStartDate.value || '';
     dashboardFilters.regionStats.endDate = regionEndDate.value || '';
-    dashboardFilters.regionStats.storeStatus = regionStatus.value || 'all';
+    dashboardFilters.regionStats.storeStatuses = _msRegionStatsStatus ? _msRegionStatsStatus.getSelected() : [];
   }
 
-  // 门店类型与周期统计筛选
-  const cycleRegionSelect = document.getElementById('cycleStatsRegion');
+  // 门店周期统计筛选
   const cycleStartDate = document.getElementById('cycleStatsStartDate');
   const cycleEndDate = document.getElementById('cycleStatsEndDate');
-  const cycleStatus = document.getElementById('cycleStatsStatus');
 
-  if (cycleRegionSelect && cycleStartDate && cycleEndDate && cycleStatus) {
-    dashboardFilters.cycleStats.region = cycleRegionSelect.value;
-    dashboardFilters.cycleStats.startDate = cycleStartDate.value;
-    dashboardFilters.cycleStats.endDate = cycleEndDate.value;
-    dashboardFilters.cycleStats.storeStatus = cycleStatus.value;
+  if (cycleStartDate && cycleEndDate) {
+    dashboardFilters.cycleStats.regions = _msCycleStatsRegion ? _msCycleStatsRegion.getSelected() : [];
+    dashboardFilters.cycleStats.startDate = cycleStartDate.value || '';
+    dashboardFilters.cycleStats.endDate = cycleEndDate.value || '';
+    dashboardFilters.cycleStats.storeStatuses = _msCycleStatsStatus ? _msCycleStatsStatus.getSelected() : [];
   }
 
   // 重新更新统计看板
   updateStats();
 }
 
-// 初始化看板区域筛选下拉框
+// 初始化看板区域筛选多选框
 function initDashboardRegionFilters() {
   const regions = [...new Set(STORES.map(s => s['区域']).filter(Boolean))].sort();
+  const statusOptions = ['选址中', '设计中', '施工前准备中', '施工中', '整改中', '待开业', '已完成', '已弃店'];
 
-  // 初始化区域门店统计的区域下拉框
-  const regionStatsRegion = document.getElementById('regionStatsRegion');
-  if (regionStatsRegion) {
-    const currentValue = regionStatsRegion.value;
-    regionStatsRegion.innerHTML = '<option value="all">全部区域</option>' +
-      regions.map(r => `<option value="${r}">${r}</option>`).join('');
-    regionStatsRegion.value = currentValue || 'all';
+  const regionItems = regions.map(r => ({ value: r, label: r }));
+  const statusItems = statusOptions.map(s => ({ value: s, label: s }));
+
+  // 初始化区域门店统计 - 区域多选
+  if (document.getElementById('regionStatsRegion')) {
+    _msRegionStatsRegion = new MultiSelect('regionStatsRegion', {
+      placeholder: '全部区域',
+      items: regionItems,
+      selected: dashboardFilters.regionStats.regions,
+      onChange: () => updateDashboardFilters()
+    });
   }
 
-  // 初始化门店周期统计的区域下拉框
-  const cycleStatsRegion = document.getElementById('cycleStatsRegion');
-  if (cycleStatsRegion) {
-    const currentValue = cycleStatsRegion.value;
-    cycleStatsRegion.innerHTML = '<option value="all">全部区域</option>' +
-      regions.map(r => `<option value="${r}">${r}</option>`).join('');
-    cycleStatsRegion.value = currentValue || 'all';
+  // 初始化区域门店统计 - 状态多选
+  if (document.getElementById('regionStatsStatus')) {
+    _msRegionStatsStatus = new MultiSelect('regionStatsStatus', {
+      placeholder: '全部状态',
+      items: statusItems,
+      selected: dashboardFilters.regionStats.storeStatuses,
+      onChange: () => updateDashboardFilters()
+    });
   }
 
-  // 同步 dashboardFilters 与 DOM 元素的值
-  const regionStartDate = document.getElementById('regionStatsStartDate');
-  const regionEndDate = document.getElementById('regionStatsEndDate');
-  const regionStatus = document.getElementById('regionStatsStatus');
-
-  if (regionStatsRegion && regionStartDate && regionEndDate && regionStatus) {
-    dashboardFilters.regionStats.region = regionStatsRegion.value || 'all';
-    dashboardFilters.regionStats.startDate = regionStartDate.value || '';
-    dashboardFilters.regionStats.endDate = regionEndDate.value || '';
-    dashboardFilters.regionStats.storeStatus = regionStatus.value || 'all';
+  // 初始化门店周期统计 - 区域多选
+  if (document.getElementById('cycleStatsRegion')) {
+    _msCycleStatsRegion = new MultiSelect('cycleStatsRegion', {
+      placeholder: '全部区域',
+      items: regionItems,
+      selected: dashboardFilters.cycleStats.regions,
+      onChange: () => updateDashboardFilters()
+    });
   }
 
-  const cycleStartDate = document.getElementById('cycleStatsStartDate');
-  const cycleEndDate = document.getElementById('cycleStatsEndDate');
-  const cycleStatus = document.getElementById('cycleStatsStatus');
-
-  if (cycleStatsRegion && cycleStartDate && cycleEndDate && cycleStatus) {
-    dashboardFilters.cycleStats.region = cycleStatsRegion.value || 'all';
-    dashboardFilters.cycleStats.startDate = cycleStartDate.value || '';
-    dashboardFilters.cycleStats.endDate = cycleEndDate.value || '';
-    dashboardFilters.cycleStats.storeStatus = cycleStatus.value || 'all';
+  // 初始化门店周期统计 - 状态多选
+  if (document.getElementById('cycleStatsStatus')) {
+    _msCycleStatsStatus = new MultiSelect('cycleStatsStatus', {
+      placeholder: '全部状态',
+      items: statusItems,
+      selected: dashboardFilters.cycleStats.storeStatuses,
+      onChange: () => updateDashboardFilters()
+    });
   }
 }
 
@@ -7268,19 +7502,11 @@ function calculateConstructionPreparationCycleData(filters = {}) {
   const storeDetails = [];
   
   STORES.forEach(store => {
-    // 区域筛选
-    if (filters.region && filters.region !== 'all') {
-      if (store['区域'] !== filters.region) return;
-    }
+    // 区域筛选（多选）
+    if (!matchMultiValue(filters.regions, store['区域'])) return;
 
-    // 门店状态筛选
-    if (filters.storeStatus && filters.storeStatus !== 'all') {
-      if (filters.storeStatus === '测量中') {
-        if (store['门店状态'] && store['门店状态'] !== '测量中') return;
-      } else if (store['门店状态'] !== filters.storeStatus) {
-        return;
-      }
-    }
+    // 门店状态筛选（多选）
+    if (!matchMultiValue(filters.storeStatuses, store['门店状态'])) return;
 
     // 时间筛选（基于设计阶段第一个节点或整改阶段最后一个节点）
     let hasDateInRange = false;
@@ -7370,19 +7596,11 @@ function calculatePhaseCycleData(phaseName, filters = {}) {
   }
   
   STORES.forEach(store => {
-    // 区域筛选
-    if (filters.region && filters.region !== 'all') {
-      if (store['区域'] !== filters.region) return;
-    }
+    // 区域筛选（多选）
+    if (!matchMultiValue(filters.regions, store['区域'])) return;
 
-    // 门店状态筛选
-    if (filters.storeStatus && filters.storeStatus !== 'all') {
-      if (filters.storeStatus === '测量中') {
-        if (store['门店状态'] && store['门店状态'] !== '测量中') return;
-      } else if (store['门店状态'] !== filters.storeStatus) {
-        return;
-      }
-    }
+    // 门店状态筛选（多选）
+    if (!matchMultiValue(filters.storeStatuses, store['门店状态'])) return;
 
     // 时间筛选（基于阶段内节点的日期）
     const phase = PHASES.find(p => p.name === actualPhaseName);
@@ -7777,19 +7995,11 @@ function generateStoreTypeWidgetForDashboard(filters = {}) {
   // 根据门店类型字段判断
   const stats = { '直营店': 0, '加盟店': 0 };
   STORES.forEach(store => {
-    // 区域筛选
-    if (filters.region && filters.region !== 'all') {
-      if (store['区域'] !== filters.region) return;
-    }
+    // 区域筛选（多选）
+    if (!matchMultiValue(filters.regions, store['区域'])) return;
 
-    // 门店状态筛选
-    if (filters.storeStatus && filters.storeStatus !== 'all') {
-      if (filters.storeStatus === '测量中') {
-        if (store['门店状态'] && store['门店状态'] !== '测量中') return;
-      } else if (store['门店状态'] !== filters.storeStatus) {
-        return;
-      }
-    }
+    // 门店状态筛选（多选）
+    if (!matchMultiValue(filters.storeStatuses, store['门店状态'])) return;
 
     // 时间筛选（基于所有阶段的日期）
     if (filters.startDate || filters.endDate) {
@@ -7933,11 +8143,15 @@ function generateCycleWidgetForDashboard(data, title, icon, color) {
 // 预估开业日历当前月份（用于导航，存储当前显示的第一个月份）
 let _openingCalendarCurrentMonth = new Date();
 
-// 预估开业日历筛选条件
+// 预估开业日历筛选条件（多选，数组为空表示全部）
 let _openingCalendarFilters = {
-  region: '', // 区域筛选
-  type: ''    // 门店类型筛选
+  region: [],  // 区域筛选（多选）
+  type: []     // 门店类型筛选（多选）
 };
+
+// 预估开业日历的筛选选项静态缓存
+let allRegions_static = null;
+let allTypes_static = null;
 
 // 切换预估开业日历月份（一次切换3个月）
 function changeOpeningCalendarMonth(delta) {
@@ -7945,29 +8159,27 @@ function changeOpeningCalendarMonth(delta) {
   const openingCalendarEl = document.getElementById('openingCalendarInDashboard');
   if (openingCalendarEl) {
     openingCalendarEl.innerHTML = generateOpeningCalendarWidget();
+    initOpeningCalendarMultiSelects();
   }
 }
 
-// 设置预估开业日历筛选条件
-function setOpeningCalendarFilter(filterType, value) {
-  _openingCalendarFilters[filterType] = value;
+// 设置预估开业日历筛选条件（由 MultiSelect 组件的 onChange 调用）
+function setOpeningCalendarFilter(filterType, selectedValues) {
+  _openingCalendarFilters[filterType] = selectedValues;
   const openingCalendarEl = document.getElementById('openingCalendarInDashboard');
   if (openingCalendarEl) {
     openingCalendarEl.innerHTML = generateOpeningCalendarWidget();
+    initOpeningCalendarMultiSelects();
   }
 }
 
 // 重置预估开业日历筛选条件
 function resetOpeningCalendarFilters() {
-  _openingCalendarFilters = { region: '', type: '' };
-  // 重置下拉框
-  const regionSelect = document.getElementById('openingCalendarRegionFilter');
-  const typeSelect = document.getElementById('openingCalendarTypeFilter');
-  if (regionSelect) regionSelect.value = '';
-  if (typeSelect) typeSelect.value = '';
+  _openingCalendarFilters = { region: [], type: [] };
   const openingCalendarEl = document.getElementById('openingCalendarInDashboard');
   if (openingCalendarEl) {
     openingCalendarEl.innerHTML = generateOpeningCalendarWidget();
+    initOpeningCalendarMultiSelects();
   }
 }
 
@@ -7981,6 +8193,10 @@ function generateOpeningCalendarWidget() {
   const allRegions = new Set();
   const allTypes = new Set();
   
+  // 保存到静态变量供 MultiSelect 初始化使用
+  allRegions_static = allRegions;
+  allTypes_static = allTypes;
+  
   STORES.forEach(store => {
     const openingDate = store['预估开业日期'];
     if (openingDate) {
@@ -7993,9 +8209,9 @@ function generateOpeningCalendarWidget() {
       if (store['区域']) allRegions.add(store['区域']);
       if (store['门店类型']) allTypes.add(store['门店类型']);
       
-      // 应用筛选条件
-      const matchRegion = !_openingCalendarFilters.region || store['区域'] === _openingCalendarFilters.region;
-      const matchType = !_openingCalendarFilters.type || store['门店类型'] === _openingCalendarFilters.type;
+      // 应用筛选条件（多选）
+      const matchRegion = matchMultiValue(_openingCalendarFilters.region, store['区域']);
+      const matchType = matchMultiValue(_openingCalendarFilters.type, store['门店类型']);
       
       if (!matchRegion || !matchType) return;
       
@@ -8161,29 +8377,16 @@ function generateOpeningCalendarWidget() {
     `;
   }
   
-  // 生成筛选器HTML
-  const regionOptions = Array.from(allRegions).sort().map(r => 
-    `<option value="${r}" ${_openingCalendarFilters.region === r ? 'selected' : ''}>${r}</option>`
-  ).join('');
-  const typeOptions = Array.from(allTypes).sort().map(t => 
-    `<option value="${t}" ${_openingCalendarFilters.type === t ? 'selected' : ''}>${t}</option>`
-  ).join('');
-  
+  // 生成筛选器HTML（使用多选组件容器）
   const filterHTML = `
     <div class="opening-store-list-filters">
       <div class="opening-store-list-filter-group">
         <label>区域：</label>
-        <select id="openingCalendarRegionFilter" onchange="setOpeningCalendarFilter('region', this.value)">
-          <option value="">全部区域</option>
-          ${regionOptions}
-        </select>
+        <div id="openingCalendarRegionFilter" style="display:inline-block;min-width:100px;"></div>
       </div>
       <div class="opening-store-list-filter-group">
         <label>门店类型：</label>
-        <select id="openingCalendarTypeFilter" onchange="setOpeningCalendarFilter('type', this.value)">
-          <option value="">全部类型</option>
-          ${typeOptions}
-        </select>
+        <div id="openingCalendarTypeFilter" style="display:inline-block;min-width:100px;"></div>
       </div>
       <button class="opening-store-list-filter-reset" onclick="resetOpeningCalendarFilters()">重置筛选</button>
     </div>
@@ -8216,6 +8419,29 @@ function generateOpeningCalendarWidget() {
   `;
   
   return `${navHTML}${filterHTML}${statsHTML}<div class="opening-store-list-container">${allDaysHTML}</div>`;
+}
+
+// 初始化预估开业日历的多选组件（在 generateOpeningCalendarWidget 设置 innerHTML 后调用）
+function initOpeningCalendarMultiSelects() {
+  const regions = Array.from(allRegions_static || []).sort();
+  const types = Array.from(allTypes_static || []).sort();
+  
+  if (document.getElementById('openingCalendarRegionFilter') && regions.length > 0) {
+    new MultiSelect('openingCalendarRegionFilter', {
+      placeholder: '全部区域',
+      items: regions.map(r => ({ value: r, label: r })),
+      selected: _openingCalendarFilters.region || [],
+      onChange: (vals) => setOpeningCalendarFilter('region', vals)
+    });
+  }
+  if (document.getElementById('openingCalendarTypeFilter') && types.length > 0) {
+    new MultiSelect('openingCalendarTypeFilter', {
+      placeholder: '全部类型',
+      items: types.map(t => ({ value: t, label: t })),
+      selected: _openingCalendarFilters.type || [],
+      onChange: (vals) => setOpeningCalendarFilter('type', vals)
+    });
+  }
 }
 
 // 生成月度趋势组件
