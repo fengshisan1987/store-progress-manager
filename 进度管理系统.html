@@ -2654,6 +2654,88 @@ let dataLoadPromise = loadStoresFromServer().then(() => {
   }
 });
 
+// ── 多设备数据轮询同步 ─────────────────────────────────────────────────────────
+let _lastSyncHash = '';
+let _syncTimer = null;
+let _isSaving = false; // 本地正在保存时跳过轮询
+const SYNC_INTERVAL = 5000; // 每5秒轮询一次
+
+// 简单数据指纹（用于判断服务器数据是否有变化）
+function _dataHash(data) {
+  try { return JSON.stringify(data); } catch(e) { return ''; }
+}
+
+// 轮询：从服务器拉取最新数据，如果与本地不同则自动更新
+async function syncFromServer() {
+  if (_isSaving) return; // 本地正在保存，跳过
+  try {
+    const response = await fetch(`${API_BASE}/data`);
+    if (!response.ok) return;
+    const data = await response.json();
+    const serverHash = _dataHash(data.stores);
+
+    if (serverHash && serverHash !== _lastSyncHash) {
+      // 数据有变化，更新本地
+      if (data.stores && data.stores.length > 0) {
+        STORES = data.stores;
+        localStorage.setItem('storeData', JSON.stringify(STORES));
+      }
+      if (data.basicFields && data.basicFields.length > 0) {
+        BASIC_FIELDS = data.basicFields;
+      }
+      if (data.storePhases && data.storePhases.length > 0) {
+        PHASES = data.storePhases;
+        ALL_STEPS = [].concat.apply([], PHASES.map(p => p.steps.map(s => ({step:s.name, phase:p, requireDate:s.requireDate}))));
+      }
+      _lastSyncHash = serverHash;
+
+      // 重新渲染页面
+      if (typeof render === 'function') render();
+      if (typeof renderOverview === 'function') renderOverview();
+      if (typeof renderDetail === 'function') renderDetail();
+      if (typeof updateStats === 'function') updateStats();
+      console.log('数据已从服务器同步更新');
+    }
+  } catch (e) {
+    // 静默失败，不影响用户操作
+  }
+}
+
+// 启动轮询
+function startSyncPolling() {
+  // 初始化 hash
+  _lastSyncHash = _dataHash(STORES);
+  // 启动定时器
+  if (_syncTimer) clearInterval(_syncTimer);
+  _syncTimer = setInterval(syncFromServer, SYNC_INTERVAL);
+  console.log('多设备同步已启动，每' + SYNC_INTERVAL/1000 + '秒检查一次');
+}
+
+// 停止轮询（登出时调用）
+function stopSyncPolling() {
+  if (_syncTimer) {
+    clearInterval(_syncTimer);
+    _syncTimer = null;
+  }
+}
+
+// 包装保存函数，保存期间暂停轮询（避免覆盖自己刚保存的数据）
+const _origSaveToServer = saveStoresToServer;
+saveStoresToServer = async function() {
+  _isSaving = true;
+  try {
+    const result = await _origSaveToServer();
+    // 保存成功后更新本地 hash，避免轮询把自己刚存的当成"远程更新"
+    if (result) {
+      _lastSyncHash = _dataHash(STORES);
+    }
+    return result;
+  } finally {
+    _isSaving = false;
+  }
+};
+
+
 // ── 进度计算 ──────────────────────────────────────────────────────────────────
 function calcProgress(store) {
   let lastDoneIdx = -1;
@@ -3859,8 +3941,9 @@ async function toggleNode(storeIdx, step, event) {
         render();
       }
     } else {
-      // 获取最小日期限制
-      const minDate = getMinDateForStep(store, step);
+      // 获取最小日期限制（"门店已验收"和"已正式开业"不限制最小日期，可随意选择）
+      const noMinDateSteps = ['门店已验收', '已正式开业'];
+      const minDate = noMinDateSteps.includes(step) ? null : getMinDateForStep(store, step);
       openDatePicker(storeIdx, step, minDate);
     }
     return;
@@ -4315,6 +4398,10 @@ function saveStoreField(storeIdx, fieldName, value) {
   if (fieldName === '最新进展日期') {
     render();
   }
+  
+  // 同步保存到服务器和 localStorage
+  saveStoresToServer();
+  localStorage.setItem('storeData', JSON.stringify(STORES));
   
   // 显示保存成功提示
   showToast(`已保存：${fieldName}`);
@@ -6189,6 +6276,9 @@ async function initPageContent() {
   // 渲染侧边栏菜单
   renderSidebarMenu();
 
+  // 启动多设备数据同步轮询
+  startSyncPolling();
+
   // ── 横向滚动同步：让表头跟随内容区横向滚动 ──
   const ganttWrap = document.getElementById('ganttWrap');
   const headerSticky = document.getElementById('phaseHeaderSticky');
@@ -6458,6 +6548,7 @@ async function handleLogin() {
 function logout() {
   localStorage.removeItem('auth_current_user');
   closeSecuritySettings();
+  stopSyncPolling(); // 停止数据同步轮询
   showLoginModal();
   // 清空登录表单
   document.getElementById('loginUsername').value = '';
