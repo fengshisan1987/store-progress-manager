@@ -8,13 +8,25 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to server
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Copy files to server via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          HOST: 47.114.120.73
+          USERNAME: admin
+          KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SOURCE: "进度管理系统.html"
+          TARGET: "/var/www/store-progress-manager/"
+          strip_components: 0
+
+      - name: Set file permissions
         uses: appleboy/ssh-action@v1.0.3
         with:
           HOST: 47.114.120.73
           USERNAME: admin
           KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /var/www/store-progress-manager
-            git pull origin main
+            chmod 644 /var/www/store-progress-manager/进度管理系统.html
             echo "Deploy completed at $(date)"
