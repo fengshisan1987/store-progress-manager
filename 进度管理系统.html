@@ -2463,6 +2463,8 @@ class MultiSelect {
     this.items = options.items || [];        // [{value, label}]
     this.selected = options.selected || [];   // 已选的 value 数组
     this.onChange = options.onChange || null;  // function(selectedValues)
+    this._boundHandleTrigger = null;
+    this._boundHandleDropdown = null;
     this._render();
     this._bindEvents();
   }
@@ -2502,8 +2504,6 @@ class MultiSelect {
         </div>
       </div>
     `;
-    // 每次渲染后重新绑定事件（因为 innerHTML 会销毁旧 DOM）
-    this._bindEvents();
   }
 
   _bindEvents() {
@@ -2513,7 +2513,15 @@ class MultiSelect {
     const dropdown = container.querySelector('.multi-select-dropdown');
     if (!trigger || !dropdown) return;
 
-    trigger.addEventListener('click', (e) => {
+    // 移除旧的事件监听器，防止重复绑定
+    if (this._boundHandleTrigger) {
+      trigger.removeEventListener('click', this._boundHandleTrigger);
+    }
+    if (this._boundHandleDropdown) {
+      dropdown.removeEventListener('click', this._boundHandleDropdown);
+    }
+
+    this._boundHandleTrigger = (e) => {
       e.stopPropagation();
       // 先关闭其他已打开的 MultiSelect
       document.querySelectorAll('.multi-select-dropdown.show').forEach(d => {
@@ -2524,9 +2532,9 @@ class MultiSelect {
       });
       dropdown.classList.toggle('show');
       trigger.classList.toggle('active');
-    });
+    };
 
-    dropdown.addEventListener('click', (e) => {
+    this._boundHandleDropdown = (e) => {
       e.stopPropagation();
       const itemEl = e.target.closest('.multi-select-item');
       if (itemEl) {
@@ -2552,7 +2560,10 @@ class MultiSelect {
         this._updateUI();
         if (this.onChange) this.onChange([...this.selected]);
       }
-    });
+    };
+
+    trigger.addEventListener('click', this._boundHandleTrigger);
+    dropdown.addEventListener('click', this._boundHandleDropdown);
   }
 
   // 只更新选中状态和触发器文字，不重建整个 dropdown DOM（保持下拉框打开）
@@ -2598,11 +2609,13 @@ class MultiSelect {
     this.items = items;
     this.selected = this.selected.filter(v => items.some(i => i.value === v));
     this._render();
+    this._bindEvents();
   }
 
   setSelected(values) {
     this.selected = values ? [...values] : [];
     this._render();
+    this._bindEvents();
   }
 
   getSelected() {
