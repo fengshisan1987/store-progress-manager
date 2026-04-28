@@ -927,11 +927,8 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
 .region-tag { background:#e8f4ff; color:#1677ff; padding:1px 6px; border-radius:3px; font-size:11px; white-space:nowrap; }
 .status-tag { padding:1px 6px; border-radius:3px; font-size:11px; white-space:nowrap; }
 .basic-field-tag { background:#f0f0f0; color:#666; padding:1px 6px; border-radius:3px; font-size:11px; white-space:nowrap; }
-.pending-steps-container { max-height:52px; overflow-y:auto; width:100%; margin-top:2px; }
-.pending-steps-container::-webkit-scrollbar { width:3px; }
-.pending-steps-container::-webkit-scrollbar-thumb { background:#ffd591; border-radius:3px; }
-.pending-steps-container::-webkit-scrollbar-track { background:transparent; }
-.current-step-tag { background:linear-gradient(135deg, #fff7e6 0%, #ffe7ba 100%); color:#d46b08; padding:2px 6px; border-radius:3px; font-size:11px; font-weight:600; white-space:nowrap; display:inline-block; margin:1px 2px 1px 0; border:1px solid #ffa940; box-shadow:0 1px 3px rgba(212,107,8,0.1); }
+.pending-steps-container { display:flex; flex-wrap:wrap; gap:3px; margin-top:2px; }
+.current-step-tag { background:linear-gradient(135deg, #fff7e6 0%, #ffe7ba 100%); color:#d46b08; padding:2px 6px; border-radius:3px; font-size:11px; font-weight:600; white-space:nowrap; display:inline-block; border:1px solid #ffa940; box-shadow:0 1px 3px rgba(212,107,8,0.1); }
 .type-tag { background:#f6ffed; color:#389e0d; padding:1px 6px; border-radius:3px; font-size:11px; white-space:nowrap; }
 .engineer-tag { background:#fff2f0; color:#cf1322; padding:1px 6px; border-radius:3px; font-size:11px; white-space:nowrap; }
 .renovation-tag { background:#fff7e6; color:#d46b08; padding:1px 6px; border-radius:3px; font-size:11px; white-space:nowrap; }
@@ -3863,7 +3860,6 @@ function render() {
             <span class="team-tag">${store['施工队伍名称'] || store['推荐队伍名称'] || '未分配'}</span>
             <span class="manager-tag">${store['姓名'] || '未分配'}</span>
           </div>
-          <div class="store-sub" style="margin-top:2px;">${currentStepTag}</div>
         </div>
         <div class="store-progress">
           <div class="store-progress-nodes">${phaseBlocks}</div>
@@ -3924,6 +3920,10 @@ function render() {
                 </div>
               ` : `<span style="color:#666;font-size:13px;">${store['风险情况备注'] || '无'}</span>`}
             </div>
+          </div>
+          <div class="info-row">
+            <div class="info-title">后续待办</div>
+            ${currentStepTag}
           </div>
         </div>
         <div class="pct-col">
