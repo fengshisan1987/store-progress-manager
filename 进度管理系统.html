@@ -7425,7 +7425,7 @@ function updateDashboardFilters() {
 // 初始化看板区域筛选多选框
 function initDashboardRegionFilters() {
   const regions = [...new Set(STORES.map(s => s['区域']).filter(Boolean))].sort();
-  const statusOptions = ['选址中', '设计中', '施工前准备中', '施工中', '整改中', '待开业'];
+  const statusOptions = ['选址中', '设计中', '施工前准备中', '施工中', '整改中', '待开业', '已完成'];
 
   const regionItems = regions.map(r => ({ value: r, label: r }));
   const statusItems = statusOptions.map(s => ({ value: s, label: s }));
