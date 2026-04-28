@@ -3031,13 +3031,17 @@ saveStoresToServer = async function() {
 
 // ── 进度计算 ──────────────────────────────────────────────────────────────────
 function calcProgress(store) {
+  // 统计实际已打钩节点数（有数据的格子）
+  let done = 0;
   let lastDoneIdx = -1;
   ALL_STEPS.forEach((item, i) => {
-    if (store[item.step]) lastDoneIdx = i;
+    if (store[item.step]) {
+      done++;
+      lastDoneIdx = i;
+    }
   });
-  const done = lastDoneIdx + 1;
   const pct  = Math.round(done / ALL_STEPS.length * 100);
-  // currentStep 改为"整排节点的第一个空白节点"（没有任何点击的节点）
+  // currentStep 为整排节点的第一个空白节点
   const firstEmptyIdx = ALL_STEPS.findIndex(item => !store[item.step]);
   const currentStep = firstEmptyIdx >= 0 ? ALL_STEPS[firstEmptyIdx].step : null;
   const lastDoneStep = lastDoneIdx >= 0 ? ALL_STEPS[lastDoneIdx].step : null;
