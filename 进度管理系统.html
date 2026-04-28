@@ -927,7 +927,11 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
 .region-tag { background:#e8f4ff; color:#1677ff; padding:1px 6px; border-radius:3px; font-size:11px; white-space:nowrap; }
 .status-tag { padding:1px 6px; border-radius:3px; font-size:11px; white-space:nowrap; }
 .basic-field-tag { background:#f0f0f0; color:#666; padding:1px 6px; border-radius:3px; font-size:11px; white-space:nowrap; }
-.current-step-tag { background:linear-gradient(135deg, #fff7e6 0%, #ffe7ba 100%); color:#d46b08; padding:3px 8px; border-radius:4px; font-size:12px; font-weight:600; white-space:normal; word-break:break-all; max-width:100%; display:inline-block; border:1px solid #ffa940; box-shadow:0 2px 4px rgba(212,107,8,0.15); }
+.pending-steps-container { max-height:52px; overflow-y:auto; width:100%; margin-top:2px; }
+.pending-steps-container::-webkit-scrollbar { width:3px; }
+.pending-steps-container::-webkit-scrollbar-thumb { background:#ffd591; border-radius:3px; }
+.pending-steps-container::-webkit-scrollbar-track { background:transparent; }
+.current-step-tag { background:linear-gradient(135deg, #fff7e6 0%, #ffe7ba 100%); color:#d46b08; padding:2px 6px; border-radius:3px; font-size:11px; font-weight:600; white-space:nowrap; display:inline-block; margin:1px 2px 1px 0; border:1px solid #ffa940; box-shadow:0 1px 3px rgba(212,107,8,0.1); }
 .type-tag { background:#f6ffed; color:#389e0d; padding:1px 6px; border-radius:3px; font-size:11px; white-space:nowrap; }
 .engineer-tag { background:#fff2f0; color:#cf1322; padding:1px 6px; border-radius:3px; font-size:11px; white-space:nowrap; }
 .renovation-tag { background:#fff7e6; color:#d46b08; padding:1px 6px; border-radius:3px; font-size:11px; white-space:nowrap; }
@@ -3802,8 +3806,17 @@ function render() {
     })();
     const rectificationDaysCls = isRectificationDone ? 'info-item completed' : (rectificationDaysOverdue ? 'info-item overdue' : 'info-item');
     
-    // 获取蓝色⚡节点名称（下一个待做节点）
-    const currentStepTag = prog.currentStep ? `<span class="current-step-tag" title="当前进度: ${prog.currentStep}">后续待办：${prog.currentStep}</span>` : '';
+    // 获取每个阶段第一个未完成的节点作为后续待办
+    const pendingSteps = [];
+    PHASES.forEach(phase => {
+      const firstEmpty = phase.steps.find(step => !store[step.name]);
+      if (firstEmpty) {
+        pendingSteps.push({ phaseName: phase.name, stepName: firstEmpty.name });
+      }
+    });
+    const currentStepTag = pendingSteps.length > 0
+      ? `<div class="pending-steps-container">${pendingSteps.map(p => `<span class="current-step-tag" title="${p.phaseName}：${p.stepName}">${p.phaseName}：${p.stepName}</span>`).join('')}</div>`
+      : '';
     
     // 判断最新进展日期是否为今天（只有选了今天才不高亮，没选或选非今天都高亮）
     let progressDate = store['最新进展日期'];
