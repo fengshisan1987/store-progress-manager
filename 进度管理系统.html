@@ -7515,27 +7515,26 @@ function calculatePhaseCycle(store, phaseName) {
   const phase = PHASES.find(p => p.name === actualPhaseName);
   if (!phase || phase.steps.length === 0) return null;
   
-  // 获取阶段内所有设置了日期的节点值
-  const dates = [];
-  phase.steps.forEach(step => {
+  // 找阶段内第一个设置了日期的节点（按顺序）
+  let firstDate = null;
+  let lastDate = null;
+  
+  for (const step of phase.steps) {
     const value = store[step.name];
     if (value && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
-      dates.push(new Date(value));
+      if (!firstDate) {
+        firstDate = new Date(value);
+      }
+      lastDate = new Date(value);
     }
-  });
+  }
   
-  if (dates.length === 0) return null;
-  
-  // 按时间排序
-  dates.sort((a, b) => a - b);
+  if (!firstDate || !lastDate) return null;
   
   // 计算从第一个节点到最后一个节点的天数
-  const firstDate = dates[0];
-  const lastDate = dates[dates.length - 1];
   const diffTime = lastDate - firstDate;
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // 包含首尾两天
   
-  // 如果只有一个日期，返回1天（当天完成）
   return diffDays >= 1 ? diffDays : 1;
 }
 
