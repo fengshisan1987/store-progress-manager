@@ -4046,14 +4046,9 @@ async function confirmStopWorkDialog() {
       return;
     }
     
-    // 保存停工天数到门店数据
-    if (days === 0) {
-      delete STORES[_stopWorkStoreIdx]['停工天数'];
-      delete STORES[_stopWorkStoreIdx]['门店是否有停工情况'];
-    } else {
-      STORES[_stopWorkStoreIdx]['停工天数'] = days;
-      STORES[_stopWorkStoreIdx]['门店是否有停工情况'] = '已完成';
-    }
+    // 保存停工天数到门店数据（0天也表示已确认，节点标记为完成）
+    STORES[_stopWorkStoreIdx]['停工天数'] = days;
+    STORES[_stopWorkStoreIdx]['门店是否有停工情况'] = '已完成';
     
     await saveStores();
     render();
