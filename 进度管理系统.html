@@ -4260,9 +4260,8 @@ async function toggleNode(storeIdx, step, event) {
         render();
       }
     } else {
-      // 获取最小日期限制（"门店已验收"、"已正式开业"和"整改已完成"不限制最小日期，可随意选择）
-      const noMinDateSteps = ['门店已验收', '已正式开业', '整改已完成'];
-      const minDate = noMinDateSteps.includes(step) ? null : getMinDateForStep(store, step);
+      // 所有日期节点均不限制最小日期，可随意选择
+      const minDate = null;
       openDatePicker(storeIdx, step, minDate);
     }
     return;
