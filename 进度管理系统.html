@@ -7515,7 +7515,25 @@ function calculatePhaseCycle(store, phaseName) {
   const phase = PHASES.find(p => p.name === actualPhaseName);
   if (!phase || phase.steps.length === 0) return null;
   
-  // 找阶段内第一个设置了日期的节点（按顺序）
+  // 施工阶段特殊处理：固定取"工程已进场"和"门店已验收"两个节点
+  if (actualPhaseName === '施工阶段') {
+    const startValue = store['工程已进场'];
+    const endValue = store['门店已验收'];
+    
+    // 门店已验收必须填写日期才计入统计
+    if (!endValue || !/^\d{4}-\d{2}-\d{2}$/.test(endValue)) return null;
+    
+    const startDate = startValue && /^\d{4}-\d{2}-\d{2}$/.test(startValue) ? new Date(startValue) : null;
+    const endDate = new Date(endValue);
+    
+    if (!startDate) return null;
+    
+    const diffTime = endDate - startDate;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    return diffDays >= 1 ? diffDays : 1;
+  }
+  
+  // 其他阶段：找阶段内第一个和最后一个设置了日期的节点（按顺序）
   let firstDate = null;
   let lastDate = null;
   
