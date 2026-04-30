@@ -4231,8 +4231,20 @@ async function toggleNode(storeIdx, step, event) {
     // 用户点击"是"，继续执行后续操作
   }
   
-  // 如果是"门店是否有停工情况"节点，弹出停工天数输入对话框
+  // 如果是"门店是否有停工情况"节点
   if (step === '门店是否有停工情况') {
+    // 如果已完成，询问是否撤销
+    if (currentVal === '已完成') {
+      if (confirm('该节点已完成（停工' + (store['停工天数'] || 0) + '天），是否撤销？')) {
+        delete store[step];
+        delete store['停工天数'];
+        await saveStores();
+        checkAndCompleteStore(storeIdx);
+        render();
+      }
+      return;
+    }
+    // 未完成，弹出停工天数输入对话框
     openStopWorkDialog(storeIdx);
     return;
   }
