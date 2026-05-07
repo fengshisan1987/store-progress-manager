@@ -2270,6 +2270,17 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
         <!-- 动态填充日历 -->
       </div>
     </div>
+
+    <!-- 预估验收门店时间看板 -->
+    <div class="opening-calendar-section-wrapper collapsible-section" style="margin-top:20px;">
+      <div class="collapsible-header" style="display:flex;align-items:center;gap:15px;margin-bottom:0;background:linear-gradient(135deg, #f0f5ff 0%, #d6e4ff 100%);border-radius:8px;border-left:4px solid #2f54eb;padding:0 16px 0 0;cursor:pointer;" onclick="toggleSection(this)">
+        <div class="stats-section-title" style="margin:0;background:transparent;border:none;flex:1;padding:12px 0 12px 16px;pointer-events:none;color:#1d39c4;"><span class="collapse-icon">▶</span> 📋 预估验收门店时间</div>
+        <div style="font-size:12px;color:#666;padding:10px 0;flex:0 0 auto;pointer-events:none;">展示所有有预估验收日期的月份</div>
+      </div>
+      <div id="acceptanceCalendarInDashboard" class="collapsible-content collapsed" style="padding:15px 0;">
+        <!-- 动态填充日历 -->
+      </div>
+    </div>
   </div>
 </div>
 
@@ -3663,6 +3674,13 @@ function updateStats() {
   if (openingCalendarEl) {
     openingCalendarEl.innerHTML = generateOpeningCalendarWidget();
     initOpeningCalendarMultiSelects();
+  }
+
+  // 预估验收门店时间看板
+  const acceptanceCalendarEl = document.getElementById('acceptanceCalendarInDashboard');
+  if (acceptanceCalendarEl) {
+    acceptanceCalendarEl.innerHTML = generateAcceptanceCalendarWidget();
+    initAcceptanceCalendarMultiSelects();
   }
 }
 
@@ -8279,6 +8297,14 @@ let _openingCalendarFilters = {
   type: []     // 门店类型筛选（多选）
 };
 
+// 预估验收日历相关变量
+let _acceptanceCalendarCurrentMonth = new Date();
+
+let _acceptanceCalendarFilters = {
+  region: [],
+  type: []
+};
+
 // 预估开业日历的筛选选项静态缓存
 let allRegions_static = null;
 let allTypes_static = null;
@@ -8573,6 +8599,300 @@ function initOpeningCalendarMultiSelects() {
       items: types.map(t => ({ value: t, label: t })),
       selected: _openingCalendarFilters.type || [],
       onChange: (vals) => setOpeningCalendarFilter('type', vals)
+    });
+  }
+}
+
+// ========== 预估验收门店时间看板函数 ==========
+
+let allAcceptanceRegions_static = null;
+let allAcceptanceTypes_static = null;
+
+function changeAcceptanceCalendarMonth(delta) {
+  _acceptanceCalendarCurrentMonth.setMonth(_acceptanceCalendarCurrentMonth.getMonth() + delta * 3);
+  const acceptanceCalendarEl = document.getElementById('acceptanceCalendarInDashboard');
+  if (acceptanceCalendarEl) {
+    acceptanceCalendarEl.innerHTML = generateAcceptanceCalendarWidget();
+    initAcceptanceCalendarMultiSelects();
+  }
+}
+
+function setAcceptanceCalendarFilter(filterType, selectedValues) {
+  _acceptanceCalendarFilters[filterType] = selectedValues;
+  const acceptanceCalendarEl = document.getElementById('acceptanceCalendarInDashboard');
+  if (acceptanceCalendarEl) {
+    acceptanceCalendarEl.innerHTML = generateAcceptanceCalendarWidget();
+    initAcceptanceCalendarMultiSelects();
+  }
+}
+
+function resetAcceptanceCalendarFilters() {
+  _acceptanceCalendarFilters = { region: [], type: [] };
+  const acceptanceCalendarEl = document.getElementById('acceptanceCalendarInDashboard');
+  if (acceptanceCalendarEl) {
+    acceptanceCalendarEl.innerHTML = generateAcceptanceCalendarWidget();
+    initAcceptanceCalendarMultiSelects();
+  }
+}
+
+// 生成预估验收门店列表组件（用于筹建进度概述看板）
+function generateAcceptanceCalendarWidget() {
+  // 收集所有有预估验收日期的门店，按年月分组
+  const storesByMonth = {};
+  
+  // 收集所有区域和门店类型用于筛选选项
+  const allRegions = new Set();
+  const allTypes = new Set();
+  
+  // 保存到静态变量供 MultiSelect 初始化使用
+  allAcceptanceRegions_static = allRegions;
+  allAcceptanceTypes_static = allTypes;
+  
+  STORES.forEach(store => {
+    // 默认排除非筹建中状态（已完成、已弃店）
+    if (EXCLUDED_STORE_STATUSES.includes(store['门店状态'])) return;
+
+    const acceptanceDate = store['预估验收日期'];
+    if (acceptanceDate) {
+      const date = new Date(acceptanceDate);
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const monthKey = `${year}-${month}`;
+      
+      // 收集筛选选项
+      if (store['区域']) allRegions.add(store['区域']);
+      if (store['门店类型']) allTypes.add(store['门店类型']);
+      
+      // 应用筛选条件（多选）
+      const matchRegion = matchMultiValue(_acceptanceCalendarFilters.region, store['区域']);
+      const matchType = matchMultiValue(_acceptanceCalendarFilters.type, store['门店类型']);
+      
+      if (!matchRegion || !matchType) return;
+      
+      if (!storesByMonth[monthKey]) {
+        storesByMonth[monthKey] = {
+          year: year,
+          month: month,
+          storesByDay: {}
+        };
+      }
+      
+      const day = date.getDate();
+      if (!storesByMonth[monthKey].storesByDay[day]) {
+        storesByMonth[monthKey].storesByDay[day] = [];
+      }
+      storesByMonth[monthKey].storesByDay[day].push({
+        name: store['门店'],
+        region: store['区域'],
+        type: store['门店类型'] || '未设置',
+        date: acceptanceDate
+      });
+    }
+  });
+  
+  // 获取当前显示的月份范围（3个月）
+  const baseYear = _acceptanceCalendarCurrentMonth.getFullYear();
+  const baseMonth = _acceptanceCalendarCurrentMonth.getMonth();
+  
+  // 计算3个月的范围
+  const monthsToShow = [];
+  for (let i = 0; i < 3; i++) {
+    const d = new Date(baseYear, baseMonth + i, 1);
+    monthsToShow.push({
+      year: d.getFullYear(),
+      month: d.getMonth(),
+      key: `${d.getFullYear()}-${d.getMonth()}`
+    });
+  }
+  
+  // 导航显示的月份范围
+  const startMonthStr = `${monthsToShow[0].year}年${monthsToShow[0].month + 1}月`;
+  const endMonthStr = `${monthsToShow[2].year}年${monthsToShow[2].month + 1}月`;
+  const monthRangeStr = startMonthStr === endMonthStr ? startMonthStr : `${startMonthStr} - ${endMonthStr}`;
+  
+  const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+  const today = new Date();
+  
+  // 合并3个月的门店数据
+  let allDaysHTML = '';
+  let totalStores = 0;
+  let totalDirectStores = 0;
+  let totalFranchiseStores = 0;
+  let hasAnyStore = false;
+  
+  monthsToShow.forEach(({ year, month, key }) => {
+    const monthData = storesByMonth[key];
+    const storesByDay = monthData ? monthData.storesByDay : {};
+    
+    // 统计
+    const monthTotal = Object.values(storesByDay).reduce((sum, stores) => sum + stores.length, 0);
+    const monthDirect = Object.values(storesByDay).flat().filter(s => s.type === '直营店').length;
+    const monthFranchise = Object.values(storesByDay).flat().filter(s => s.type === '加盟店').length;
+    totalStores += monthTotal;
+    totalDirectStores += monthDirect;
+    totalFranchiseStores += monthFranchise;
+    
+    if (monthTotal > 0) {
+      hasAnyStore = true;
+      
+      // 生成该月的月份标题（带门店数量详情）
+      const monthTitle = `${year}年${month + 1}月（${monthTotal}家，直营店${monthDirect}家、加盟店${monthFranchise}家）`;
+      allDaysHTML += `<div class="opening-store-list-month-title">${monthTitle}</div>`;
+      
+      // 生成有门店的日期列表（按日期排序）
+      const daysWithStores = Object.keys(storesByDay)
+        .map(day => parseInt(day))
+        .sort((a, b) => a - b);
+      
+      allDaysHTML += `<div class="opening-store-list-days">`;
+      daysWithStores.forEach(day => {
+        const stores = storesByDay[day];
+        const date = new Date(year, month, day);
+        const weekday = weekdays[date.getDay()];
+        const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
+        const todayClass = isToday ? 'today' : '';
+        
+        allDaysHTML += `
+          <div class="opening-store-list-day ${todayClass}">
+            <div class="opening-store-list-items">
+                ${(() => {
+                // 分离直营店和加盟店
+                const directStores = stores.filter(s => s.type === '直营店');
+                const franchiseStores = stores.filter(s => s.type === '加盟店');
+                
+                // 生成单行门店HTML
+                const generateStoreItemHTML = (s) => {
+                  const isDirect = s.type === '直营店';
+                  const typeClass = isDirect ? 'direct' : 'franchise';
+                  const typeBadge = isDirect ? '直营' : '加盟';
+                  // 根据区域生成对应的class
+                  const region = s.region || '';
+                  const regionClass = region ? `region-${region}` : 'region-default';
+                  return `
+                    <div class="opening-store-list-item-store-section">
+                      <span class="opening-store-list-item-badge ${typeClass}">${typeBadge}</span>
+                      <span class="opening-store-list-item-name">${s.name}</span>
+                      <span class="opening-store-list-item-region ${regionClass}">${region}</span>
+                    </div>
+                  `;
+                };
+                
+                let storesHtml = '';
+                
+                // 先排直营店（一行）
+                if (directStores.length > 0) {
+                  storesHtml += `<div class="opening-store-list-store-row">`;
+                  directStores.forEach(s => {
+                    storesHtml += generateStoreItemHTML(s);
+                  });
+                  storesHtml += `</div>`;
+                }
+                
+                // 再排加盟店（另起一行）
+                if (franchiseStores.length > 0) {
+                  storesHtml += `<div class="opening-store-list-store-row">`;
+                  franchiseStores.forEach(s => {
+                    storesHtml += generateStoreItemHTML(s);
+                  });
+                  storesHtml += `</div>`;
+                }
+                
+                return `
+                  <div class="opening-store-list-day-content">
+                    <div class="opening-store-list-day-date-col">
+                      <div class="opening-store-list-item-date-section">
+                        <span class="opening-store-list-item-date">${day}日</span>
+                        <span class="opening-store-list-item-weekday">星期${weekday}</span>
+                        <span class="opening-store-list-item-daycount">${stores.length}家</span>
+                      </div>
+                    </div>
+                    <div class="opening-store-list-day-stores-col">
+                      ${storesHtml}
+                    </div>
+                  </div>
+                `;
+              })()}
+            </div>
+          </div>
+        `;
+      });
+      allDaysHTML += `</div>`;
+    }
+  });
+  
+  // 如果没有门店
+  if (!hasAnyStore) {
+    allDaysHTML = `
+      <div class="opening-store-list-empty">
+        <div class="opening-store-list-empty-icon">📋</div>
+        <div>这3个月暂无预估验收门店</div>
+        <div style="font-size:12px;color:#999;margin-top:8px;">请尝试调整筛选条件</div>
+      </div>
+    `;
+  }
+  
+  // 生成筛选器HTML（使用多选组件容器）
+  const filterHTML = `
+    <div class="opening-store-list-filters">
+      <div class="opening-store-list-filter-group">
+        <label>区域：</label>
+        <div id="acceptanceCalendarRegionFilter" style="display:inline-block;min-width:100px;"></div>
+      </div>
+      <div class="opening-store-list-filter-group">
+        <label>门店类型：</label>
+        <div id="acceptanceCalendarTypeFilter" style="display:inline-block;min-width:100px;"></div>
+      </div>
+      <button class="opening-store-list-filter-reset" onclick="resetAcceptanceCalendarFilters()">重置筛选</button>
+    </div>
+  `;
+  
+  // 生成导航和统计
+  const navHTML = `
+    <div class="opening-store-list-nav">
+      <button class="opening-store-list-nav-btn" onclick="changeAcceptanceCalendarMonth(-1)">◀ 前3个月</button>
+      <span class="opening-store-list-nav-range">${monthRangeStr}</span>
+      <button class="opening-store-list-nav-btn" onclick="changeAcceptanceCalendarMonth(1)">后3个月 ▶</button>
+    </div>
+  `;
+  
+  const statsHTML = `
+    <div class="opening-store-list-stats">
+      <div class="opening-store-list-stat-card">
+        <div class="stat-value">${totalStores}</div>
+        <div class="stat-label">验收门店</div>
+      </div>
+      <div class="opening-store-list-stat-card">
+        <div class="stat-value" style="color:#1677ff;">${totalDirectStores}</div>
+        <div class="stat-label">直营店</div>
+      </div>
+      <div class="opening-store-list-stat-card">
+        <div class="stat-value" style="color:#faad14;">${totalFranchiseStores}</div>
+        <div class="stat-label">加盟店</div>
+      </div>
+    </div>
+  `;
+  
+  return `${navHTML}${filterHTML}${statsHTML}<div class="opening-store-list-container">${allDaysHTML}</div>`;
+}
+
+function initAcceptanceCalendarMultiSelects() {
+  const regions = Array.from(allAcceptanceRegions_static || []).sort();
+  const types = Array.from(allAcceptanceTypes_static || []).sort();
+  
+  if (document.getElementById('acceptanceCalendarRegionFilter') && regions.length > 0) {
+    new MultiSelect('acceptanceCalendarRegionFilter', {
+      placeholder: '全部区域',
+      items: regions.map(r => ({ value: r, label: r })),
+      selected: _acceptanceCalendarFilters.region || [],
+      onChange: (vals) => setAcceptanceCalendarFilter('region', vals)
+    });
+  }
+  if (document.getElementById('acceptanceCalendarTypeFilter') && types.length > 0) {
+    new MultiSelect('acceptanceCalendarTypeFilter', {
+      placeholder: '全部类型',
+      items: types.map(t => ({ value: t, label: t })),
+      selected: _acceptanceCalendarFilters.type || [],
+      onChange: (vals) => setAcceptanceCalendarFilter('type', vals)
     });
   }
 }
