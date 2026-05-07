@@ -7654,30 +7654,21 @@ function calculateConstructionPreparationCycleData(filters = {}) {
     const hasStatusFilter = filters.storeStatuses && filters.storeStatuses.length > 0;
     if (!hasStatusFilter && EXCLUDED_STORE_STATUSES.includes(store['门店状态'])) return;
 
-    // 时间筛选（基于筹建周期的首尾节点：确认门店测量时间、门店已验收）
-    let hasDateInRange = false;
-    // 使用本地日期字符串比较，避免时区问题
+    // 时间筛选（只看筹建周期结束节点"门店已验收"的日期是否在范围内）
     const startStr = filters.startDate ? filters.startDate : null;
     const endStr = filters.endDate ? filters.endDate : null;
-    
-    // 检查筹建周期的首尾节点日期是否在范围内
-    const valuesToCheck = [store['确认门店测量时间'], store['门店已验收']];
-    valuesToCheck.forEach(value => {
-      if (value && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
-        // 检查日期是否在筛选范围内（使用字符串比较）
-        if (startStr || endStr) {
-          let inRange = true;
-          if (startStr && value < startStr) inRange = false;
-          if (endStr && value > endStr) inRange = false;
-          if (inRange) hasDateInRange = true;
-        } else {
-          hasDateInRange = true;
-        }
+
+    if (startStr || endStr) {
+      const endValue = store['门店已验收'];
+      let inRange = true;
+      if (endValue && /^\d{4}-\d{2}-\d{2}$/.test(endValue)) {
+        if (startStr && endValue < startStr) inRange = false;
+        if (endStr && endValue > endStr) inRange = false;
+      } else {
+        inRange = false; // 结束节点没有日期，直接排除
       }
-    });
-    
-    // 如果有时间筛选条件，但没有日期在范围内，则跳过
-    if ((filters.startDate || filters.endDate) && !hasDateInRange) return;
+      if (!inRange) return;
+    }
     
     // 计算筹建周期
     const cycle = calculateConstructionPreparationCycle(store);
@@ -7748,38 +7739,39 @@ function calculatePhaseCycleData(phaseName, filters = {}) {
     const hasStatusFilter = filters.storeStatuses && filters.storeStatuses.length > 0;
     if (!hasStatusFilter && EXCLUDED_STORE_STATUSES.includes(store['门店状态'])) return;
 
-    // 时间筛选（基于阶段内节点的日期）
+    // 时间筛选（只看阶段结束节点的日期是否在范围内）
     const phase = PHASES.find(p => p.name === actualPhaseName);
     if (!phase) return;
-    
-    let hasDateInRange = false;
-    let latestDate = null;
+
     // 使用本地日期字符串比较，避免时区问题
     const startStr = filters.startDate ? filters.startDate : null;
     const endStr = filters.endDate ? filters.endDate : null;
-    
-    phase.steps.forEach(step => {
-      const value = store[step.name];
-      if (value && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
-        const date = new Date(value);
-        if (!latestDate || date > latestDate) {
-          latestDate = date;
-        }
-        
-        // 检查日期是否在筛选范围内（使用字符串比较）
-        if (startStr || endStr) {
-          let inRange = true;
-          if (startStr && value < startStr) inRange = false;
-          if (endStr && value > endStr) inRange = false;
-          if (inRange) hasDateInRange = true;
-        } else {
-          hasDateInRange = true;
-        }
+
+    if (startStr || endStr) {
+      // 确定该阶段的结束节点字段
+      let endNodeField = '';
+      if (actualPhaseName === '设计阶段') {
+        endNodeField = '施工图已确认';
+      } else if (actualPhaseName === '施工前准备阶段') {
+        endNodeField = '工程进场报备已结束';
+      } else if (actualPhaseName === '施工阶段') {
+        endNodeField = '门店已验收';
+      } else if (actualPhaseName === '筹建阶段') {
+        endNodeField = '门店已验收';
       }
-    });
-    
-    // 如果有时间筛选条件，但没有日期在范围内，则跳过
-    if ((filters.startDate || filters.endDate) && !hasDateInRange) return;
+
+      if (endNodeField) {
+        const endValue = store[endNodeField];
+        let inRange = true;
+        if (endValue && /^\d{4}-\d{2}-\d{2}$/.test(endValue)) {
+          if (startStr && endValue < startStr) inRange = false;
+          if (endStr && endValue > endStr) inRange = false;
+        } else {
+          inRange = false; // 结束节点没有日期，直接排除
+        }
+        if (!inRange) return;
+      }
+    }
     
     // 计算周期
     const cycle = calculatePhaseCycle(store, phaseName);
