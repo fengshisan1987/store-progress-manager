@@ -2676,40 +2676,41 @@ const DEFAULT_PHASES = [
       { name: '设备报价已出具', requireDate: false },
       { name: '设备费用已收取', requireDate: false },
       { name: '设计费、系统使用费、推广费等费用已收取', requireDate: false },
-      { name: '提醒办理执照并开通税务', requireDate: false },
       { name: '工程进场报备已结束', requireDate: true },
     ]
   },
   {
-    name:'各个小事对接', short:'事项对接', cls:'ph-4',
+    name:'各个小事项对接', short:'事项对接', cls:'ph-8',
     color:'#7c3aed',
     steps:[
+      { name: '确认设备是否自采', requireDate: false },
       { name: '开业预期甘特图发出', requireDate: false },
       { name: '后续注意相关事项发出', requireDate: false },
-      { name: '收集身份证及门店手机号', requireDate: false },
+      { name: '收集合同以及门店手机号', requireDate: false },
       { name: '提交美团建店材料', requireDate: false },
-      { name: '门店冰柜数量已完成', requireDate: false },
-      { name: '预估进度', requireDate: false },
+      { name: '门店消杀勘察已完成', requireDate: false },
+      { name: '预约监控', requireDate: false },
       { name: '监控已安装完成', requireDate: false },
       { name: '提醒约食药监老师看现场', requireDate: false },
-      { name: '确认税务开通，发送外票所需材料', requireDate: false },
+      { name: '确认税务开通，发送外卖所需材料', requireDate: false },
     ]
   },
   {
-    name:'施工阶段', short:'施工', cls:'ph-5',
+    name:'施工阶段', short:'施工', cls:'ph-4',
     color:'#d97706',
     steps:[
       { name: '工程已进场', requireDate: true },
+      { name: '工程项目启动会完成以及物料下单', requireDate: false },
+      { name: '确认围挡已安装', requireDate: false },
       { name: '门头报备已完成', requireDate: false },
       { name: '门店灯具已安装', requireDate: false },
       { name: '门店电箱已安装', requireDate: false },
+      { name: '门店空调已安装', requireDate: false },
+      { name: '门店网络已完成', requireDate: false },
       { name: '门店家具已安装', requireDate: false },
       { name: '提醒设备到场需本人签字验收', requireDate: false },
       { name: '门店设备已安装', requireDate: false },
-      { name: '门店空调已安装', requireDate: false },
-      { name: '门店监控已安装', requireDate: false },
       { name: '提醒开业活动报备', requireDate: false },
-      { name: '新提醒约食药监老师看现场', requireDate: false },
       { name: '门店广告物料已安装', requireDate: false },
       { name: '预估验收日期', requireDate: true },
       { name: '门店是否有停工情况', requireDate: false },
@@ -2717,15 +2718,15 @@ const DEFAULT_PHASES = [
     ]
   },
   {
-    name:'人员阶段', short:'人员', cls:'ph-6',
+    name:'人员阶段', short:'人员', cls:'ph-5',
     color:'#059669',
     steps:[
-      { name: '招聘须知已发送', requireDate: false },
+      { name: '人员培训已对接', requireDate: false },
       { name: '人员培训已通过', requireDate: false },
     ]
   },
   {
-    name:'整改阶段', short:'整改', cls:'ph-7',
+    name:'整改阶段', short:'整改', cls:'ph-6',
     color:'#7c3aed',
     steps:[
       { name: '确认整改日期', requireDate: true },
@@ -2733,7 +2734,7 @@ const DEFAULT_PHASES = [
     ]
   },
   {
-    name:'开业阶段', short:'开业', cls:'ph-8',
+    name:'开业阶段', short:'开业', cls:'ph-7',
     color:'#16a34a',
     steps:[
       { name: '首配', requireDate: false },
