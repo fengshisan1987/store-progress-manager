@@ -8652,6 +8652,10 @@ function generateAcceptanceCalendarWidget() {
     // 默认排除非筹建中状态（已完成、已弃店）
     if (EXCLUDED_STORE_STATUSES.includes(store['门店状态'])) return;
 
+    // 如果门店已验收（有日期），则不显示在预估验收看板中
+    const inspectionDoneDate = store['门店已验收'];
+    if (inspectionDoneDate && /^\d{4}-\d{2}-\d{2}$/.test(inspectionDoneDate)) return;
+
     const acceptanceDate = store['预估验收日期'];
     if (acceptanceDate) {
       const date = new Date(acceptanceDate);
