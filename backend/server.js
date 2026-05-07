@@ -42,19 +42,29 @@ function saveAuthData(data) {
 // 初始化数据文件
 function initDataFile() {
     if (!fs.existsSync(DATA_FILE)) {
-        fs.writeFileSync(DATA_FILE, JSON.stringify({ stores: [], basicFields: [] }, null, 2));
+        fs.writeFileSync(DATA_FILE, JSON.stringify({ stores: [], basicFields: [], phases: null }, null, 2));
     }
 }
 
-// 读取数据
-function readData() {
+// 读取数据（兼容旧数据结构）
+function readDataSafe() {
     try {
         initDataFile();
         const content = fs.readFileSync(DATA_FILE, 'utf8');
-        return JSON.parse(content);
+        const data = JSON.parse(content);
+        // 兼容旧数据：如果没有 phases 字段，初始化为 null
+        if (!data.hasOwnProperty('phases')) {
+            data.phases = null;
+        }
+        return data;
     } catch (e) {
-        return { stores: [], basicFields: [] };
+        return { stores: [], basicFields: [], phases: null };
     }
+}
+
+// 读取数据（使用安全读取，兼容旧数据结构）
+function readData() {
+    return readDataSafe();
 }
 
 // 保存数据

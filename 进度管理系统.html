@@ -2749,26 +2749,8 @@ const DEFAULT_PHASES = [
 // 阶段配置版本号（仅用于标记，不再强制重置用户数据）
 const PHASES_VERSION = '2026-04-20-v1';
 
-// 从 localStorage 读取阶段配置
-// 优先使用用户保存的数据，不会强制重置
-let savedPhases = localStorage.getItem('storePhases');
-let PHASES;
-
-if (savedPhases) {
-  // 使用用户保存的阶段配置
-  try {
-    PHASES = JSON.parse(savedPhases);
-  } catch (e) {
-    // 解析失败时使用默认值
-    PHASES = JSON.parse(JSON.stringify(DEFAULT_PHASES));
-    localStorage.setItem('storePhases', JSON.stringify(PHASES));
-  }
-} else {
-  // 首次使用，使用默认值
-  PHASES = JSON.parse(JSON.stringify(DEFAULT_PHASES));
-  localStorage.setItem('storePhases', JSON.stringify(PHASES));
-}
-// 保存当前版本号（用于参考，不用于强制重置）
+// 阶段配置初始化：先用默认值，然后从服务器加载（服务器优先）
+let PHASES = JSON.parse(JSON.stringify(DEFAULT_PHASES));
 localStorage.setItem('storePhasesVersion', PHASES_VERSION);
 
 // 所有步骤扁平列表（使用 concat + map 替代 flatMap 以兼容 iOS Safari）
@@ -2864,12 +2846,25 @@ async function loadStoresFromServer() {
         ALL_STEPS = [].concat.apply([], PHASES.map(p => p.steps.map(s => ({step:s.name, phase:p, requireDate:s.requireDate}))));
         console.log('阶段节点配置已从服务器加载');
       } else {
-        // 服务器数据为空，尝试从 localStorage 回退
+        // 服务器没有节点配置，尝试从 localStorage 回退，并上传到服务器
         const localPhases = localStorage.getItem('storePhases');
         if (localPhases) {
-          PHASES = JSON.parse(localPhases);
-          ALL_STEPS = [].concat.apply([], PHASES.map(p => p.steps.map(s => ({step:s.name, phase:p, requireDate:s.requireDate}))));
-          console.log('阶段节点配置从 localStorage 加载（服务器为空）');
+          try {
+            const parsed = JSON.parse(localPhases);
+            if (parsed && parsed.length > 0) {
+              PHASES = parsed;
+              ALL_STEPS = [].concat.apply([], PHASES.map(p => p.steps.map(s => ({step:s.name, phase:p, requireDate:s.requireDate}))));
+              console.log('阶段节点配置从 localStorage 加载，准备上传到服务器...');
+              // 异步上传到服务器，不阻塞页面加载
+              saveStoresToServer().catch(e => console.log('上传节点配置到服务器失败:', e));
+            }
+          } catch (e) {
+            console.log('localStorage 节点配置解析失败，使用默认值');
+          }
+        } else {
+          // localStorage 也没有，用默认值并上传到服务器
+          console.log('使用默认节点配置，准备上传到服务器...');
+          saveStoresToServer().catch(e => console.log('上传默认节点配置到服务器失败:', e));
         }
       }
       
@@ -2968,7 +2963,9 @@ async function syncFromServer() {
     const data = await response.json();
     const serverHash = _dataHash(data.stores);
 
-    if (serverHash && serverHash !== _lastSyncHash) {
+    // 计算完整数据指纹（包含门店、字段、节点配置）
+    const fullServerHash = _dataHash({ stores: data.stores, basicFields: data.basicFields, storePhases: data.storePhases });
+    if (fullServerHash && fullServerHash !== _lastSyncHash) {
       // 数据有变化，更新本地
       if (data.stores && data.stores.length > 0) {
         STORES = data.stores;
@@ -2976,12 +2973,14 @@ async function syncFromServer() {
       }
       if (data.basicFields && data.basicFields.length > 0) {
         BASIC_FIELDS = data.basicFields;
+        localStorage.setItem('basicFields', JSON.stringify(BASIC_FIELDS));
       }
       if (data.storePhases && data.storePhases.length > 0) {
         PHASES = data.storePhases;
         ALL_STEPS = [].concat.apply([], PHASES.map(p => p.steps.map(s => ({step:s.name, phase:p, requireDate:s.requireDate}))));
+        localStorage.setItem('storePhases', JSON.stringify(PHASES));
       }
-      _lastSyncHash = serverHash;
+      _lastSyncHash = fullServerHash;
 
       // 重新渲染页面
       if (typeof render === 'function') render();
@@ -2997,8 +2996,8 @@ async function syncFromServer() {
 
 // 启动轮询
 function startSyncPolling() {
-  // 初始化 hash
-  _lastSyncHash = _dataHash(STORES);
+  // 初始化 hash（包含门店、字段、节点配置）
+  _lastSyncHash = _dataHash({ stores: STORES, basicFields: BASIC_FIELDS, storePhases: PHASES });
   // 启动定时器
   if (_syncTimer) clearInterval(_syncTimer);
   _syncTimer = setInterval(syncFromServer, SYNC_INTERVAL);
@@ -4653,18 +4652,29 @@ async function saveNodeChanges() {
   alert('节点配置已保存，所有门店已同步更新！');
 }
 
-// 导出进度节点配置
+// 导出进度节点配置（JSON 备份 + JS 代码两种格式）
 function exportNodeConfig() {
-  const config = {
+  // 生成可直接替换代码的 JS 格式
+  function phaseToJs(phase) {
+    const stepsJs = phase.steps.map(s => {
+      let props = `name: '${s.name}', requireDate: ${s.requireDate}`;
+      if (s.requireConfirm) props += `, requireConfirm: true, confirmText: '${s.confirmText || ''}'`;
+      return `      { ${props} }`;
+    }).join(',\n');
+    return `  {\n    name:'${phase.name}', short:'${phase.short}', cls:'${phase.cls}',\n    color:'${phase.color}',\n    steps:[\n${stepsJs}\n    ]\n  }`;
+  }
+  const jsCode = `const DEFAULT_PHASES = [\n${_editingPhases.map(phaseToJs).join(',\n')}\n];`;
+
+  // JSON 格式用于备份
+  const jsonStr = JSON.stringify({
     phases: _editingPhases,
     exportTime: new Date().toISOString(),
     version: '1.0'
-  };
+  }, null, 2);
 
-  const jsonStr = JSON.stringify(config, null, 2);
+  // 下载 JSON 文件
   const blob = new Blob([jsonStr], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
-
   const a = document.createElement('a');
   a.href = url;
   a.download = `node-config-${new Date().toISOString().split('T')[0]}.json`;
@@ -4673,11 +4683,11 @@ function exportNodeConfig() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 
-  // 同时复制到剪贴板
-  navigator.clipboard.writeText(jsonStr).then(() => {
-    alert('配置已导出并复制到剪贴板！\n\n你可以：\n1. 下载 JSON 文件\n2. 直接粘贴发送给我更新代码');
+  // 复制 JS 代码到剪贴板（方便直接替换代码）
+  navigator.clipboard.writeText(jsCode).then(() => {
+    alert('配置已导出！\n\n1. JSON 文件已下载（备份用）\n2. JS 代码已复制到剪贴板（可直接替换代码中的 DEFAULT_PHASES）\n\n你可以把 JS 代码粘贴给我，我来更新本地代码。');
   }).catch(() => {
-    alert('配置已导出！\n\nJSON 文件已下载，请发送给我更新代码。');
+    alert('配置已导出！\n\nJSON 文件已下载。由于浏览器限制无法自动复制，请手动选中并复制代码中的 DEFAULT_PHASES 部分。');
   });
 }
 
