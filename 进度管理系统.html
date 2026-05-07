@@ -3076,10 +3076,21 @@ function pctColor(pct) {
 
 // ── 计算筹建天数 ───────────────────────────────────────────────────────────────
 function calcBuildDays(store) {
-  // 查找第一个需要日期且已设置日期的节点
+  // 从"确认门店测量时间"开始查找第一个已设置日期的节点（跳过选址阶段）
   let startDateStr = null;
+  let foundMeasureTime = false; // 标记是否已遇到"确认门店测量时间"节点
+
   for (const phase of PHASES) {
     for (const stepObj of phase.steps) {
+      // 跳过"确认门店测量时间"之前的所有节点
+      if (!foundMeasureTime) {
+        if (stepObj.name === '确认门店测量时间') {
+          foundMeasureTime = true;
+        } else {
+          continue; // 跳过选址阶段的节点
+        }
+      }
+
       if (stepObj.requireDate) {
         const val = store[stepObj.name];
         if (val && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
@@ -3090,7 +3101,7 @@ function calcBuildDays(store) {
     }
     if (startDateStr) break;
   }
-  
+
   if (!startDateStr) {
     return null; // 未设置开始日期
   }
