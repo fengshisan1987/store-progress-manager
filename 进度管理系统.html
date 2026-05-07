@@ -3778,7 +3778,8 @@ function render() {
     const constructionDaysOverdue = !isConstructionDone && constructionDays !== null && constructionDays > 18;
     const constructionDaysText = (() => {
       if (isConstructionDone) {
-        return '门店施工已完成';
+        const actualDays = calcConstructionActualDays(store);
+        return actualDays ? `门店施工已完成（实际完成天数${actualDays}天）` : '门店施工已完成';
       }
       if (constructionDays === null) {
         return '施工中：未设置日期';
