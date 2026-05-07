@@ -7360,14 +7360,15 @@ const EXCLUDED_STORE_STATUSES = ['已完成', '已弃店'];
 function calculateRegionData(filters = {}) {
   const stats = {};
   STORES.forEach(store => {
-    // 默认排除非筹建中状态（已完成、已弃店）
-    if (EXCLUDED_STORE_STATUSES.includes(store['门店状态'])) return;
-
     // 区域筛选（多选）
     if (!matchMultiValue(filters.regions, store['区域'])) return;
 
     // 门店状态筛选（多选）
     if (!matchMultiValue(filters.storeStatuses, store['门店状态'])) return;
+    
+    // 默认排除非筹建中状态（已完成、已弃店），但如果用户手动选择了状态则以用户选择为准
+    const hasStatusFilter = filters.storeStatuses && filters.storeStatuses.length > 0;
+    if (!hasStatusFilter && EXCLUDED_STORE_STATUSES.includes(store['门店状态'])) return;
 
     // 时间筛选（基于所有阶段的日期）
     // 只有当用户明确设置了日期范围，且门店有日期字段时，才进行筛选
@@ -7625,14 +7626,15 @@ function calculateConstructionPreparationCycleData(filters = {}) {
   const storeDetails = [];
 
   STORES.forEach(store => {
-    // 默认排除非筹建中状态（已完成、已弃店）
-    if (EXCLUDED_STORE_STATUSES.includes(store['门店状态'])) return;
-
     // 区域筛选（多选）
     if (!matchMultiValue(filters.regions, store['区域'])) return;
 
     // 门店状态筛选（多选）
     if (!matchMultiValue(filters.storeStatuses, store['门店状态'])) return;
+    
+    // 默认排除非筹建中状态（已完成、已弃店），但如果用户手动选择了状态则以用户选择为准
+    const hasStatusFilter = filters.storeStatuses && filters.storeStatuses.length > 0;
+    if (!hasStatusFilter && EXCLUDED_STORE_STATUSES.includes(store['门店状态'])) return;
 
     // 时间筛选（基于筹建周期的首尾节点：确认门店测量时间、门店已验收）
     let hasDateInRange = false;
@@ -7716,14 +7718,15 @@ function calculatePhaseCycleData(phaseName, filters = {}) {
   }
   
   STORES.forEach(store => {
-    // 默认排除非筹建中状态（已完成、已弃店）
-    if (EXCLUDED_STORE_STATUSES.includes(store['门店状态'])) return;
-
     // 区域筛选（多选）
     if (!matchMultiValue(filters.regions, store['区域'])) return;
 
     // 门店状态筛选（多选）
     if (!matchMultiValue(filters.storeStatuses, store['门店状态'])) return;
+    
+    // 默认排除非筹建中状态（已完成、已弃店），但如果用户手动选择了状态则以用户选择为准
+    const hasStatusFilter = filters.storeStatuses && filters.storeStatuses.length > 0;
+    if (!hasStatusFilter && EXCLUDED_STORE_STATUSES.includes(store['门店状态'])) return;
 
     // 时间筛选（基于阶段内节点的日期）
     const phase = PHASES.find(p => p.name === actualPhaseName);
@@ -8118,14 +8121,15 @@ function generateStoreTypeWidgetForDashboard(filters = {}) {
   // 根据门店类型字段判断
   const stats = { '直营店': 0, '加盟店': 0 };
   STORES.forEach(store => {
-    // 默认排除非筹建中状态（已完成、已弃店）
-    if (EXCLUDED_STORE_STATUSES.includes(store['门店状态'])) return;
-
     // 区域筛选（多选）
     if (!matchMultiValue(filters.regions, store['区域'])) return;
 
     // 门店状态筛选（多选）
     if (!matchMultiValue(filters.storeStatuses, store['门店状态'])) return;
+    
+    // 默认排除非筹建中状态（已完成、已弃店），但如果用户手动选择了状态则以用户选择为准
+    const hasStatusFilter = filters.storeStatuses && filters.storeStatuses.length > 0;
+    if (!hasStatusFilter && EXCLUDED_STORE_STATUSES.includes(store['门店状态'])) return;
 
     // 时间筛选（基于所有阶段的日期）
     if (filters.startDate || filters.endDate) {
