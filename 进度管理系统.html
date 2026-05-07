@@ -8748,74 +8748,38 @@ function generateAcceptanceCalendarWidget() {
         .map(day => parseInt(day))
         .sort((a, b) => a - b);
       
-      allDaysHTML += `<div class="opening-store-list-days">`;
+      allDaysHTML += `<div class="opening-store-list-days" style="gap:6px;">`;
       daysWithStores.forEach(day => {
         const stores = storesByDay[day];
         const date = new Date(year, month, day);
         const weekday = weekdays[date.getDay()];
         const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
-        const todayClass = isToday ? 'today' : '';
+        const todayBorder = isToday ? 'border-left-color:#ff4d4f;background:linear-gradient(135deg,#fff 0%,#fff1f0 100%);' : '';
+        
+        // 生成紧凑的门店chips（不分直营/加盟行，全部混排）
+        const storeChips = stores.map(s => {
+          const isDirect = s.type === '直营店';
+          const typeBadge = isDirect ? '直营' : '加盟';
+          const badgeBg = isDirect ? '#1677ff' : '#fa8c16';
+          const region = s.region || '';
+          return `
+            <div style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;background:#f8f9fa;border-radius:4px;border:1px solid #e8e8e8;font-size:12px;white-space:nowrap;">
+              <span style="font-size:10px;padding:1px 4px;border-radius:2px;background:${badgeBg};color:#fff;flex-shrink:0;">${typeBadge}</span>
+              <span style="color:#333;">${s.name}</span>
+              ${region ? `<span style="font-size:10px;color:#666;background:#f0f0f0;padding:1px 4px;border-radius:2px;flex-shrink:0;">${region}</span>` : ''}
+            </div>
+          `;
+        }).join('');
         
         allDaysHTML += `
-          <div class="opening-store-list-day ${todayClass}">
-            <div class="opening-store-list-items">
-                ${(() => {
-                // 分离直营店和加盟店
-                const directStores = stores.filter(s => s.type === '直营店');
-                const franchiseStores = stores.filter(s => s.type === '加盟店');
-                
-                // 生成单行门店HTML
-                const generateStoreItemHTML = (s) => {
-                  const isDirect = s.type === '直营店';
-                  const typeClass = isDirect ? 'direct' : 'franchise';
-                  const typeBadge = isDirect ? '直营' : '加盟';
-                  // 根据区域生成对应的class
-                  const region = s.region || '';
-                  const regionClass = region ? `region-${region}` : 'region-default';
-                  return `
-                    <div class="opening-store-list-item-store-section">
-                      <span class="opening-store-list-item-badge ${typeClass}">${typeBadge}</span>
-                      <span class="opening-store-list-item-name">${s.name}</span>
-                      <span class="opening-store-list-item-region ${regionClass}">${region}</span>
-                    </div>
-                  `;
-                };
-                
-                let storesHtml = '';
-                
-                // 先排直营店（一行）
-                if (directStores.length > 0) {
-                  storesHtml += `<div class="opening-store-list-store-row">`;
-                  directStores.forEach(s => {
-                    storesHtml += generateStoreItemHTML(s);
-                  });
-                  storesHtml += `</div>`;
-                }
-                
-                // 再排加盟店（另起一行）
-                if (franchiseStores.length > 0) {
-                  storesHtml += `<div class="opening-store-list-store-row">`;
-                  franchiseStores.forEach(s => {
-                    storesHtml += generateStoreItemHTML(s);
-                  });
-                  storesHtml += `</div>`;
-                }
-                
-                return `
-                  <div class="opening-store-list-day-content">
-                    <div class="opening-store-list-day-date-col">
-                      <div class="opening-store-list-item-date-section">
-                        <span class="opening-store-list-item-date">${day}日</span>
-                        <span class="opening-store-list-item-weekday">星期${weekday}</span>
-                        <span class="opening-store-list-item-daycount">${stores.length}家</span>
-                      </div>
-                    </div>
-                    <div class="opening-store-list-day-stores-col">
-                      ${storesHtml}
-                    </div>
-                  </div>
-                `;
-              })()}
+          <div style="display:flex;align-items:flex-start;gap:8px;padding:6px 10px;background:#fff;border-radius:8px;border-left:3px solid #13c2c2;box-shadow:0 1px 4px rgba(0,0,0,0.04);${todayBorder}">
+            <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 8px;background:linear-gradient(135deg,#fff7e6 0%,#ffd591 100%);border-radius:6px;min-width:48px;">
+              <span style="font-size:16px;font-weight:700;color:#fa8c16;line-height:1;">${day}日</span>
+              <span style="font-size:11px;color:#666;line-height:1;margin-top:2px;">星期${weekday}</span>
+              <span style="font-size:10px;color:#999;line-height:1;margin-top:2px;">${stores.length}家</span>
+            </div>
+            <div style="flex:1;display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding-top:2px;">
+              ${storeChips}
             </div>
           </div>
         `;
