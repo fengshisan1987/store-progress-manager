@@ -7711,7 +7711,7 @@ function calculateConstructionPreparationCycleData(filters = {}) {
     average: Math.round(sum / cycles.length),
     min: Math.min(...cycles),
     max: Math.max(...cycles),
-    stores: storeDetails.sort((a, b) => b.cycle - a.cycle).slice(0, 10) // 取周期最长的10家
+    stores: storeDetails.sort((a, b) => b.cycle - a.cycle) // 取所有通过筛选的门店
   };
 }
 
@@ -7807,13 +7807,13 @@ function calculatePhaseCycleData(phaseName, filters = {}) {
   }
   
   const sum = cycles.reduce((a, b) => a + b, 0);
-  
+
   return {
     count: cycles.length,
     average: Math.round(sum / cycles.length),
     min: Math.min(...cycles),
     max: Math.max(...cycles),
-    stores: storeDetails.sort((a, b) => b.cycle - a.cycle).slice(0, 10) // 取周期最长的10家
+    stores: storeDetails.sort((a, b) => b.cycle - a.cycle) // 取所有通过筛选的门店
   };
 }
 
@@ -8233,24 +8233,7 @@ function generateCycleWidgetForDashboard(data, title, icon, color) {
     `;
   }
 
-  // 根据看板标题确定阈值
-  let threshold = 35; // 默认阈值
-  let thresholdLabel = '35';
-  if (title.includes('设计周期')) {
-    threshold = 7;
-    thresholdLabel = '7';
-  } else if (title.includes('施工前准备')) {
-    threshold = 5;
-    thresholdLabel = '5';
-  } else if (title.includes('施工阶段')) {
-    threshold = 18;
-    thresholdLabel = '18';
-  } else if (title.includes('筹建周期')) {
-    threshold = 35;
-    thresholdLabel = '35';
-  }
-  
-  const filteredStores = data.stores.filter(s => s.cycle > threshold);
+  const filteredStores = data.stores;
 
   return `
     <div class="dashboard-real-widget">
@@ -8272,11 +8255,11 @@ function generateCycleWidgetForDashboard(data, title, icon, color) {
           </div>
         </div>
 
-        <!-- 周期大于${thresholdLabel}天的门店 -->
+        <!-- 共 N 家门店 -->
         <div>
-          <div style="font-size:12px;color:#666;margin-bottom:8px;">周期大于${thresholdLabel}天的门店 (${filteredStores.length}家)</div>
+          <div style="font-size:12px;color:#666;margin-bottom:8px;">共 ${filteredStores.length} 家门店</div>
           <div style="max-height:120px;overflow-y:auto;">
-            ${filteredStores.length === 0 ? `<div style="text-align:center;color:#999;padding:10px;font-size:12px;">暂无大于${thresholdLabel}天的门店</div>` : filteredStores.map((s, i) => {
+            ${filteredStores.length === 0 ? `<div style="text-align:center;color:#999;padding:10px;font-size:12px;">暂无数据</div>` : filteredStores.map((s, i) => {
               const typeLabel = s.type || '未设置';
               const typeColor = s.type === '直营店' ? '#1677ff' : (s.type === '加盟店' ? '#fa8c16' : '#999');
               const typeBg = s.type === '直营店' ? '#e6f4ff' : (s.type === '加盟店' ? '#fff7e6' : '#f5f5f5');
