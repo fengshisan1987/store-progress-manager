@@ -2087,6 +2087,71 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
 .multi-select-action-btn:hover {
   background: #f0f5ff;
 }
+
+/* ── Tab 导航栏 ──────────────────────────────────────────────────────────────── */
+.tab-nav {
+  display: flex;
+  background: #fff;
+  border-bottom: 1px solid #e8e8e8;
+  padding: 0 16px;
+  margin-top: 8px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.tab-item {
+  padding: 12px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  user-select: none;
+}
+.tab-item:hover {
+  color: #1677ff;
+}
+.tab-item.active {
+  color: #1677ff;
+  border-bottom-color: #1677ff;
+  font-weight: 600;
+}
+.tab-content {
+  display: none;
+}
+.tab-content.active {
+  display: block;
+}
+
+/* 设置Tab提示页面 */
+.tab-settings-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: #999;
+  font-size: 15px;
+}
+.tab-settings-hint .hint-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+.tab-settings-hint .hint-text {
+  margin-bottom: 20px;
+}
+.tab-settings-hint .hint-btn {
+  padding: 8px 24px;
+  background: #1677ff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.tab-settings-hint .hint-btn:hover {
+  background: #4096ff;
+}
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 </head>
@@ -2117,6 +2182,16 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
     <span class="navbar-meta" id="userRoleDisplay" style="padding:4px 12px;background:rgba(255,255,255,0.15);border-radius:4px;font-size:13px;">加载中...</span>
   </div>
 </div>
+
+<!-- Tab 导航栏 -->
+<div class="tab-nav" id="tabNav">
+  <div class="tab-item active" data-tab="detail" onclick="switchTab('detail')">📋 筹建门店详细进度</div>
+  <div class="tab-item" data-tab="dashboard" onclick="switchTab('dashboard')">📊 筹建进度概述看板</div>
+  <div class="tab-item" data-tab="settings" onclick="switchTab('settings')">⚙️ 设置</div>
+</div>
+
+<!-- Tab 2: 筹建进度概述看板 -->
+<div id="tab-dashboard" class="tab-content">
 
 <!-- 筹建进度概述看板（可折叠） -->
 <div class="dashboard-wrapper">
@@ -2310,6 +2385,11 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
   </div>
 </div>
 
+</div><!-- tab-dashboard -->
+
+<!-- Tab 1: 筹建门店详细进度 -->
+<div id="tab-detail" class="tab-content active">
+
 <!-- 筹建门店详细进度标题 -->
 <div class="section-title-bar">
   <div class="section-title">📋 筹建门店详细进度</div>
@@ -2406,6 +2486,17 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
     <div class="gantt-container">
       <div id="ganttBody" style="padding:12px 0;background:#f5f7fa;border-radius:12px;"></div>
     </div>
+  </div>
+</div>
+
+</div><!-- tab-detail -->
+
+<!-- Tab 3: 设置 -->
+<div id="tab-settings" class="tab-content">
+  <div class="tab-settings-hint">
+    <div class="hint-icon">⚙️</div>
+    <div class="hint-text">请点击右上角 ⚙️ 设置按钮或左侧边栏菜单打开设置页面</div>
+    <button class="hint-btn" onclick="toggleSidebar()">打开设置侧边栏</button>
   </div>
 </div>
 
@@ -4933,6 +5024,42 @@ function toggleDashboard() {
   const toggle = document.getElementById('dashboardToggle');
   content.classList.toggle('collapsed');
   toggle.classList.toggle('collapsed');
+}
+
+// ── 切换 Tab ────────────────────────────────────────────────────────────────────
+function switchTab(tabName) {
+  // 隐藏所有 tab 内容
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  // 移除所有 tab 激活状态
+  document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
+  
+  // 激活当前 tab
+  const tabContent = document.getElementById('tab-' + tabName);
+  const tabItem = document.querySelector('.tab-item[data-tab="' + tabName + '"]');
+  if (tabContent) tabContent.classList.add('active');
+  if (tabItem) tabItem.classList.add('active');
+  
+  // 如果切换到设置 tab，自动打开侧边栏
+  if (tabName === 'settings') {
+    const sidebar = document.getElementById('sidebar');
+    if (!sidebar.classList.contains('open')) {
+      toggleSidebar();
+    }
+  }
+  
+  // 如果切换到概述看板 tab，自动展开并渲染统计
+  if (tabName === 'dashboard') {
+    const dashboardContent = document.getElementById('dashboardContent');
+    const dashboardToggle = document.getElementById('dashboardToggle');
+    if (dashboardContent && dashboardContent.classList.contains('collapsed')) {
+      dashboardContent.classList.remove('collapsed');
+      dashboardToggle.classList.remove('collapsed');
+    }
+    updateStats();
+  }
+  
+  // 滚动到顶部
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ── 切换单个区域折叠状态 ────────────────────────────────────────────────────────
