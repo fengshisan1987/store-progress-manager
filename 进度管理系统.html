@@ -792,6 +792,22 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
 .stat-icon.gold   { background:#fffbe6; }
 .stat-num { font-size:24px; font-weight:700; line-height:1; }
 .stat-label { font-size:12px; color:#888; margin-top:3px; }
+.stat-clickable { cursor:pointer; transition:transform 0.15s ease, box-shadow 0.15s ease; }
+.stat-clickable:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,.1); }
+.store-list {
+  background:#fff; border-radius:8px;
+  font-size:11px; color:#666; line-height:1.8;
+  overflow:hidden; transition:max-height 0.3s ease, padding 0.3s ease, margin 0.3s ease;
+  max-height:0; padding:0 12px; margin:0;
+}
+.store-list.expanded {
+  max-height:800px; padding:8px 12px; margin-top:4px;
+}
+.store-tag {
+  display:inline-block; background:#f5f5f5;
+  padding:2px 8px; border-radius:4px;
+  margin:2px 6px 2px 0; white-space:nowrap;
+}
 .num-blue   { color:#1677ff; }
 .num-orange { color:#fa8c16; }
 .num-green  { color:#52c41a; }
@@ -2121,30 +2137,36 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
             <div class="stat-icon blue">🏪</div>
             <div><div class="stat-num num-blue" id="cnt-total">32</div><div class="stat-label">筹建门店总数</div></div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card stat-clickable" onclick="toggleStoreList('list-designing')">
             <div class="stat-icon purple">📐</div>
             <div><div class="stat-num num-purple" id="cnt-designing">0</div><div class="stat-label">设计中</div></div>
           </div>
-          <div class="stat-card">
+          <div class="store-list collapsed" id="list-designing"></div>
+          <div class="stat-card stat-clickable" onclick="toggleStoreList('list-constructing')">
             <div class="stat-icon orange">🔨</div>
             <div><div class="stat-num num-orange" id="cnt-constructing">0</div><div class="stat-label">施工中</div></div>
           </div>
-          <div class="stat-card">
+          <div class="store-list collapsed" id="list-constructing"></div>
+          <div class="stat-card stat-clickable" onclick="toggleStoreList('list-rectifying')">
             <div class="stat-icon red">🔧</div>
             <div><div class="stat-num num-red" id="cnt-rectifying">0</div><div class="stat-label">整改中</div></div>
           </div>
-          <div class="stat-card">
+          <div class="store-list collapsed" id="list-rectifying"></div>
+          <div class="stat-card stat-clickable" onclick="toggleStoreList('list-site')">
             <div class="stat-icon teal">📍</div>
             <div><div class="stat-num num-teal" id="cnt-site">0</div><div class="stat-label">选址中</div></div>
           </div>
-          <div class="stat-card">
+          <div class="store-list collapsed" id="list-site"></div>
+          <div class="stat-card stat-clickable" onclick="toggleStoreList('list-prep')">
             <div class="stat-icon cyan">📝</div>
             <div><div class="stat-num num-cyan" id="cnt-prep">0</div><div class="stat-label">施工前准备中</div></div>
           </div>
-          <div class="stat-card">
+          <div class="store-list collapsed" id="list-prep"></div>
+          <div class="stat-card stat-clickable" onclick="toggleStoreList('list-ready')">
             <div class="stat-icon gold">🎉</div>
             <div><div class="stat-num num-gold" id="cnt-ready">0</div><div class="stat-label">待开业</div></div>
           </div>
+          <div class="store-list collapsed" id="list-ready"></div>
         </div>
       </div>
       <!-- 中间：逾期门店概要 -->
@@ -3497,18 +3519,31 @@ function renderPhaseHeaders() {
   el.innerHTML = PHASES.map(p => `<div class="phase-th" style="flex:${p.steps.length};background:${p.color}">${p.short}</div>`).join('');
 }
 
+// ── 切换门店列表展开/折叠 ────────────────────────────────────────────────────
+function toggleStoreList(listId) {
+  const el = document.getElementById(listId);
+  if (el) el.classList.toggle('expanded');
+}
+
 // ── 更新统计栏数量 ────────────────────────────────────────────────────────────
 function updateStats() {
   // 使用 calculateStoreStatus 统一计算状态
   let siteSelecting = 0, designing = 0, prep = 0, constructing = 0, rectifying = 0, ready = 0, completed = 0;
   let overdueBuild = 0, overdueDesign = 0, overdueConstruction = 0, overdueRectification = 0;
-  
+
+  // 收集各状态的门店名称列表（用于展开显示）
+  const storeLists = {
+    '选址中': [], '设计中': [], '施工前准备中': [],
+    '施工中': [], '整改中': [], '待开业': []
+  };
+
   // 先更新所有门店状态
   updateAllStoresStatus();
-  
+
   STORES.forEach((store, idx) => {
     const status = store['门店状态'] || '选址中';
-    
+    const storeName = store['门店'] || '未知门店';
+
     // 统计各状态数量
     switch(status) {
       case '选址中': siteSelecting++; break;
@@ -3518,6 +3553,11 @@ function updateStats() {
       case '整改中': rectifying++; break;
       case '待开业': ready++; break;
       case '已完成': completed++; break;
+    }
+
+    // 收集门店名称到对应列表
+    if (storeLists[status]) {
+      storeLists[status].push(storeName);
     }
     
     // 逾期统计
@@ -3561,7 +3601,28 @@ function updateStats() {
   document.getElementById('cnt-site').textContent = siteSelecting;
   document.getElementById('cnt-prep').textContent = prep;
   document.getElementById('cnt-ready').textContent = ready;
-  
+
+  // 填充各状态门店名称列表
+  const listMap = {
+    '设计中': 'list-designing',
+    '施工中': 'list-constructing',
+    '整改中': 'list-rectifying',
+    '选址中': 'list-site',
+    '施工前准备中': 'list-prep',
+    '待开业': 'list-ready'
+  };
+  Object.keys(listMap).forEach(status => {
+    const el = document.getElementById(listMap[status]);
+    if (el) {
+      const names = storeLists[status];
+      if (names && names.length > 0) {
+        el.innerHTML = names.map(n => `<span class="store-tag">${n}</span>`).join('');
+      } else {
+        el.innerHTML = '<span class="store-tag" style="background:none;color:#999;">暂无</span>';
+      }
+    }
+  });
+
   // 逾期统计
   document.getElementById('cnt-overdue-build').textContent = overdueBuild;
   document.getElementById('cnt-overdue-design').textContent = overdueDesign;
