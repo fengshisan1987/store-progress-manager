@@ -3672,8 +3672,12 @@ function updateStats() {
     }
   });
   
-  // 风险门店统计
-  const riskStores = STORES.filter(s => s['风险情况备注'] && s['风险情况备注'].trim());
+  // 风险门店统计（排除已验收的门店，风险备注数据保留）
+  const riskStores = STORES.filter(s => {
+    const hasRisk = s['风险情况备注'] && s['风险情况备注'].trim();
+    const isAccepted = s['门店已验收'] && /^\d{4}-\d{2}-\d{2}$/.test(s['门店已验收']);
+    return hasRisk && !isAccepted;
+  });
   document.getElementById('cnt-risk-stores').textContent = riskStores.length;
   
   // 风险门店概况列表
