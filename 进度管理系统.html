@@ -3553,6 +3553,9 @@ function updateStats() {
     const status = store['门店状态'] || '选址中';
     const storeName = store['门店'] || '未知门店';
 
+    // 跳过"已完成"和"已弃店"的门店，不计入任何统计
+    if (status === '已完成' || status === '已弃店') return;
+
     // 统计各状态数量
     switch(status) {
       case '选址中': siteSelecting++; break;
