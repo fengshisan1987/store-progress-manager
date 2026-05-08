@@ -4507,12 +4507,13 @@ async function toggleNode(storeIdx, step, event) {
   
   // 如果是装修阶段的第一个节点，检查必填字段
   if (isConstructionPhaseFirstStep && (!currentVal || currentVal === '待完成' || currentVal === '待启动')) {
-    // 检查门店类型、工程负责人、装修形式、施工队伍名称是否已填写
+    // 检查门店类型、工程负责人、装修形式、施工队伍名称、门店面积是否已填写
     const missingFields = [];
     if (!store['门店类型'] || store['门店类型'].trim() === '') missingFields.push('门店类型');
     if (!store['工程负责人'] || store['工程负责人'].trim() === '') missingFields.push('工程负责人');
     if (!store['装修形式'] || store['装修形式'].trim() === '') missingFields.push('装修形式');
     if (!store['施工队伍名称'] || store['施工队伍名称'].trim() === '') missingFields.push('施工队伍名称');
+    if (!store['门店面积'] || store['门店面积'].trim() === '') missingFields.push('门店面积');
     
     if (missingFields.length > 0) {
       // 有未填写的必填字段，打开编辑页面
