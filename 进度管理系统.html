@@ -2175,22 +2175,26 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
           <span class="collapse-icon">▶</span> ⚠️ 逾期门店概要
         </div>
         <div class="collapsible-content collapsed" style="background:linear-gradient(135deg, #fff7e6 0%, #ffe7ba 100%);border-radius:8px;padding:12px;">
-          <div class="stat-card">
+          <div class="stat-card" onclick="toggleStoreList('list-overdue-build')">
             <div class="stat-icon gray">📅</div>
             <div><div class="stat-num num-gray" id="cnt-overdue-build">0</div><div class="stat-label">筹建期逾期数量</div></div>
           </div>
-          <div class="stat-card">
+          <div class="store-list collapsed" id="list-overdue-build"></div>
+          <div class="stat-card" onclick="toggleStoreList('list-overdue-design')">
             <div class="stat-icon purple">📐</div>
             <div><div class="stat-num num-purple" id="cnt-overdue-design">0</div><div class="stat-label">设计期逾期数量</div></div>
           </div>
-          <div class="stat-card">
+          <div class="store-list collapsed" id="list-overdue-design"></div>
+          <div class="stat-card" onclick="toggleStoreList('list-overdue-construction')">
             <div class="stat-icon orange">🔨</div>
             <div><div class="stat-num num-orange" id="cnt-overdue-construction">0</div><div class="stat-label">施工期延期数量</div></div>
           </div>
-          <div class="stat-card">
+          <div class="store-list collapsed" id="list-overdue-construction"></div>
+          <div class="stat-card" onclick="toggleStoreList('list-overdue-rectification')">
             <div class="stat-icon red">🔧</div>
             <div><div class="stat-num num-red" id="cnt-overdue-rectification">0</div><div class="stat-label">整改期延期数量</div></div>
           </div>
+          <div class="store-list collapsed" id="list-overdue-rectification"></div>
         </div>
       </div>
     </div>
@@ -3537,6 +3541,11 @@ function updateStats() {
     '施工中': [], '整改中': [], '待开业': []
   };
 
+  // 收集逾期门店名称列表
+  const overdueLists = {
+    'build': [], 'design': [], 'construction': [], 'rectification': []
+  };
+
   // 先更新所有门店状态
   updateAllStoresStatus();
 
@@ -3568,27 +3577,31 @@ function updateStats() {
     const buildDays = calcBuildDays(store);
     if (!isCompleted && buildDays !== null && buildDays > 35) {
       overdueBuild++;
+      overdueLists['build'].push(storeName);
     }
-    
+
     // 设计期逾期判断（阈值7天）
     const isDesignDone = isDesignCompleted(store);
     const designDays = calcDesignDays(store);
     if (!isDesignDone && designDays !== null && designDays > 7) {
       overdueDesign++;
+      overdueLists['design'].push(storeName);
     }
-    
+
     // 施工期逾期判断（阈值18天）
     const isConstructionDone = isConstructionCompleted(store);
     const constructionDays = calcConstructionDays(store);
     if (!isConstructionDone && constructionDays !== null && constructionDays > 18) {
       overdueConstruction++;
+      overdueLists['construction'].push(storeName);
     }
-    
+
     // 整改期逾期判断（阈值3天）
     const isRectificationDone = isRectificationCompleted(store);
     const rectificationDays = calcRectificationDays(store);
     if (!isRectificationDone && rectificationDays !== null && rectificationDays > 3) {
       overdueRectification++;
+      overdueLists['rectification'].push(storeName);
     }
   });
   
@@ -3628,6 +3641,25 @@ function updateStats() {
   document.getElementById('cnt-overdue-design').textContent = overdueDesign;
   document.getElementById('cnt-overdue-construction').textContent = overdueConstruction;
   document.getElementById('cnt-overdue-rectification').textContent = overdueRectification;
+
+  // 填充逾期门店名称列表
+  const overdueListMap = {
+    'build': 'list-overdue-build',
+    'design': 'list-overdue-design',
+    'construction': 'list-overdue-construction',
+    'rectification': 'list-overdue-rectification'
+  };
+  Object.keys(overdueListMap).forEach(key => {
+    const el = document.getElementById(overdueListMap[key]);
+    if (el) {
+      const names = overdueLists[key];
+      if (names && names.length > 0) {
+        el.innerHTML = names.map(n => `<span class="store-tag">${n}</span>`).join('');
+      } else {
+        el.innerHTML = '<span class="store-tag" style="background:none;color:#999;">暂无逾期门店</span>';
+      }
+    }
+  });
   
   // 风险门店统计
   const riskStores = STORES.filter(s => s['风险情况备注'] && s['风险情况备注'].trim());
