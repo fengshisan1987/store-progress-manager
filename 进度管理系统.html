@@ -1185,6 +1185,12 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
   color:#389e0d;
   font-weight:500;
   min-width:120px;
+  resize:none;
+  overflow:hidden;
+  line-height:1.4;
+  font-family:inherit;
+  word-wrap:break-word;
+  white-space:pre-wrap;
 }
 /* 门店行高亮样式 - 日期不是今天时 */
 .gantt-row-highlight {
@@ -4100,7 +4106,7 @@ function render() {
       ? `<div class="pending-steps-container">${pendingSteps.map(p => `<span class="current-step-tag" title="${p.phaseName}：${p.stepName}">${p.phaseName}：${p.stepName}</span>`).join('')}</div>`
       : '';
     
-    // 判断最新进展日期是否为今天（只有选了今天才不高亮，没选或选非今天都高亮）
+    // 判断是否需要高亮：最新进展日期不是今天 或 进展内容为空
     let progressDate = store['最新进展日期'];
     // 标准化日期格式：处理各种可能的格式
     if (progressDate) {
@@ -4111,10 +4117,10 @@ function render() {
       if (!progressDate) return false; // 没有日期时视为非今天，需要高亮
       const today = new Date();
       const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-      console.log('比较日期:', progressDate, 'vs', todayStr, '结果:', progressDate === todayStr);
       return progressDate === todayStr;
     })();
-    const rowHighlightClass = !isToday ? 'gantt-row-highlight' : '';
+    const hasProgressContent = !!(store['最新进展内容'] && store['最新进展内容'].trim());
+    const rowHighlightClass = (!isToday || !hasProgressContent) ? 'gantt-row-highlight' : '';
     
     // 根据角色控制编辑权限
     const role = checkRole();
@@ -4159,7 +4165,7 @@ function render() {
           <div class="info-row" onclick="event.stopPropagation()">
             <div class="info-title">今日门店最新进展</div>
             <div class="auto-progress-field">
-              <span class="auto-progress-text">${prog.lastDoneStep ? ALL_STEPS.find(s => s.step === prog.lastDoneStep)?.phase?.name + ' - ' + prog.lastDoneStep : '暂无进展'}</span>
+              ${canEdit ? `<textarea class="auto-progress-text" id="progress-content-${storeIdx}" rows="1" placeholder="请填写今日进展" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'" onchange="saveStoreField(${storeIdx}, '最新进展内容', this.value)">${store['最新进展内容'] || ''}</textarea>` : `<span class="auto-progress-text" style="display:inline-block;">${store['最新进展内容'] || ''}</span>`}
               ${canEdit ? `<input type="date" class="editable-date progress-date" id="progress-date-${storeIdx}" value="${store['最新进展日期'] || ''}" onchange="saveStoreField(${storeIdx}, '最新进展日期', this.value)" title="选择更新日期">` : `<span style="color:#666;font-size:13px;">${store['最新进展日期'] || '未设置'}</span>`}
             </div>
           </div>
@@ -4218,6 +4224,14 @@ function render() {
       </div>
     `;
   }).join('');
+
+  // 调整所有进展内容textarea的高度以适应内容
+  requestAnimationFrame(() => {
+    document.querySelectorAll('[id^="progress-content-"]').forEach(el => {
+      el.style.height = 'auto';
+      el.style.height = el.scrollHeight + 'px';
+    });
+  });
 }
 
 // ── 日期选择器相关变量 ─────────────────────────────────────────────────────────
@@ -5008,8 +5022,8 @@ function saveStoreField(storeIdx, fieldName, value) {
     updateStats();
   }
   
-  // 如果是日期字段，重新渲染以更新高亮状态
-  if (fieldName === '最新进展日期') {
+  // 如果是日期字段或进展内容，重新渲染以更新高亮状态
+  if (fieldName === '最新进展日期' || fieldName === '最新进展内容') {
     render();
   }
   
