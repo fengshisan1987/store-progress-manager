@@ -3139,41 +3139,43 @@ function calcBuildDays(store) {
   return diffDays >= 0 ? diffDays : 0;
 }
 
-// ── 计算筹建实际完成天数（第一个节点到最后一节点）─────────────────────────────────
+// ── 计算筹建实际完成天数（从"确认门店测量时间"到"门店已验收"）───────────────────────
 function calcBuildActualDays(store) {
   let startDateStr = null;
   let endDateStr = null;
-  
-  // 查找第一个需要日期且已设置日期的节点
+
+  // 查找"确认门店测量时间"的日期作为筹建开始日期
   for (const phase of PHASES) {
     for (const stepObj of phase.steps) {
-      if (stepObj.requireDate) {
+      if (stepObj.name === '确认门店测量时间') {
         const val = store[stepObj.name];
         if (val && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
           startDateStr = val;
-          break;
         }
+        break;
       }
     }
     if (startDateStr) break;
   }
-  
-  // 查找最后一个设置了日期的节点
+
+  // 查找"门店已验收"的日期作为筹建结束日期
   for (let i = PHASES.length - 1; i >= 0; i--) {
     const phase = PHASES[i];
     for (let j = phase.steps.length - 1; j >= 0; j--) {
       const stepObj = phase.steps[j];
-      const val = store[stepObj.name];
-      if (val && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
-        endDateStr = val;
+      if (stepObj.name === '门店已验收') {
+        const val = store[stepObj.name];
+        if (val && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
+          endDateStr = val;
+        }
         break;
       }
     }
     if (endDateStr) break;
   }
-  
+
   if (!startDateStr || !endDateStr) return null;
-  
+
   const startDate = new Date(startDateStr);
   const endDate = new Date(endDateStr);
   const diffTime = endDate - startDate;
@@ -3245,11 +3247,13 @@ function calcDesignActualDays(store) {
   return Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // 包含首尾两天
 }
 
-// ── 检查设计阶段是否全部完成 ───────────────────────────────────────────────────
+// ── 检查设计阶段是否全部完成（以最后一个节点"施工图已确认"是否有日期为准）─────────────────
 function isDesignCompleted(store) {
   const designPhase = PHASES.find(p => p.name === '设计阶段');
-  if (!designPhase) return false;
-  return designPhase.steps.every(stepObj => store[stepObj.name]);
+  if (!designPhase || designPhase.steps.length === 0) return false;
+  const lastStep = designPhase.steps[designPhase.steps.length - 1];
+  const val = store[lastStep.name];
+  return val && /^\d{4}-\d{2}-\d{2}$/.test(val);
 }
 
 // ── 计算施工前准备天数 ─────────────────────────────────────────────────────────
@@ -3401,11 +3405,13 @@ function calcConstructionActualDays(store) {
   return actualDays;
 }
 
-// ── 检查装修阶段是否全部完成 ───────────────────────────────────────────────────
+// ── 检查装修阶段是否全部完成（以最后一个节点"门店已验收"是否有日期为准）─────────────────
 function isConstructionCompleted(store) {
   const constructionPhase = PHASES.find(p => p.name === '装修阶段') || PHASES.find(p => p.name === '施工阶段');
-  if (!constructionPhase) return false;
-  return constructionPhase.steps.every(stepObj => store[stepObj.name]);
+  if (!constructionPhase || constructionPhase.steps.length === 0) return false;
+  const lastStep = constructionPhase.steps[constructionPhase.steps.length - 1];
+  const val = store[lastStep.name];
+  return val && /^\d{4}-\d{2}-\d{2}$/.test(val);
 }
 
 // ── 计算整改天数 ───────────────────────────────────────────────────────────────
@@ -3433,11 +3439,13 @@ function calcRectificationDays(store) {
   return diffDays >= 0 ? diffDays : 0;
 }
 
-// ── 检查整改阶段是否全部完成 ───────────────────────────────────────────────────
+// ── 检查整改阶段是否全部完成（以最后一个节点"整改已完成"是否有日期为准）─────────────────
 function isRectificationCompleted(store) {
   const rectificationPhase = PHASES.find(p => p.name === '整改阶段');
-  if (!rectificationPhase) return false;
-  return rectificationPhase.steps.every(stepObj => store[stepObj.name]);
+  if (!rectificationPhase || rectificationPhase.steps.length === 0) return false;
+  const lastStep = rectificationPhase.steps[rectificationPhase.steps.length - 1];
+  const val = store[lastStep.name];
+  return val && /^\d{4}-\d{2}-\d{2}$/.test(val);
 }
 
 // ── 计算整改实际完成天数（整改阶段第一个节点到最后一个节点）────────────────────────
@@ -3573,9 +3581,9 @@ function updateStats() {
     }
     
     // 逾期统计
-    const prog = calcProgress(store);
-    const isCompleted = prog.pct === 100;
-    
+    // 筹建完成判断：以"门店已验收"是否有日期为准
+    const isCompleted = store['门店已验收'] && /^\d{4}-\d{2}-\d{2}$/.test(store['门店已验收']);
+
     // 筹建期逾期判断（阈值35天）
     const buildDays = calcBuildDays(store);
     if (!isCompleted && buildDays !== null && buildDays > 35) {
@@ -3852,7 +3860,8 @@ function render() {
     
     // 筹建天数信息（阈值：35天）
     const buildDays = calcBuildDays(store);
-    const isCompleted = prog.pct === 100;
+    // 筹建完成判断：以"门店已验收"是否有日期为准
+    const isCompleted = store['门店已验收'] && /^\d{4}-\d{2}-\d{2}$/.test(store['门店已验收']);
     const buildDaysOverdue = !isCompleted && buildDays !== null && buildDays > 35;
     const buildDaysText = (() => {
       if (isCompleted) {
