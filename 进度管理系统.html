@@ -2372,6 +2372,14 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
       <div id="teamDropdownItems" style="padding:4px;"></div>
     </div>
   </div>
+  <!-- 开业日期范围筛选 -->
+  <div class="dropdown-filter" id="openingDateFilter" style="position:relative;display:flex;align-items:center;gap:6px;">
+    <span style="font-size:12px;color:#666;white-space:nowrap;">开业日期：</span>
+    <input type="date" id="openingDateStart" class="filter-date-input" style="padding:4px 8px;border:1px solid #d0d0d0;border-radius:4px;font-size:12px;width:120px;" onchange="setOpeningDateFilter()" placeholder="开始日期">
+    <span style="font-size:12px;color:#999;">-</span>
+    <input type="date" id="openingDateEnd" class="filter-date-input" style="padding:4px 8px;border:1px solid #d0d0d0;border-radius:4px;font-size:12px;width:120px;" onchange="setOpeningDateFilter()" placeholder="结束日期">
+    <button class="filter-btn" onclick="clearOpeningDateFilter()" style="padding:4px 8px;font-size:11px;margin-left:4px;">清空</button>
+  </div>
 </div>
 
 <!-- 图例 -->
@@ -3485,6 +3493,7 @@ function calcRectificationActualDays(store) {
 
 // ── 过滤状态 ──────────────────────────────────────────────────────────────────
 let curRegion = 'all', curStatus = 'all', curStoreType = 'all', curEngineer = 'all', curRenovationType = 'all', curTeam = 'all';
+let curOpeningDateStart = '', curOpeningDateEnd = '';
 
 function filtered() {
   const q = document.getElementById('searchInput').value.trim().toLowerCase();
@@ -3508,7 +3517,19 @@ function filtered() {
     const me = curEngineer === 'all' || s['工程负责人'] === curEngineer;
     const mrt = curRenovationType === 'all' || s['装修形式'] === curRenovationType;
     const mteam = curTeam === 'all' || s['施工队伍名称'] === curTeam || s['推荐队伍名称'] === curTeam;
-    return mq && mr && ms && mt && me && mrt && mteam;
+    // 开业日期范围筛选
+    let mOpeningDate = true;
+    const openingDate = s['已正式开业'];
+    if (curOpeningDateStart || curOpeningDateEnd) {
+      // 如果设置了日期筛选，但没有开业日期的门店要隐藏
+      if (!openingDate || !/^\d{4}-\d{2}-\d{2}$/.test(openingDate)) {
+        mOpeningDate = false;
+      } else {
+        if (curOpeningDateStart && openingDate < curOpeningDateStart) mOpeningDate = false;
+        if (curOpeningDateEnd && openingDate > curOpeningDateEnd) mOpeningDate = false;
+      }
+    }
+    return mq && mr && ms && mt && me && mrt && mteam && mOpeningDate;
   });
   
   // 按"确认门店测量时间"日期从早到晚排序（设计阶段第一个节点）
@@ -6713,6 +6734,25 @@ function setTeamFilter(team) {
   const btn = document.querySelector('#teamDropdown .filter-btn');
   btn.textContent = '施工队伍：' + (team === 'all' ? '全部' : team) + ' ▼';
   document.getElementById('teamDropdownMenu').style.display = 'none';
+  render();
+}
+
+// 开业日期范围筛选
+function setOpeningDateFilter() {
+  const startEl = document.getElementById('openingDateStart');
+  const endEl = document.getElementById('openingDateEnd');
+  curOpeningDateStart = startEl ? startEl.value : '';
+  curOpeningDateEnd = endEl ? endEl.value : '';
+  render();
+}
+
+function clearOpeningDateFilter() {
+  const startEl = document.getElementById('openingDateStart');
+  const endEl = document.getElementById('openingDateEnd');
+  if (startEl) startEl.value = '';
+  if (endEl) endEl.value = '';
+  curOpeningDateStart = '';
+  curOpeningDateEnd = '';
   render();
 }
 
