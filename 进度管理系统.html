@@ -7550,6 +7550,17 @@ function renderFinanceTable(storeIdx, isEdit) {
     html += '</tr>';
   }
   
+  // 单列结算状态行（编辑模式和展示模式都显示）
+  html += '<tr style="background:#fafafa;">';
+  html += `<th colspan="3" style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;">${isEdit ? '结算状态' : ''}</th>`;
+  FINANCE_COLUMNS.forEach(col => {
+    const status = calcColumnStatus(storeIdx, col.key);
+    const statusColor = status === '已结算完成' ? '#52c41a' : (status === '已付首款' ? '#fa8c16' : (status === '报价阶段' ? '#1677ff' : '#999'));
+    html += `<th style="padding:6px 4px;border:1px solid #e8e8e8;text-align:center;font-size:11px;font-weight:500;color:${statusColor};">${status || ''}</th>`;
+  });
+  html += '<th colspan="4" style="border:1px solid #e8e8e8;"></th>';
+  html += '</tr>';
+  
   html += '</thead>';
   
   // 表体
