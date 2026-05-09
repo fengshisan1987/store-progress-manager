@@ -7329,6 +7329,9 @@ function getStoreFinance(storeIdx) {
   if (!store._finance) {
     store._finance = {};
   }
+  if (!store._finance._suppliers) {
+    store._finance._suppliers = {};
+  }
   return store._finance;
 }
 
@@ -7510,18 +7513,44 @@ function renderFinanceTable(storeIdx, isEdit) {
   html += '<table class="finance-table" style="width:100%;border-collapse:collapse;font-size:13px;min-width:900px;">';
   
   // 表头
-  html += '<thead><tr style="background:#f5f5f5;">';
+  html += '<thead>';
+  
+  // 第一行：列标题
+  html += '<tr style="background:#f5f5f5;">';
   html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:left;font-weight:600;color:#333;width:100px;">金额类型</th>';
   html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:left;font-weight:600;color:#333;width:120px;">类型明细</th>';
   html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:left;font-weight:600;color:#333;width:140px;">金额备注</th>';
   FINANCE_COLUMNS.forEach(col => {
-    html += `<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:90px;">${col.key}费用</th>`;
+    const supplierName = (fin._suppliers && fin._suppliers[col.key]) || '';
+    const colTitle = (!isEdit && supplierName) ? `${col.key}费用<br><span style="font-size:11px;color:#666;font-weight:400;">(${supplierName})</span>` : `${col.key}费用`;
+    html += `<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:90px;">${colTitle}</th>`;
   });
   html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:90px;">工程类费用小计</th>';
   html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:80px;">设备费用</th>';
   html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:100px;">整体筹建费用总计</th>';
   html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:90px;">结算状态</th>';
-  html += '</tr></thead>';
+  html += '</tr>';
+  
+  // 编辑模式下增加供应商选择行
+  if (isEdit) {
+    html += '<tr style="background:#fafafa;">';
+    html += '<th colspan="3" style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;">供应商选择 ↓</th>';
+    FINANCE_COLUMNS.forEach(col => {
+      const suppliers = getSuppliersByCategory(col.category);
+      const selected = (fin._suppliers && fin._suppliers[col.key]) || '';
+      let selectHtml = `<select onchange="updateFinanceSupplier(${storeIdx},'${col.key}',this.value)" style="width:100%;padding:3px 4px;border:1px solid #d9d9d9;border-radius:4px;font-size:11px;box-sizing:border-box;background:#fff;">`;
+      selectHtml += `<option value="">-- 选择 --</option>`;
+      suppliers.forEach(s => {
+        selectHtml += `<option value="${s}" ${s === selected ? 'selected' : ''}>${s}</option>`;
+      });
+      selectHtml += '</select>';
+      html += `<th style="padding:4px;border:1px solid #e8e8e8;text-align:center;">${selectHtml}</th>`;
+    });
+    html += '<th colspan="4" style="border:1px solid #e8e8e8;"></th>';
+    html += '</tr>';
+  }
+  
+  html += '</thead>';
   
   // 表体
   html += '<tbody>';
@@ -7554,14 +7583,18 @@ function renderFinanceTable(storeIdx, isEdit) {
       const val = calcFinanceValue(storeIdx, row.rowId, col.key);
       const displayVal = val !== 0 ? val.toFixed(2) : '';
       const colStatus = (row.rowId === 'finalPay' || row.rowId === 'firstPay' || row.rowId === 'unpaid') ? '' : calcColumnStatus(storeIdx, col.key);
+      const hasSupplier = fin._suppliers && fin._suppliers[col.key];
       
       if (isEdit && row.editable) {
+        const disabledAttr = hasSupplier ? '' : 'disabled';
+        const bgStyle = hasSupplier ? '' : 'background:#f5f5f5;color:#999;';
         html += `<td style="padding:4px;border:1px solid #e8e8e8;text-align:right;">
           <input type="number" step="0.01" 
             value="${displayVal}" 
             data-row="${row.rowId}" data-col="${col.key}" 
             onchange="updateFinanceCell(${storeIdx},'${row.rowId}','${col.key}',this.value)"
-            style="width:100%;padding:4px 6px;border:1px solid #d9d9d9;border-radius:4px;font-size:12px;text-align:right;box-sizing:border-box;"
+            ${disabledAttr}
+            style="width:100%;padding:4px 6px;border:1px solid #d9d9d9;border-radius:4px;font-size:12px;text-align:right;box-sizing:border-box;${bgStyle}"
           />
         </td>`;
       } else {
@@ -7663,9 +7696,25 @@ function renderFinanceEditForm(storeIdx) {
   return html;
 }
 
+// 更新某列的供应商
+function updateFinanceSupplier(storeIdx, colKey, supplierName) {
+  const fin = getStoreFinance(storeIdx);
+  if (!fin._suppliers) fin._suppliers = {};
+  fin._suppliers[colKey] = supplierName || '';
+  
+  // 重新渲染编辑表单以更新禁用状态和公式列
+  document.getElementById('financeEditBd').innerHTML = renderFinanceEditForm(storeIdx);
+}
+
 // 更新单元格值
 function updateFinanceCell(storeIdx, rowId, colKey, value) {
   const fin = getStoreFinance(storeIdx);
+  // 检查是否已选供应商，未选则不允许修改
+  if (!fin._suppliers || !fin._suppliers[colKey]) {
+    showToast('请先选择供应商');
+    document.getElementById('financeEditBd').innerHTML = renderFinanceEditForm(storeIdx);
+    return;
+  }
   if (!fin[rowId]) fin[rowId] = {};
   const numVal = parseFloat(value);
   fin[rowId][colKey] = isNaN(numVal) ? 0 : numVal;
