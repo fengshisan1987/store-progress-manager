@@ -56,9 +56,17 @@ function readDataSafe() {
         if (!data.hasOwnProperty('phases')) {
             data.phases = null;
         }
+        // 兼容旧数据：如果没有 suppliers 字段，初始化为空数组
+        if (!data.hasOwnProperty('suppliers')) {
+            data.suppliers = [];
+        }
+        // 兼容旧数据：如果没有 financeData 字段，初始化为空对象
+        if (!data.hasOwnProperty('financeData')) {
+            data.financeData = {};
+        }
         return data;
     } catch (e) {
-        return { stores: [], basicFields: [], phases: null };
+        return { stores: [], basicFields: [], phases: null, suppliers: [], financeData: {} };
     }
 }
 
@@ -69,6 +77,13 @@ function readData() {
 
 // 保存数据
 function saveData(data) {
+    // 兼容旧数据结构，确保 suppliers 和 financeData 字段存在
+    if (!data.hasOwnProperty('suppliers')) {
+        data.suppliers = [];
+    }
+    if (!data.hasOwnProperty('financeData')) {
+        data.financeData = {};
+    }
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 }
 

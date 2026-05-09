@@ -2187,6 +2187,26 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
   font-size: 12px;
   color: #888;
 }
+
+/* ── 财务结算表格样式 ── */
+.finance-table th,
+.finance-table td {
+  white-space: nowrap;
+}
+.finance-table input[type="number"] {
+  -moz-appearance: textfield;
+}
+.finance-table input[type="number"]::-webkit-outer-spin-button,
+.finance-table input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.finance-store-item {
+  transition: all 0.2s;
+}
+.finance-store-header:hover {
+  background: #f0f5ff !important;
+}
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 </head>
@@ -2222,6 +2242,7 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
 <div class="tab-nav" id="tabNav">
   <div class="tab-item active" data-tab="detail" onclick="switchTab('detail')">📋 筹建门店详细进度</div>
   <div class="tab-item" data-tab="dashboard" onclick="switchTab('dashboard')">📊 筹建进度概述看板</div>
+  <div class="tab-item" data-tab="finance" onclick="switchTab('finance')" id="tabFinanceNav" style="display:none;">💰 门店财务结算明细</div>
   <div class="tab-item" data-tab="settings" onclick="switchTab('settings')">⚙️ 设置</div>
 </div>
 
@@ -2532,6 +2553,16 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
     <div style="font-size:18px;font-weight:600;color:#333;margin-bottom:20px;">设置中心</div>
     <div id="settings-cards-container" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;max-width:900px;">
       <!-- 动态填充 -->
+    </div>
+  </div>
+</div>
+
+<!-- Tab 4: 门店财务结算明细 -->
+<div id="tab-finance" class="tab-content">
+  <div style="padding:20px;">
+    <div style="font-size:18px;font-weight:600;color:#333;margin-bottom:20px;">💰 门店财务结算明细</div>
+    <div id="finance-store-list" style="max-width:1200px;">
+      <!-- 动态填充门店列表 -->
     </div>
   </div>
 </div>
@@ -3086,7 +3117,7 @@ async function saveStoresToServer() {
     const response = await fetch(`${API_BASE}/data`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ stores: STORES, basicFields: BASIC_FIELDS, storePhases: PHASES })
+      body: JSON.stringify({ stores: STORES, basicFields: BASIC_FIELDS, storePhases: PHASES, suppliers: SUPPLIERS })
     });
     if (response.ok) {
       console.log('数据已保存到服务器');
@@ -5087,6 +5118,11 @@ function switchTab(tabName) {
   if (tabContent) tabContent.classList.add('active');
   if (tabItem) tabItem.classList.add('active');
   
+  // 如果切换到财务结算 tab，渲染列表
+  if (tabName === 'finance') {
+    renderFinanceStoreList();
+  }
+  
   // 如果切换到设置 tab，自动打开侧边栏
   if (tabName === 'settings') {
     const sidebar = document.getElementById('sidebar');
@@ -6272,6 +6308,7 @@ async function saveStore() {
     STORES[_editingStoreIdx] = { ...STORES[_editingStoreIdx], ...storeData };
   } else {
     // 添加新门店
+    storeData._finance = {};
     STORES.push(storeData);
   }
   
@@ -7018,8 +7055,22 @@ function isAdmin() {
   return checkRole() === 'admin';
 }
 
+function isEngineerAdmin() {
+  return checkRole() === 'engineer';
+}
+
 function isVisitor() {
   return checkRole() === 'guest' || checkRole() === 'visitor';
+}
+
+function canEditFinance() {
+  const role = checkRole();
+  return role === 'superadmin' || role === 'engineer';
+}
+
+function canViewFinance() {
+  const role = checkRole();
+  return role === 'superadmin' || role === 'admin' || role === 'engineer';
 }
 
 // ── 初始化 ────────────────────────────────────────────────────────────────────
@@ -7164,6 +7215,11 @@ function renderSettingsCards() {
         <div class="settings-card-title">导入数据</div>
         <div class="settings-card-desc">从 Excel 导入门店数据</div>
       </div>
+      <div class="settings-card" onclick="openSupplierManager()">
+        <div class="settings-card-icon">🏭</div>
+        <div class="settings-card-title">供应商管理</div>
+        <div class="settings-card-desc">管理供应商分类及名称</div>
+      </div>
     `;
   }
 
@@ -7203,12 +7259,21 @@ function updateUserRoleDisplay() {
       case 'admin':
         roleText = '管理员';
         break;
+      case 'engineer':
+        roleText = '工程管理员';
+        break;
       default:
         roleText = '访客';
     }
     roleDisplay.textContent = roleText;
   } else if (roleDisplay) {
     roleDisplay.textContent = '未登录';
+  }
+  
+  // 根据权限显示/隐藏财务结算Tab
+  const financeTab = document.getElementById('tabFinanceNav');
+  if (financeTab) {
+    financeTab.style.display = canViewFinance() ? 'block' : 'none';
   }
 }
 
@@ -7280,6 +7345,485 @@ function openSecuritySettings() {
 // 关闭安全设置面板
 function closeSecuritySettings() {
   document.getElementById('securitySettingsPanel').classList.remove('open');
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// 供应商管理
+// ═════════════════════════════════════════════════════════════════════════════
+
+// 供应商分类列表
+const SUPPLIER_CATEGORIES = ['工程硬装','广告物料','安装收尾','家具','灯具','配电箱','设计','空调','消防','其他工程类'];
+
+// 供应商数据（从服务器加载，localStorage备份）
+let SUPPLIERS = JSON.parse(localStorage.getItem('storeSuppliers') || '[]');
+
+// 打开供应商管理面板
+function openSupplierManager() {
+  renderSupplierPanel();
+  document.getElementById('supplierPanel').classList.add('open');
+}
+
+// 关闭供应商管理面板
+function closeSupplierManager() {
+  document.getElementById('supplierPanel').classList.remove('open');
+}
+
+// 渲染供应商管理面板
+function renderSupplierPanel() {
+  const bd = document.getElementById('supplierPanelBd');
+  if (!bd) return;
+  
+  let html = '<div style="padding:16px;">';
+  
+  // 按分类分组显示
+  SUPPLIER_CATEGORIES.forEach(cat => {
+    const list = SUPPLIERS.filter(s => s.category === cat);
+    html += `
+      <div style="margin-bottom:20px;">
+        <div style="font-size:15px;font-weight:600;color:#333;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+          <span>${cat}</span>
+          <button onclick="addSupplier('${cat}')" style="padding:4px 12px;background:#1677ff;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;">+ 添加</button>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          ${list.length === 0 ? '<span style="color:#999;font-size:13px;">暂无供应商</span>' : ''}
+          ${list.map((s, idx) => `
+            <div style="display:flex;align-items:center;gap:4px;padding:6px 12px;background:#f5f5f5;border-radius:6px;border:1px solid #e8e8e8;">
+              <span style="font-size:13px;color:#333;">${s.name}</span>
+              <button onclick="deleteSupplier('${cat}',${idx})" style="background:none;border:none;color:#ff4d4f;cursor:pointer;font-size:14px;padding:0 2px;">×</button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  });
+  
+  html += '</div>';
+  bd.innerHTML = html;
+}
+
+// 添加供应商
+async function addSupplier(category) {
+  const name = prompt(`请输入【${category}】供应商名称：`);
+  if (!name || !name.trim()) return;
+  
+  SUPPLIERS.push({ category, name: name.trim() });
+  localStorage.setItem('storeSuppliers', JSON.stringify(SUPPLIERS));
+  await saveStoresToServer();
+  renderSupplierPanel();
+  showToast('供应商添加成功');
+}
+
+// 删除供应商
+async function deleteSupplier(category, idx) {
+  const globalIdx = SUPPLIERS.findIndex((s, i) => s.category === category && SUPPLIERS.filter(x => x.category === category).indexOf(s) === idx);
+  if (globalIdx >= 0) {
+    if (confirm(`确定删除供应商「${SUPPLIERS[globalIdx].name}」吗？`)) {
+      SUPPLIERS.splice(globalIdx, 1);
+      localStorage.setItem('storeSuppliers', JSON.stringify(SUPPLIERS));
+      await saveStoresToServer();
+      renderSupplierPanel();
+      showToast('供应商已删除');
+    }
+  }
+}
+
+// 获取某分类下的供应商列表
+function getSuppliersByCategory(category) {
+  return SUPPLIERS.filter(s => s.category === category).map(s => s.name);
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// 门店财务结算明细
+// ═════════════════════════════════════════════════════════════════════════════
+
+// 费用列定义
+const FINANCE_COLUMNS = [
+  { key: '工程硬装', category: '工程硬装' },
+  { key: '广告物料', category: '广告物料' },
+  { key: '安装收尾', category: '安装收尾' },
+  { key: '家具', category: '家具' },
+  { key: '灯具', category: '灯具' },
+  { key: '配电箱', category: '配电箱' },
+  { key: '设计', category: '设计' },
+  { key: '空调', category: '空调' },
+  { key: '消防', category: '消防' },
+  { key: '其他工程类', category: '其他工程类' }
+];
+
+// 结算行定义
+const FINANCE_ROWS = [
+  { type: '初始报价数据', detail: '初始报价金额', editable: true, rowId: 'initQuote' },
+  { type: '初始报价数据', detail: '初始成本金额', editable: true, rowId: 'initCost' },
+  { type: '初始报价数据', detail: '初始利润', editable: false, rowId: 'initProfit', formula: 'quote-cost' },
+  { type: '增减项数据', detail: '增减项报价金额', editable: true, rowId: 'changeQuote' },
+  { type: '增减项数据', detail: '增减项成本金额', editable: true, rowId: 'changeCost' },
+  { type: '增减项数据', detail: '增减项利润', editable: false, rowId: 'changeProfit', formula: 'quote-cost' },
+  { type: '最终结算数据', detail: '最终对外报价金额', editable: false, rowId: 'finalQuote', formula: 'init+change' },
+  { type: '最终结算数据', detail: '最终应支付结算金额', editable: false, rowId: 'finalPay', formula: 'init+change-cost' },
+  { type: '最终结算数据', detail: '最终利润', editable: false, rowId: 'finalProfit', formula: 'final-quote-pay' },
+  { type: '实际支付数据', detail: '首次结算支付金额', editable: true, rowId: 'firstPay' },
+  { type: '实际支付数据', detail: '后续结算支付金额', editable: true, rowId: 'secondPay' },
+  { type: '实际支付数据', detail: '未支付金额', editable: false, rowId: 'unpaid', formula: 'pay-first-second' }
+];
+
+// 获取门店的结算数据（如果没有则初始化）
+function getStoreFinance(storeIdx) {
+  const store = STORES[storeIdx];
+  if (!store) return null;
+  if (!store._finance) {
+    store._finance = {};
+  }
+  return store._finance;
+}
+
+// 获取门店开业日期
+function getStoreOpeningDate(store) {
+  return store['已正式开业'] || '';
+}
+
+// 计算结算行的值（核心公式）
+function calcFinanceValue(storeIdx, rowId, colKey) {
+  const fin = getStoreFinance(storeIdx);
+  if (!fin) return 0;
+  
+  const v = (r, c) => {
+    const val = parseFloat((fin[r] && fin[r][c]) || 0);
+    return isNaN(val) ? 0 : val;
+  };
+  
+  switch (rowId) {
+    case 'initProfit':
+      return v('initQuote', colKey) - v('initCost', colKey);
+    case 'changeProfit':
+      return v('changeQuote', colKey) - v('changeCost', colKey);
+    case 'finalQuote':
+      return v('initQuote', colKey) + v('changeQuote', colKey);
+    case 'finalPay':
+      return v('initCost', colKey) + v('changeCost', colKey);
+    case 'finalProfit':
+      return calcFinanceValue(storeIdx, 'finalQuote', colKey) - calcFinanceValue(storeIdx, 'finalPay', colKey);
+    case 'unpaid':
+      return calcFinanceValue(storeIdx, 'finalPay', colKey) - v('firstPay', colKey) - v('secondPay', colKey);
+    default:
+      return v(rowId, colKey);
+  }
+}
+
+// 计算某行的工程类费用小计
+function calcRowSubtotal(storeIdx, rowId) {
+  let sum = 0;
+  FINANCE_COLUMNS.forEach(col => {
+    sum += calcFinanceValue(storeIdx, rowId, col.key);
+  });
+  return sum;
+}
+
+// 计算某行的整体筹建费用总计
+function calcRowTotal(storeIdx, rowId) {
+  return calcRowSubtotal(storeIdx, rowId) + calcFinanceValue(storeIdx, rowId, '设备费用');
+}
+
+// 计算单列结算状态
+function calcColumnStatus(storeIdx, colKey) {
+  const fin = getStoreFinance(storeIdx);
+  if (!fin) return '';
+  
+  const v = (r, c) => {
+    const val = parseFloat((fin[r] && fin[r][c]) || 0);
+    return isNaN(val) ? 0 : val;
+  };
+  
+  const finalPay = calcFinanceValue(storeIdx, 'finalPay', colKey);
+  const firstPay = v('firstPay', colKey);
+  const secondPay = v('secondPay', colKey);
+  const unpaid = calcFinanceValue(storeIdx, 'unpaid', colKey);
+  
+  if (finalPay > 0 && firstPay === 0 && secondPay === 0) return '报价阶段';
+  if (firstPay > 0 && unpaid !== 0) return '已付首款';
+  if (finalPay > 0 && unpaid === 0) return '已结算完成';
+  return '';
+}
+
+// 计算门店总结算状态
+function calcStoreTotalStatus(storeIdx) {
+  const fin = getStoreFinance(storeIdx);
+  if (!fin) return '';
+  
+  const v = (r, c) => {
+    const val = parseFloat((fin[r] && fin[r][c]) || 0);
+    return isNaN(val) ? 0 : val;
+  };
+  
+  // 检查是否有初始报价
+  let hasInitQuote = false;
+  FINANCE_COLUMNS.forEach(col => {
+    if (v('initQuote', col.key) > 0) hasInitQuote = true;
+  });
+  
+  // 检查是否有首次支付
+  let hasFirstPay = false;
+  FINANCE_COLUMNS.forEach(col => {
+    if (v('firstPay', col.key) > 0) hasFirstPay = true;
+  });
+  
+  // 检查是否所有未支付金额都为0
+  let allUnpaidZero = true;
+  FINANCE_COLUMNS.forEach(col => {
+    if (calcFinanceValue(storeIdx, 'unpaid', col.key) !== 0) allUnpaidZero = false;
+  });
+  
+  // 检查是否有最终应支付
+  let hasFinalPay = false;
+  FINANCE_COLUMNS.forEach(col => {
+    if (calcFinanceValue(storeIdx, 'finalPay', col.key) > 0) hasFinalPay = true;
+  });
+  
+  if (hasInitQuote && !hasFirstPay) return '报价阶段';
+  if (hasFirstPay && !allUnpaidZero) return '已支付部分款项';
+  if (hasFinalPay && allUnpaidZero) return '已结算完成';
+  return '';
+}
+
+// 渲染财务结算门店列表
+function renderFinanceStoreList() {
+  const container = document.getElementById('finance-store-list');
+  if (!container) return;
+  
+  if (!canViewFinance()) {
+    container.innerHTML = '<div style="text-align:center;padding:60px;color:#999;">您没有权限查看结算明细</div>';
+    return;
+  }
+  
+  if (STORES.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:60px;color:#999;">暂无门店数据</div>';
+    return;
+  }
+  
+  let html = '';
+  STORES.forEach((store, idx) => {
+    const status = calcStoreTotalStatus(idx);
+    const statusColor = status === '已结算完成' ? '#52c41a' : (status === '已支付部分款项' ? '#fa8c16' : (status === '报价阶段' ? '#1677ff' : '#999'));
+    
+    html += `
+      <div class="finance-store-item" style="background:#fff;border-radius:12px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06);overflow:hidden;">
+        <div class="finance-store-header" onclick="toggleFinanceDetail(${idx})" style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;cursor:pointer;background:#fafafa;border-bottom:1px solid #f0f0f0;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:16px;font-weight:600;color:#333;">${store['门店'] || '未命名门店'}</span>
+            <span style="font-size:12px;color:#888;">${store['区域'] || ''} · ${store['门店类型'] || ''}</span>
+            ${status ? `<span style="font-size:12px;padding:2px 8px;background:${statusColor}15;color:${statusColor};border-radius:4px;border:1px solid ${statusColor}40;">${status}</span>` : ''}
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            ${canEditFinance() ? `<button onclick="event.stopPropagation();openFinanceEdit(${idx})" style="padding:4px 12px;background:#1677ff;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;">编辑</button>` : ''}
+            <span id="finance-toggle-${idx}" style="font-size:12px;color:#999;transition:transform 0.2s;">▼</span>
+          </div>
+        </div>
+        <div id="finance-detail-${idx}" class="finance-detail-content" style="display:none;padding:0;">
+          ${renderFinanceTable(idx, false)}
+        </div>
+      </div>
+    `;
+  });
+  
+  container.innerHTML = html;
+}
+
+// 切换结算明细展开/折叠
+function toggleFinanceDetail(storeIdx) {
+  const detail = document.getElementById('finance-detail-' + storeIdx);
+  const toggle = document.getElementById('finance-toggle-' + storeIdx);
+  if (!detail) return;
+  
+  if (detail.style.display === 'none') {
+    detail.style.display = 'block';
+    if (toggle) toggle.style.transform = 'rotate(180deg)';
+    // 渲染表格内容
+    detail.innerHTML = renderFinanceTable(storeIdx, false);
+  } else {
+    detail.style.display = 'none';
+    if (toggle) toggle.style.transform = 'rotate(0deg)';
+  }
+}
+
+// 渲染结算明细表格（isEdit=true表示编辑模式）
+function renderFinanceTable(storeIdx, isEdit) {
+  const store = STORES[storeIdx];
+  const fin = getStoreFinance(storeIdx);
+  const openingDate = getStoreOpeningDate(store);
+  
+  let html = '<div style="overflow-x:auto;">';
+  html += '<table class="finance-table" style="width:100%;border-collapse:collapse;font-size:13px;min-width:900px;">';
+  
+  // 表头
+  html += '<thead><tr style="background:#f5f5f5;">';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:left;font-weight:600;color:#333;width:100px;">金额类型</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:left;font-weight:600;color:#333;width:120px;">类型明细</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:left;font-weight:600;color:#333;width:140px;">金额备注</th>';
+  FINANCE_COLUMNS.forEach(col => {
+    html += `<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:90px;">${col.key}费用</th>`;
+  });
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:90px;">工程类费用小计</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:80px;">设备费用</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:100px;">整体筹建费用总计</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:90px;">结算状态</th>';
+  html += '</tr></thead>';
+  
+  // 表体
+  html += '<tbody>';
+  
+  let lastType = '';
+  FINANCE_ROWS.forEach(row => {
+    const isFormula = !row.editable;
+    const bgColor = isFormula ? '#fafafa' : '#fff';
+    const fontWeight = (row.detail.includes('利润') || row.detail.includes('最终')) ? '600' : '400';
+    
+    html += `<tr style="background:${bgColor};">`;
+    
+    // 金额类型（合并单元格效果）
+    if (row.type !== lastType) {
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:600;" rowspan="">${row.type}</td>`;
+      lastType = row.type;
+    } else {
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;"></td>`;
+    }
+    
+    // 类型明细
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:${fontWeight};">${row.detail}</td>`;
+    
+    // 金额备注
+    const remark = (fin[row.rowId] && fin[row.rowId]._remark) || '';
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;">${remark}</td>`;
+    
+    // 10个费用列
+    FINANCE_COLUMNS.forEach(col => {
+      const val = calcFinanceValue(storeIdx, row.rowId, col.key);
+      const displayVal = val !== 0 ? val.toFixed(2) : '';
+      const colStatus = (row.rowId === 'finalPay' || row.rowId === 'firstPay' || row.rowId === 'unpaid') ? '' : calcColumnStatus(storeIdx, col.key);
+      
+      if (isEdit && row.editable) {
+        html += `<td style="padding:4px;border:1px solid #e8e8e8;text-align:right;">
+          <input type="number" step="0.01" 
+            value="${displayVal}" 
+            data-row="${row.rowId}" data-col="${col.key}" 
+            onchange="updateFinanceCell(${storeIdx},'${row.rowId}','${col.key}',this.value)"
+            style="width:100%;padding:4px 6px;border:1px solid #d9d9d9;border-radius:4px;font-size:12px;text-align:right;box-sizing:border-box;"
+          />
+        </td>`;
+      } else {
+        html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;color:${isFormula ? '#1677ff' : '#333'};font-weight:${fontWeight};">${displayVal}</td>`;
+      }
+    });
+    
+    // 工程类费用小计
+    const subtotal = calcRowSubtotal(storeIdx, row.rowId);
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;color:#1677ff;font-weight:600;">${subtotal !== 0 ? subtotal.toFixed(2) : ''}</td>`;
+    
+    // 设备费用
+    const equipVal = calcFinanceValue(storeIdx, row.rowId, '设备费用');
+    if (isEdit && row.editable) {
+      html += `<td style="padding:4px;border:1px solid #e8e8e8;text-align:right;">
+        <input type="number" step="0.01" 
+          value="${equipVal !== 0 ? equipVal.toFixed(2) : ''}" 
+          data-row="${row.rowId}" data-col="设备费用" 
+          onchange="updateFinanceCell(${storeIdx},'${row.rowId}','设备费用',this.value)"
+          style="width:100%;padding:4px 6px;border:1px solid #d9d9d9;border-radius:4px;font-size:12px;text-align:right;box-sizing:border-box;"
+        />
+      </td>`;
+    } else {
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;color:#333;">${equipVal !== 0 ? equipVal.toFixed(2) : ''}</td>`;
+    }
+    
+    // 整体筹建费用总计
+    const total = calcRowTotal(storeIdx, row.rowId);
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;color:#52c41a;font-weight:600;">${total !== 0 ? total.toFixed(2) : ''}</td>`;
+    
+    // 结算状态（仅在特定行显示）
+    if (row.rowId === 'finalPay') {
+      const status = calcStoreTotalStatus(storeIdx);
+      const statusColor = status === '已结算完成' ? '#52c41a' : (status === '已支付部分款项' ? '#fa8c16' : (status === '报价阶段' ? '#1677ff' : '#999'));
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;">
+        <span style="font-size:12px;padding:2px 8px;background:${statusColor}15;color:${statusColor};border-radius:4px;border:1px solid ${statusColor}40;">${status || '-'}</span>
+      </td>`;
+    } else {
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;"></td>`;
+    }
+    
+    html += '</tr>';
+  });
+  
+  html += '</tbody></table>';
+  html += '</div>';
+  
+  return html;
+}
+
+// 打开结算明细编辑面板
+function openFinanceEdit(storeIdx) {
+  if (!canEditFinance()) {
+    alert('您没有权限编辑结算明细');
+    return;
+  }
+  const store = STORES[storeIdx];
+  document.getElementById('financeEditTitle').innerHTML = `💰 ${store['门店'] || '未命名门店'} - 结算明细`;
+  document.getElementById('financeEditBd').innerHTML = renderFinanceEditForm(storeIdx);
+  document.getElementById('financeEditPanel').classList.add('open');
+  window._financeEditingStoreIdx = storeIdx;
+}
+
+// 关闭结算明细编辑面板
+function closeFinanceEdit() {
+  document.getElementById('financeEditPanel').classList.remove('open');
+  window._financeEditingStoreIdx = null;
+}
+
+// 渲染结算明细编辑表单
+function renderFinanceEditForm(storeIdx) {
+  const store = STORES[storeIdx];
+  const fin = getStoreFinance(storeIdx);
+  
+  let html = '<div style="display:flex;flex-direction:column;gap:16px;">';
+  
+  // 顶部信息
+  html += `
+    <div style="display:flex;gap:20px;padding:12px;background:#f5f5f5;border-radius:8px;font-size:13px;color:#666;">
+      <span><strong>门店：</strong>${store['门店'] || ''}</span>
+      <span><strong>区域：</strong>${store['区域'] || ''}</span>
+      <span><strong>类型：</strong>${store['门店类型'] || ''}</span>
+      <span><strong>开业日期：</strong>${getStoreOpeningDate(store) || '未设置'}</span>
+    </div>
+  `;
+  
+  // 编辑表格
+  html += renderFinanceTable(storeIdx, true);
+  
+  // 保存按钮
+  html += `
+    <div style="display:flex;justify-content:center;gap:12px;padding-top:8px;">
+      <button onclick="saveFinanceData(${storeIdx})" style="padding:8px 32px;background:#52c41a;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;font-weight:500;">💾 保存</button>
+      <button onclick="closeFinanceEdit()" style="padding:8px 32px;background:#f5f5f5;color:#666;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;cursor:pointer;">取消</button>
+    </div>
+  `;
+  
+  html += '</div>';
+  return html;
+}
+
+// 更新单元格值
+function updateFinanceCell(storeIdx, rowId, colKey, value) {
+  const fin = getStoreFinance(storeIdx);
+  if (!fin[rowId]) fin[rowId] = {};
+  const numVal = parseFloat(value);
+  fin[rowId][colKey] = isNaN(numVal) ? 0 : numVal;
+  
+  // 重新渲染编辑表单以更新公式列
+  document.getElementById('financeEditBd').innerHTML = renderFinanceEditForm(storeIdx);
+}
+
+// 保存结算数据
+async function saveFinanceData(storeIdx) {
+  await saveStores();
+  closeFinanceEdit();
+  renderFinanceStoreList();
+  showToast('结算数据已保存');
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -9397,6 +9941,7 @@ function renderSecuritySettings() {
           <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">选择角色</label>
           <select id="newAuthRole" style="width:100%;padding:10px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;box-sizing:border-box;background:#fff;">
             <option value="admin">管理员（可编辑主界面，不可编辑设置）</option>
+            <option value="engineer">工程管理员（可编辑主界面和结算明细，不可编辑设置）</option>
             <option value="visitor">访客（仅可查看）</option>
           </select>
         </div>
@@ -9502,6 +10047,8 @@ async function renderAuthorizedAccountsList() {
       roleText = '<span style="color:#1677ff;font-size:12px;">[超管]</span>';
     } else if (acc.role === 'admin') {
       roleText = '<span style="color:#52c41a;font-size:12px;">[管理员]</span>';
+    } else if (acc.role === 'engineer') {
+      roleText = '<span style="color:#fa8c16;font-size:12px;">[工程管理员]</span>';
     } else if (acc.role === 'guest') {
       roleText = '<span style="color:#999;font-size:12px;">[访客]</span>';
     }
@@ -9830,6 +10377,28 @@ document.addEventListener('DOMContentLoaded', function() {
     <button class="panel-close" onclick="closeSecuritySettings()">✕</button>
   </div>
   <div class="panel-bd" id="securitySettingsBd">
+    <!-- 动态生成内容 -->
+  </div>
+</div>
+
+<!-- 供应商管理面板 -->
+<div class="detail-panel" id="supplierPanel" style="width:600px;z-index:203;">
+  <div class="panel-hd" style="background:linear-gradient(135deg,#fa8c16,#d46b08);">
+    <h3>🏭 供应商管理</h3>
+    <button class="panel-close" onclick="closeSupplierManager()">✕</button>
+  </div>
+  <div class="panel-bd" id="supplierPanelBd">
+    <!-- 动态生成内容 -->
+  </div>
+</div>
+
+<!-- 结算明细编辑面板 -->
+<div class="detail-panel" id="financeEditPanel" style="width:1100px;z-index:203;max-width:95vw;">
+  <div class="panel-hd" style="background:linear-gradient(135deg,#52c41a,#389e0d);">
+    <h3 id="financeEditTitle">💰 门店结算明细</h3>
+    <button class="panel-close" onclick="closeFinanceEdit()">✕</button>
+  </div>
+  <div class="panel-bd" id="financeEditBd" style="padding:16px;overflow-x:auto;">
     <!-- 动态生成内容 -->
   </div>
 </div>
