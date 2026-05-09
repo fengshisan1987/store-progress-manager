@@ -14,116 +14,6 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
   min-height: 100vh;
 }
 
-/* ── 左侧边栏 ── */
-.sidebar {
-  width: 200px;
-  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
-  position: fixed;
-  left: -200px;
-  top: 0;
-  bottom: 0;
-  z-index: 101;
-  display: flex;
-  flex-direction: column;
-  padding-top: 58px;
-  transition: left 0.3s ease;
-}
-
-.sidebar.open {
-  left: 0;
-}
-
-/* ── 设置按钮 ── */
-.settings-btn {
-  position: fixed;
-  right: 140px;
-  top: 9px;
-  width: 36px;
-  height: 36px;
-  background: #10b981;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 102;
-  transition: all 0.2s;
-}
-
-.settings-btn:hover {
-  background: #059669;
-  transform: scale(1.05);
-}
-
-.settings-btn .icon {
-  font-size: 18px;
-  color: #fff;
-}
-
-/* 边栏打开时隐藏设置按钮 */
-.sidebar.open ~ .main-content .settings-btn {
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* ── 遮罩层 ── */
-.sidebar-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.3);
-  z-index: 100;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s;
-}
-
-.sidebar-overlay.show {
-  opacity: 1;
-  visibility: visible;
-}
-
-.sidebar-menu {
-  padding: 16px 0;
-}
-
-.sidebar-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 20px;
-  color: rgba(255,255,255,0.7);
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-  border-left: 3px solid transparent;
-}
-
-.sidebar-item:hover {
-  background: rgba(255,255,255,0.1);
-  color: #fff;
-}
-
-.sidebar-item.active {
-  background: rgba(255,255,255,0.15);
-  color: #fff;
-  border-left-color: #1677ff;
-}
-
-.sidebar-icon {
-  font-size: 18px;
-  width: 24px;
-  text-align: center;
-}
-
-.sidebar-divider {
-  height: 1px;
-  background: rgba(255,255,255,0.1);
-  margin: 12px 20px;
-}
-
 /* ── 文件上传区域 ── */
 .file-upload-area {
   border: 2px dashed #d9d9d9;
@@ -2218,21 +2108,6 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
 </head>
 <body>
 
-<!-- 遮罩层 -->
-<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
-
-<!-- 左侧边栏 -->
-<div class="sidebar" id="sidebar">
-  <div class="sidebar-menu" id="sidebarMenu">
-    <!-- 动态生成，根据角色显示不同选项 -->
-  </div>
-</div>
-
-<!-- 设置按钮 -->
-<div class="settings-btn" onclick="toggleSidebar()" title="打开设置">
-  <span class="icon">⚙️</span>
-</div>
-
 <!-- 主内容区 -->
 <div class="main-content" id="mainContent">
 
@@ -2556,6 +2431,10 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
 <!-- Tab 3: 设置 -->
 <div id="tab-settings" class="tab-content">
   <div style="padding:20px;">
+    <div style="font-size:18px;font-weight:600;color:#333;margin-bottom:20px;">快捷操作</div>
+    <div id="quick-action-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;max-width:900px;margin-bottom:30px;">
+      <!-- 动态填充 -->
+    </div>
     <div style="font-size:18px;font-weight:600;color:#333;margin-bottom:20px;">设置中心</div>
     <div id="settings-cards-container" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;max-width:900px;">
       <!-- 动态填充 -->
@@ -5129,12 +5008,9 @@ function switchTab(tabName) {
     renderFinanceStoreList();
   }
   
-  // 如果切换到设置 tab，自动打开侧边栏
+  // 如果切换到设置 tab，渲染设置卡片
   if (tabName === 'settings') {
-    const sidebar = document.getElementById('sidebar');
-    if (!sidebar.classList.contains('open')) {
-      toggleSidebar();
-    }
+    renderSettingsCards();
   }
   
   // 如果切换到概述看板 tab，自动展开并渲染统计
@@ -5366,17 +5242,6 @@ function saveStoreFields() {
 
 function saveStoreGroups() {
   localStorage.setItem('storeGroups', JSON.stringify(STORE_GROUPS));
-}
-
-// ── 边栏控制 ───────────────────────────────────────────────────────────────────
-function toggleSidebar() {
-  const sidebar = document.getElementById('sidebar');
-  const mainContent = document.getElementById('mainContent');
-  const overlay = document.querySelector('.sidebar-overlay');
-  
-  sidebar.classList.toggle('open');
-  mainContent.classList.toggle('sidebar-open');
-  overlay.classList.toggle('show');
 }
 
 // ── 数据导入导出 ────────────────────────────────────────────────────────────────
@@ -7000,9 +6865,6 @@ async function initPageContent() {
   renderPhaseHeaders();
   render();
   
-  // 渲染侧边栏菜单
-  renderSidebarMenu();
-
   // 启动多设备数据同步轮询
   startSyncPolling();
 
@@ -7012,39 +6874,6 @@ async function initPageContent() {
   ganttWrap.addEventListener('scroll', function() {
     headerSticky.scrollLeft = ganttWrap.scrollLeft;
   });
-}
-
-// ── 渲染侧边栏菜单 ────────────────────────────────────────────────────────────
-function renderSidebarMenu() {
-  const role = checkRole();
-  const menu = document.getElementById('sidebarMenu');
-  
-  let html = '';
-  
-  // 超管和管理员共有的菜单
-  if (role === 'superadmin' || role === 'admin') {
-    html += `
-      <div class="sidebar-item" onclick="openStoreEditor(); toggleSidebar();">
-        <span class="sidebar-icon">➕</span>
-        <span>添加门店</span>
-      </div>
-      <div class="sidebar-divider"></div>
-    `;
-  }
-
-  // 所有角色都有的菜单
-  html += `
-    <div class="sidebar-item" onclick="openDashboardPanel(); toggleSidebar();">
-      <span class="sidebar-icon">📊</span>
-      <span>数据看板</span>
-    </div>
-    <div class="sidebar-item" onclick="switchTab('settings'); toggleSidebar();">
-      <span class="sidebar-icon">⚙️</span>
-      <span>设置中心</span>
-    </div>
-  `;
-  
-  menu.innerHTML = html;
 }
 
 // ── 角色权限检查函数 ───────────────────────────────────────────────────────────
@@ -7196,10 +7025,31 @@ function hideLoginModal() {
 // 渲染设置中心卡片
 function renderSettingsCards() {
   const container = document.getElementById('settings-cards-container');
+  const quickContainer = document.getElementById('quick-action-cards');
   if (!container) return;
 
   const currentUser = JSON.parse(localStorage.getItem('auth_current_user') || '{}');
   const role = currentUser.role || 'operator';
+
+  // 渲染快捷操作卡片
+  let quickHtml = '';
+  if (role === 'superadmin' || role === 'admin') {
+    quickHtml += `
+      <div class="settings-card" onclick="openStoreEditor()">
+        <div class="settings-card-icon">➕</div>
+        <div class="settings-card-title">添加门店</div>
+        <div class="settings-card-desc">新增一家门店到系统中</div>
+      </div>
+    `;
+  }
+  quickHtml += `
+    <div class="settings-card" onclick="openDashboardPanel()">
+      <div class="settings-card-icon">📊</div>
+      <div class="settings-card-title">数据看板</div>
+      <div class="settings-card-desc">查看门店筹建数据概览</div>
+    </div>
+  `;
+  if (quickContainer) quickContainer.innerHTML = quickHtml;
 
   let html = '';
 
