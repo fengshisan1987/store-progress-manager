@@ -7587,7 +7587,17 @@ function renderFinanceTable(storeIdx, isEdit) {
     
     // 金额备注
     const remark = (fin[row.rowId] && fin[row.rowId]._remark) || '';
-    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;">${remark}</td>`;
+    let remarkHtml = '';
+    if (isEdit && canEditFinance()) {
+      // 编辑模式：可点击编辑
+      const displayRemark = remark.length > 10 ? remark.substring(0, 10) + '...' : remark;
+      remarkHtml = `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;cursor:pointer;background:#fafafa;" onclick="openFinanceRemarkEditor(${storeIdx}, '${row.rowId}')" title="${remark || '点击编辑备注'}">${displayRemark || '<span style="color:#999;font-size:11px;">点击编辑</span>'}</td>`;
+    } else {
+      // 展示模式：只读，过长截断，悬停显示完整
+      const displayRemark = remark.length > 10 ? remark.substring(0, 10) + '...' : remark;
+      remarkHtml = `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;" title="${remark}">${displayRemark}</td>`;
+    }
+    html += remarkHtml;
     
     // 10个费用列
     FINANCE_COLUMNS.forEach(col => {
@@ -7745,6 +7755,62 @@ function updateFinanceCell(storeIdx, rowId, colKey, value) {
   
   // 恢复横向滚动位置
   if (bd) bd.scrollLeft = scrollLeft;
+}
+
+// 打开备注编辑弹窗
+function openFinanceRemarkEditor(storeIdx, rowId) {
+  const fin = getStoreFinance(storeIdx);
+  const currentRemark = (fin[rowId] && fin[rowId]._remark) || '';
+  
+  // 创建弹窗遮罩
+  const overlay = document.createElement('div');
+  overlay.id = 'remarkEditOverlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;';
+  
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:12px;padding:24px;width:400px;max-width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.15);">
+      <div style="font-size:16px;font-weight:600;color:#333;margin-bottom:16px;">编辑金额备注</div>
+      <textarea id="remarkEditInput" style="width:100%;min-height:80px;padding:10px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;resize:vertical;box-sizing:border-box;" placeholder="请输入备注内容...">${currentRemark}</textarea>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
+        <button onclick="closeFinanceRemarkEditor()" style="padding:6px 16px;background:#f5f5f5;color:#666;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;cursor:pointer;">取消</button>
+        <button onclick="updateFinanceRemark(${storeIdx}, '${rowId}')" style="padding:6px 16px;background:#1677ff;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;">保存</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(overlay);
+  
+  // 点击遮罩关闭
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) closeFinanceRemarkEditor();
+  });
+}
+
+// 关闭备注编辑弹窗
+function closeFinanceRemarkEditor() {
+  const overlay = document.getElementById('remarkEditOverlay');
+  if (overlay) overlay.remove();
+}
+
+// 更新备注
+function updateFinanceRemark(storeIdx, rowId) {
+  const input = document.getElementById('remarkEditInput');
+  if (!input) return;
+  
+  const bd = document.getElementById('financeEditBd');
+  const scrollLeft = bd ? bd.scrollLeft : 0;
+  
+  const fin = getStoreFinance(storeIdx);
+  if (!fin[rowId]) fin[rowId] = {};
+  fin[rowId]._remark = input.value;
+  
+  closeFinanceRemarkEditor();
+  
+  // 重新渲染编辑表单
+  if (bd) {
+    bd.innerHTML = renderFinanceEditForm(storeIdx);
+    bd.scrollLeft = scrollLeft;
+  }
 }
 
 // 保存结算数据
