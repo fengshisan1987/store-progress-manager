@@ -8456,6 +8456,22 @@ function calculatePhaseCycle(store, phaseName) {
       actualPhaseName = '施工前准备阶段';
     }
   }
+  // 开业周期不在 PHASES 中，提前处理
+  if (actualPhaseName === '开业周期') {
+    const startValue = store['门店已验收'];
+    const endValue = store['已正式开业'];
+    
+    if (!startValue || !/^\d{4}-\d{2}-\d{2}$/.test(startValue)) return null;
+    if (!endValue || !/^\d{4}-\d{2}-\d{2}$/.test(endValue)) return null;
+    
+    const startDate = new Date(startValue);
+    const endDate = new Date(endValue);
+    
+    const diffTime = endDate - startDate;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    return diffDays >= 1 ? diffDays : 1;
+  }
+
   const phase = PHASES.find(p => p.name === actualPhaseName);
   if (!phase || phase.steps.length === 0) return null;
   
@@ -8497,22 +8513,6 @@ function calculatePhaseCycle(store, phaseName) {
   if (actualPhaseName === '施工前准备阶段') {
     const startValue = store['工程报价已出具'];
     const endValue = store['工程进场报备已结束'];
-    
-    if (!startValue || !/^\d{4}-\d{2}-\d{2}$/.test(startValue)) return null;
-    if (!endValue || !/^\d{4}-\d{2}-\d{2}$/.test(endValue)) return null;
-    
-    const startDate = new Date(startValue);
-    const endDate = new Date(endValue);
-    
-    const diffTime = endDate - startDate;
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-    return diffDays >= 1 ? diffDays : 1;
-  }
-
-  // 开业周期：固定取"门店已验收"和"已正式开业"
-  if (actualPhaseName === '开业周期') {
-    const startValue = store['门店已验收'];
-    const endValue = store['已正式开业'];
     
     if (!startValue || !/^\d{4}-\d{2}-\d{2}$/.test(startValue)) return null;
     if (!endValue || !/^\d{4}-\d{2}-\d{2}$/.test(endValue)) return null;
