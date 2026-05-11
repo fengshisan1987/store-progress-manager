@@ -3546,6 +3546,125 @@ function calcRectificationActualDays(store) {
   return Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // 包含首尾两天
 }
 
+// ── 生成工程物料超期提醒 ─────────────────────────────────────────────────────────
+function generateMaterialOverdueReminders(store) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const reminders = [];
+  
+  // 辅助函数：计算截止日期
+  function calcDeadline(baseDateStr, addDays) {
+    if (!baseDateStr || !/^\d{4}-\d{2}-\d{2}$/.test(baseDateStr)) return null;
+    const baseDate = new Date(baseDateStr);
+    baseDate.setDate(baseDate.getDate() + addDays);
+    return baseDate;
+  }
+  
+  // 辅助函数：格式化日期
+  function fmtDate(date) {
+    if (!date) return '';
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+  
+  // 辅助函数：检查是否超期
+  function isOverdue(deadline) {
+    if (!deadline) return false;
+    return today > deadline;
+  }
+  
+  // 1. 基于"工程已进场"的提醒（+3天复尺、+5天灯具发货、+3天配电箱发货）
+  const constructionStart = store['工程已进场'];
+  if (constructionStart && /^\d{4}-\d{2}-\d{2}$/.test(constructionStart)) {
+    // 1.1 门店最晚复尺日期（+3天）
+    if (!store['门店已复尺'] || !/^\d{4}-\d{2}-\d{2}$/.test(store['门店已复尺'])) {
+      const deadline = calcDeadline(constructionStart, 3);
+      reminders.push({
+        text: `门店最晚复尺日期：${fmtDate(deadline)}`,
+        overdue: isOverdue(deadline)
+      });
+    }
+    
+    // 1.2 门店灯具最晚发货日期（+5天）
+    if (!store['门店灯具已发货'] || !/^\d{4}-\d{2}-\d{2}$/.test(store['门店灯具已发货'])) {
+      const deadline = calcDeadline(constructionStart, 5);
+      reminders.push({
+        text: `门店灯具最晚发货日期：${fmtDate(deadline)}`,
+        overdue: isOverdue(deadline)
+      });
+    }
+    
+    // 1.3 门店配电箱最晚发货日期（+3天）
+    if (!store['门店配电箱已发货'] || !/^\d{4}-\d{2}-\d{2}$/.test(store['门店配电箱已发货'])) {
+      const deadline = calcDeadline(constructionStart, 3);
+      reminders.push({
+        text: `门店配电箱最晚发货日期：${fmtDate(deadline)}`,
+        overdue: isOverdue(deadline)
+      });
+    }
+  }
+  
+  // 2. 基于"门店已复尺"的提醒（+1天家具制作、+7天家具发货、+1天广告物料制作、+7天广告物料发货）
+  const remeasureDate = store['门店已复尺'];
+  if (remeasureDate && /^\d{4}-\d{2}-\d{2}$/.test(remeasureDate)) {
+    // 2.1 门店家具最晚确认制作日期（+1天）
+    if (!store['门店家具已制作'] || !/^\d{4}-\d{2}-\d{2}$/.test(store['门店家具已制作'])) {
+      const deadline = calcDeadline(remeasureDate, 1);
+      reminders.push({
+        text: `门店家具最晚确认制作日期：${fmtDate(deadline)}`,
+        overdue: isOverdue(deadline)
+      });
+    }
+    
+    // 2.2 门店家具最晚发货日期（+7天）
+    if (!store['门店家具已发货'] || !/^\d{4}-\d{2}-\d{2}$/.test(store['门店家具已发货'])) {
+      const deadline = calcDeadline(remeasureDate, 7);
+      reminders.push({
+        text: `门店家具最晚发货日期：${fmtDate(deadline)}`,
+        overdue: isOverdue(deadline)
+      });
+    }
+    
+    // 2.3 门店广告物料最晚确认制作日期（+1天）
+    if (!store['门店广告物料已制作'] || !/^\d{4}-\d{2}-\d{2}$/.test(store['门店广告物料已制作'])) {
+      const deadline = calcDeadline(remeasureDate, 1);
+      reminders.push({
+        text: `门店广告物料最晚确认制作日期：${fmtDate(deadline)}`,
+        overdue: isOverdue(deadline)
+      });
+    }
+    
+    // 2.4 门店广告物料最晚发货日期（+7天）
+    if (!store['门店广告物料已发货'] || !/^\d{4}-\d{2}-\d{2}$/.test(store['门店广告物料已发货'])) {
+      const deadline = calcDeadline(remeasureDate, 7);
+      reminders.push({
+        text: `门店广告物料最晚发货日期：${fmtDate(deadline)}`,
+        overdue: isOverdue(deadline)
+      });
+    }
+  }
+  
+  // 如果没有提醒，返回空字符串
+  if (reminders.length === 0) return '';
+  
+  // 生成HTML
+  const reminderItems = reminders.map(r => {
+    const style = r.overdue
+      ? 'border:1px solid #ff4d4f;color:#ff4d4f;background:#fff1f0;'
+      : 'border:1px solid #d9d9d9;color:#666;background:#fafafa;';
+    return `<span style="display:inline-block;padding:3px 10px;border-radius:4px;font-size:12px;white-space:nowrap;${style}">${r.text}</span>`;
+  }).join('');
+  
+  return `
+    <div class="info-row material-overdue-row">
+      <div class="info-title" style="color:#ff4d4f;font-weight:600;">工程物料超期提醒</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;flex:1;">${reminderItems}</div>
+    </div>
+  `;
+}
+
 // ── 过滤状态 ──────────────────────────────────────────────────────────────────
 let curRegion = 'all', curStatus = 'all', curStoreType = 'all', curEngineer = 'all', curRenovationType = 'all', curTeam = 'all';
 let curOpeningDateStart = '', curOpeningDateEnd = '';
@@ -4093,6 +4212,7 @@ function render() {
             <div class="${constructionDaysCls}">${constructionDaysText}</div>
             <div class="${rectificationDaysCls}">${rectificationDaysText}</div>
           </div>
+          ${generateMaterialOverdueReminders(store)}
           <div class="info-row" onclick="event.stopPropagation()">
             <div class="info-title">今日门店最新进展</div>
             <div class="auto-progress-field">
