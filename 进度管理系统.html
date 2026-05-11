@@ -3842,16 +3842,16 @@ function updateStats() {
     const designHTML = generateCycleWidgetForDashboard(designData, '设计周期', '🎨', '#2563eb');
     const contractHTML = generateCycleWidgetForDashboard(contractData, '施工前准备周期', '📝', '#0891b2');
     const constructionHTML = generateCycleWidgetForDashboard(constructionData, '施工阶段周期', '🔨', '#d97706');
-    const preparationHTML = generateCycleWidgetForDashboard(constructionPreparationData, '筹建周期', '🏗️', '#e11d48');
     const openingHTML = generateCycleWidgetForDashboard(openingData, '开业周期', '🎉', '#8B5CF6');
+    const preparationHTML = generateCycleWidgetForDashboard(constructionPreparationData, '筹建周期', '🏗️', '#e11d48');
     
     cycleStatsEl.innerHTML = `
       <div class="cycle-stats-grid">
         ${designHTML}
         ${contractHTML}
         ${constructionHTML}
-        ${preparationHTML}
         ${openingHTML}
+        ${preparationHTML}
       </div>
     `;
   }
