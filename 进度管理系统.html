@@ -3837,11 +3837,13 @@ function updateStats() {
     const contractData = calculatePhaseCycleData('合同阶段', cycleFilters);
     const constructionData = calculatePhaseCycleData('装修阶段', cycleFilters);
     const constructionPreparationData = calculateConstructionPreparationCycleData(cycleFilters);
+    const openingData = calculatePhaseCycleData('开业周期', cycleFilters);
     
     const designHTML = generateCycleWidgetForDashboard(designData, '设计周期', '🎨', '#2563eb');
     const contractHTML = generateCycleWidgetForDashboard(contractData, '施工前准备周期', '📝', '#0891b2');
     const constructionHTML = generateCycleWidgetForDashboard(constructionData, '施工阶段周期', '🔨', '#d97706');
     const preparationHTML = generateCycleWidgetForDashboard(constructionPreparationData, '筹建周期', '🏗️', '#e11d48');
+    const openingHTML = generateCycleWidgetForDashboard(openingData, '开业周期', '🎉', '#8B5CF6');
     
     cycleStatsEl.innerHTML = `
       <div class="cycle-stats-grid">
@@ -3849,6 +3851,7 @@ function updateStats() {
         ${contractHTML}
         ${constructionHTML}
         ${preparationHTML}
+        ${openingHTML}
       </div>
     `;
   }
@@ -8219,6 +8222,7 @@ function generateDashboardHTML() {
   const trainingData = calculatePhaseCycleData('设备/培训', cycleDashboardFilters);
   const rectificationData = calculatePhaseCycleData('整改阶段', cycleDashboardFilters);
   const constructionPreparationData = calculateConstructionPreparationCycleData(cycleDashboardFilters);
+  const openingData = calculatePhaseCycleData('开业周期', cycleDashboardFilters);
   
   let widgetsHTML = '';
   
@@ -8262,6 +8266,9 @@ function generateDashboardHTML() {
   }
   if (selectedWidgets.includes('constructionPreparationCycle')) {
     widgetsHTML += generateCycleWidget(constructionPreparationData, '筹建周期看板', '🏗️', '#e11d48');
+  }
+  if (selectedWidgets.includes('openingCycle')) {
+    widgetsHTML += generateCycleWidget(openingData, '开业周期看板', '🎉', '#8B5CF6');
   }
   
   return widgetsHTML;
@@ -8501,6 +8508,22 @@ function calculatePhaseCycle(store, phaseName) {
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
     return diffDays >= 1 ? diffDays : 1;
   }
+
+  // 开业周期：固定取"门店已验收"和"已正式开业"
+  if (actualPhaseName === '开业周期') {
+    const startValue = store['门店已验收'];
+    const endValue = store['已正式开业'];
+    
+    if (!startValue || !/^\d{4}-\d{2}-\d{2}$/.test(startValue)) return null;
+    if (!endValue || !/^\d{4}-\d{2}-\d{2}$/.test(endValue)) return null;
+    
+    const startDate = new Date(startValue);
+    const endDate = new Date(endValue);
+    
+    const diffTime = endDate - startDate;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    return diffDays >= 1 ? diffDays : 1;
+  }
   
   // 其他阶段：找阶段内第一个和最后一个设置了日期的节点（按顺序）
   let firstDate = null;
@@ -8646,9 +8669,6 @@ function calculatePhaseCycleData(phaseName, filters = {}) {
     if (!hasStatusFilter && EXCLUDED_STORE_STATUSES.includes(store['门店状态'])) return;
 
     // 时间筛选（只看阶段结束节点的日期是否在范围内）
-    const phase = PHASES.find(p => p.name === actualPhaseName);
-    if (!phase) return;
-
     // 使用本地日期字符串比较，避免时区问题
     const startStr = filters.startDate ? filters.startDate : null;
     const endStr = filters.endDate ? filters.endDate : null;
@@ -8664,6 +8684,8 @@ function calculatePhaseCycleData(phaseName, filters = {}) {
         endNodeField = '门店已验收';
       } else if (actualPhaseName === '筹建阶段') {
         endNodeField = '门店已验收';
+      } else if (actualPhaseName === '开业周期') {
+        endNodeField = '已正式开业';
       }
 
       if (endNodeField) {
@@ -8703,7 +8725,7 @@ function calculatePhaseCycleData(phaseName, filters = {}) {
       stores: []
     };
   }
-  
+
   const sum = cycles.reduce((a, b) => a + b, 0);
 
   return {
@@ -10342,6 +10364,16 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
           </div>
           <input type="checkbox" class="dashboard-widget-checkbox" id="widget-constructionPreparationCycle">
+        </div>
+        <div class="dashboard-widget-item" data-widget="openingCycle" onclick="toggleWidget('openingCycle')">
+          <div class="dashboard-widget-info">
+            <div class="dashboard-widget-icon chart-progress">🎉</div>
+            <div>
+              <div class="dashboard-widget-name">开业周期看板</div>
+              <div class="dashboard-widget-desc">统计从门店验收到正式开业的平均周期</div>
+            </div>
+          </div>
+          <input type="checkbox" class="dashboard-widget-checkbox" id="widget-openingCycle">
         </div>
       </div>
     </div>
