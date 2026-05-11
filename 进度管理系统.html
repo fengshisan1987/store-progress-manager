@@ -5432,12 +5432,25 @@ function exportData() {
   openExportModal();
 }
 
+// 导出弹窗中的筛选组件实例
+let _msExportRegion = null;
+let _msExportStatus = null;
+
 function openExportModal() {
+  // 准备筛选选项
+  const regionItems = [...new Set(STORES.map(s => s['区域']).filter(Boolean))].map(r => ({ value: r, label: r }));
+  const allStatuses = [...new Set(STORES.map(s => s['门店状态']).filter(Boolean))];
+  // 确保包含所有标准状态
+  ['筹建中', '已完成', '已弃店'].forEach(status => {
+    if (!allStatuses.includes(status)) allStatuses.push(status);
+  });
+  const statusItems = allStatuses.map(s => ({ value: s, label: s }));
+
   const modal = document.createElement('div');
   modal.id = 'exportModal';
   modal.className = 'modal-overlay';
   modal.innerHTML = `
-    <div class="modal" style="max-width: 480px;">
+    <div class="modal" style="max-width: 560px;">
       <div class="modal-header">
         <h3>📤 导出数据</h3>
         <button class="close-btn" onclick="closeExportModal()">&times;</button>
@@ -5449,6 +5462,13 @@ function openExportModal() {
             <option value="full">完整数据（门店基本信息 + 各阶段进度）</option>
             <option value="cycleStats">门店周期统计（各阶段周期明细）</option>
           </select>
+        </div>
+        <div id="exportFilters" style="display:none;margin-bottom:16px;">
+          <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">筛选条件</label>
+          <div style="display:flex;gap:10px;">
+            <div id="exportRegionFilter" style="flex:1;"></div>
+            <div id="exportStatusFilter" style="flex:1;"></div>
+          </div>
         </div>
         <div id="exportInfoBox" style="margin-bottom: 20px;">
           <p style="color: #666; margin-bottom: 16px;">即将导出 <strong>${STORES.length}</strong> 家门店的完整数据</p>
@@ -5475,6 +5495,26 @@ function openExportModal() {
   `;
   document.body.appendChild(modal);
   setTimeout(() => modal.classList.add('show'), 10);
+
+  // 初始化多选筛选组件（延迟确保DOM已渲染）
+  setTimeout(() => {
+    if (document.getElementById('exportRegionFilter')) {
+      _msExportRegion = new MultiSelect('exportRegionFilter', {
+        placeholder: '全部区域',
+        items: regionItems,
+        selected: [],
+        onChange: () => {}
+      });
+    }
+    if (document.getElementById('exportStatusFilter')) {
+      _msExportStatus = new MultiSelect('exportStatusFilter', {
+        placeholder: '全部状态',
+        items: statusItems,
+        selected: statusItems.map(s => s.value), // 默认全选所有状态
+        onChange: () => {}
+      });
+    }
+  }, 50);
 }
 
 // 根据导出类型更新弹窗UI
@@ -5482,6 +5522,7 @@ function updateExportModalUI() {
   const exportType = document.getElementById('exportType').value;
   const infoBox = document.getElementById('exportInfoBox');
   const fileNameInput = document.getElementById('exportFileName');
+  const filtersBox = document.getElementById('exportFilters');
   
   if (exportType === 'cycleStats') {
     infoBox.innerHTML = `
@@ -5491,10 +5532,11 @@ function updateExportModalUI() {
         <div>• 门店基本信息（名称、区域、类型、装修形式）</div>
         <div>• 各阶段周期明细（设计/施工前准备/施工/筹建/开业）</div>
         <div>• 每个阶段的开始日期、结束日期、周期天数</div>
-        <div style="margin-top:8px;color:#999;font-size:12px;">应用当前周期统计看板的筛选条件</div>
+        <div style="margin-top:8px;color:#999;font-size:12px;">可通过上方筛选条件选择要导出的门店</div>
       </div>
     `;
     fileNameInput.value = '门店周期统计_' + new Date().toISOString().slice(0, 10);
+    if (filtersBox) filtersBox.style.display = 'block';
   } else {
     infoBox.innerHTML = `
       <p style="color: #666; margin-bottom: 16px;">即将导出 <strong>${STORES.length}</strong> 家门店的完整数据</p>
@@ -5506,6 +5548,7 @@ function updateExportModalUI() {
       </div>
     `;
     fileNameInput.value = '门店进度数据_' + new Date().toISOString().slice(0, 10);
+    if (filtersBox) filtersBox.style.display = 'none';
   }
 }
 
@@ -5513,7 +5556,11 @@ function closeExportModal() {
   const modal = document.getElementById('exportModal');
   if (modal) {
     modal.classList.remove('show');
-    setTimeout(() => modal.remove(), 300);
+    setTimeout(() => {
+      modal.remove();
+      _msExportRegion = null;
+      _msExportStatus = null;
+    }, 300);
   }
 }
 
@@ -5606,8 +5653,9 @@ async function confirmExport() {
 
 // 导出门店周期统计数据
 function exportCycleStatsData(fileName) {
-  // 获取周期统计的筛选条件
-  const filters = dashboardFilters.cycleStats || {};
+  // 从弹窗组件获取筛选条件
+  const selectedRegions = _msExportRegion ? _msExportRegion.getSelected() : [];
+  const selectedStatuses = _msExportStatus ? _msExportStatus.getSelected() : [];
   
   // 定义5个阶段的配置
   const cycleConfigs = [
@@ -5625,40 +5673,11 @@ function exportCycleStatsData(fileName) {
   const data = [];
   
   STORES.forEach(store => {
-    // 应用筛选条件
-    // 区域筛选（多选）
-    if (!matchMultiValue(filters.regions, store['区域'])) return;
+    // 区域筛选（多选）：选中区域且不在选中列表中时排除
+    if (selectedRegions.length > 0 && !selectedRegions.includes(store['区域'])) return;
     
-    // 门店状态筛选（多选）
-    if (!matchMultiValue(filters.storeStatuses, store['门店状态'])) return;
-    
-    // 默认排除非筹建中状态（已完成、已弃店），但如果用户手动选择了状态则以用户选择为准
-    const hasStatusFilter = filters.storeStatuses && filters.storeStatuses.length > 0;
-    if (!hasStatusFilter && EXCLUDED_STORE_STATUSES.includes(store['门店状态'])) return;
-    
-    // 时间筛选（基于所有阶段的日期）
-    if (filters.startDate || filters.endDate) {
-      let hasDateInRange = false;
-      let hasAnyDate = false;
-      const startStr = filters.startDate || null;
-      const endStr = filters.endDate || null;
-      
-      PHASES.forEach(phase => {
-        phase.steps.forEach(step => {
-          const value = store[step.name];
-          if (value && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
-            hasAnyDate = true;
-            let inRange = true;
-            if (startStr && value < startStr) inRange = false;
-            if (endStr && value > endStr) inRange = false;
-            if (inRange) hasDateInRange = true;
-          }
-        });
-      });
-      
-      // 只有当门店有日期字段，且没有日期在范围内时，才过滤掉
-      if (hasAnyDate && !hasDateInRange) return;
-    }
+    // 门店状态筛选（多选）：选中状态且不在选中列表中时排除
+    if (selectedStatuses.length > 0 && !selectedStatuses.includes(store['门店状态'])) return;
     
     // 该门店通过筛选，为其生成5个阶段的数据行
     cycleConfigs.forEach(config => {
