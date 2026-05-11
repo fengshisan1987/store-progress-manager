@@ -2290,7 +2290,12 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
           <input type="date" id="cycleStatsStartDate" placeholder="开始日期" style="padding:6px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;" onchange="updateDashboardFilters()">
           <span style="color:#999;">至</span>
           <input type="date" id="cycleStatsEndDate" placeholder="结束日期" style="padding:6px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;" onchange="updateDashboardFilters()">
-          <div id="cycleStatsStatus" style="display:inline-block;min-width:100px;"></div>
+          <select id="cycleStatsStatus" onchange="updateDashboardFilters()" style="padding:6px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:13px;background:#fff;min-width:100px;">
+            <option value="">全部状态</option>
+            <option value="筹建中">筹建中</option>
+            <option value="已完成">已完成</option>
+            <option value="已弃店">已弃店</option>
+          </select>
         </div>
       </div>
       <div id="cycleStatsInDashboard" class="collapsible-content collapsed" style="padding:15px 0;">
@@ -8519,7 +8524,7 @@ let dashboardFilters = {
     regions: [],
     startDate: '',
     endDate: '',
-    storeStatuses: []
+    storeStatus: '' // 状态单选，空字符串=全部（默认排除已完成/已弃店）
   }
 };
 
@@ -8550,7 +8555,8 @@ function updateDashboardFilters() {
     dashboardFilters.cycleStats.regions = _msCycleStatsRegion ? _msCycleStatsRegion.getSelected() : [];
     dashboardFilters.cycleStats.startDate = cycleStartDate.value || '';
     dashboardFilters.cycleStats.endDate = cycleEndDate.value || '';
-    dashboardFilters.cycleStats.storeStatuses = _msCycleStatsStatus ? _msCycleStatsStatus.getSelected() : [];
+    const cycleStatusSelect = document.getElementById('cycleStatsStatus');
+    dashboardFilters.cycleStats.storeStatus = cycleStatusSelect ? cycleStatusSelect.value : '';
   }
 
   // 重新更新统计看板
@@ -8595,14 +8601,10 @@ function initDashboardRegionFilters() {
     });
   }
 
-  // 初始化门店周期统计 - 状态多选
-  if (document.getElementById('cycleStatsStatus')) {
-    _msCycleStatsStatus = new MultiSelect('cycleStatsStatus', {
-      placeholder: '全部状态',
-      items: statusItems,
-      selected: dashboardFilters.cycleStats.storeStatuses,
-      onChange: () => updateDashboardFilters()
-    });
+  // 初始化门店周期统计 - 状态单选
+  const cycleStatusSelect = document.getElementById('cycleStatsStatus');
+  if (cycleStatusSelect) {
+    cycleStatusSelect.value = dashboardFilters.cycleStats.storeStatus || '';
   }
 }
 
@@ -8744,19 +8746,21 @@ function calculateConstructionPreparationCycleData(filters = {}) {
     // 区域筛选（多选）
     if (!matchMultiValue(filters.regions, store['区域'])) return;
 
-    // 门店状态筛选（多选）
-    if (!matchMultiValue(filters.storeStatuses, store['门店状态'])) return;
+    // 门店状态筛选（单选）
+    const selectedStatus = filters.storeStatus || '';
+    if (selectedStatus && store['门店状态'] !== selectedStatus) return;
     
     // 默认排除非筹建中状态（已完成、已弃店），但如果用户手动选择了状态则以用户选择为准
-    const hasStatusFilter = filters.storeStatuses && filters.storeStatuses.length > 0;
-    if (!hasStatusFilter && EXCLUDED_STORE_STATUSES.includes(store['门店状态'])) return;
+    if (!selectedStatus && EXCLUDED_STORE_STATUSES.includes(store['门店状态'])) return;
 
-    // 时间筛选（只看筹建周期结束节点"门店已验收"的日期是否在范围内）
+    // 时间筛选
     const startStr = filters.startDate ? filters.startDate : null;
     const endStr = filters.endDate ? filters.endDate : null;
 
     if (startStr || endStr) {
-      const endValue = store['门店已验收'];
+      // 当筛选状态为"已完成"时，统一基于"已正式开业"日期筛选
+      const endNodeField = selectedStatus === '已完成' ? '已正式开业' : '门店已验收';
+      const endValue = store[endNodeField];
       let inRange = true;
       if (endValue && /^\d{4}-\d{2}-\d{2}$/.test(endValue)) {
         if (startStr && endValue < startStr) inRange = false;
@@ -8829,31 +8833,35 @@ function calculatePhaseCycleData(phaseName, filters = {}) {
     // 区域筛选（多选）
     if (!matchMultiValue(filters.regions, store['区域'])) return;
 
-    // 门店状态筛选（多选）
-    if (!matchMultiValue(filters.storeStatuses, store['门店状态'])) return;
+    // 门店状态筛选（单选）
+    const selectedStatus = filters.storeStatus || '';
+    if (selectedStatus && store['门店状态'] !== selectedStatus) return;
     
     // 默认排除非筹建中状态（已完成、已弃店），但如果用户手动选择了状态则以用户选择为准
-    const hasStatusFilter = filters.storeStatuses && filters.storeStatuses.length > 0;
-    if (!hasStatusFilter && EXCLUDED_STORE_STATUSES.includes(store['门店状态'])) return;
+    if (!selectedStatus && EXCLUDED_STORE_STATUSES.includes(store['门店状态'])) return;
 
-    // 时间筛选（只看阶段结束节点的日期是否在范围内）
-    // 使用本地日期字符串比较，避免时区问题
+    // 时间筛选
     const startStr = filters.startDate ? filters.startDate : null;
     const endStr = filters.endDate ? filters.endDate : null;
 
     if (startStr || endStr) {
-      // 确定该阶段的结束节点字段
+      // 当筛选状态为"已完成"时，所有阶段统一基于"已正式开业"日期筛选
+      // 其他状态（筹建中/已弃店/全部）保持各阶段看自己的结束日期
       let endNodeField = '';
-      if (actualPhaseName === '设计阶段') {
-        endNodeField = '施工图已确认';
-      } else if (actualPhaseName === '施工前准备阶段') {
-        endNodeField = '工程进场报备已结束';
-      } else if (actualPhaseName === '施工阶段') {
-        endNodeField = '门店已验收';
-      } else if (actualPhaseName === '筹建阶段') {
-        endNodeField = '门店已验收';
-      } else if (actualPhaseName === '开业周期') {
+      if (selectedStatus === '已完成') {
         endNodeField = '已正式开业';
+      } else {
+        if (actualPhaseName === '设计阶段') {
+          endNodeField = '施工图已确认';
+        } else if (actualPhaseName === '施工前准备阶段') {
+          endNodeField = '工程进场报备已结束';
+        } else if (actualPhaseName === '施工阶段') {
+          endNodeField = '门店已验收';
+        } else if (actualPhaseName === '筹建阶段') {
+          endNodeField = '门店已验收';
+        } else if (actualPhaseName === '开业周期') {
+          endNodeField = '已正式开业';
+        }
       }
 
       if (endNodeField) {
