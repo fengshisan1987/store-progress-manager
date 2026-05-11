@@ -9054,6 +9054,7 @@ function generateStoreTypeWidgetForDashboard(filters = {}) {
     // 时间筛选（基于所有阶段的日期）
     if (filters.startDate || filters.endDate) {
       let hasDateInRange = false;
+      let hasAnyDate = false;
       // 使用本地日期字符串比较，避免时区问题
       const startStr = filters.startDate ? filters.startDate : null;
       const endStr = filters.endDate ? filters.endDate : null;
@@ -9063,6 +9064,7 @@ function generateStoreTypeWidgetForDashboard(filters = {}) {
         phase.steps.forEach(step => {
           const value = store[step.name];
           if (value && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+            hasAnyDate = true;
             let inRange = true;
             if (startStr && value < startStr) inRange = false;
             if (endStr && value > endStr) inRange = false;
@@ -9071,7 +9073,9 @@ function generateStoreTypeWidgetForDashboard(filters = {}) {
         });
       });
       
-      if (!hasDateInRange) return;
+      // 只有当门店有日期字段，且没有日期在范围内时，才过滤掉
+      // 如果门店没有日期字段，不应用时间筛选（保留该门店）
+      if (hasAnyDate && !hasDateInRange) return;
     }
     
     const type = store['门店类型'] || '';
