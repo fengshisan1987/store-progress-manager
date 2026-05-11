@@ -5667,7 +5667,7 @@ function exportCycleStatsData(fileName) {
   ];
   
   // 准备表头
-  const headers = ['门店名称', '区域', '门店类型', '装修形式', '阶段名称', '开始日期', '结束日期', '周期(天)'];
+  const headers = ['门店名称', '区域', '门店状态', '门店类型', '装修形式', '阶段名称', '开始日期', '结束日期', '周期(天)'];
   
   // 准备数据：先筛选门店，再为每个门店生成5行数据
   const data = [];
@@ -5705,6 +5705,7 @@ function exportCycleStatsData(fileName) {
       data.push([
         store['门店'] || '',
         store['区域'] || '',
+        store['门店状态'] || '',
         store['门店类型'] || '',
         store['装修形式'] || '',
         config.name,
