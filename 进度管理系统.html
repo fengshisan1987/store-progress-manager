@@ -5443,7 +5443,14 @@ function openExportModal() {
         <button class="close-btn" onclick="closeExportModal()">&times;</button>
       </div>
       <div class="modal-body">
-        <div style="margin-bottom: 20px;">
+        <div style="margin-bottom: 16px;">
+          <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">导出类型</label>
+          <select id="exportType" onchange="updateExportModalUI()" style="width:100%;padding:10px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;background:#fff;">
+            <option value="full">完整数据（门店基本信息 + 各阶段进度）</option>
+            <option value="cycleStats">门店周期统计（各阶段周期明细）</option>
+          </select>
+        </div>
+        <div id="exportInfoBox" style="margin-bottom: 20px;">
           <p style="color: #666; margin-bottom: 16px;">即将导出 <strong>${STORES.length}</strong> 家门店的完整数据</p>
           <div style="background: #f5f5f5; padding: 12px; border-radius: 8px; font-size: 13px; color: #666;">
             <div style="margin-bottom: 8px;"><strong>包含内容：</strong></div>
@@ -5468,6 +5475,38 @@ function openExportModal() {
   `;
   document.body.appendChild(modal);
   setTimeout(() => modal.classList.add('show'), 10);
+}
+
+// 根据导出类型更新弹窗UI
+function updateExportModalUI() {
+  const exportType = document.getElementById('exportType').value;
+  const infoBox = document.getElementById('exportInfoBox');
+  const fileNameInput = document.getElementById('exportFileName');
+  
+  if (exportType === 'cycleStats') {
+    infoBox.innerHTML = `
+      <p style="color: #666; margin-bottom: 16px;">即将导出 <strong>门店周期统计</strong> 数据</p>
+      <div style="background: #f5f5f5; padding: 12px; border-radius: 8px; font-size: 13px; color: #666;">
+        <div style="margin-bottom: 8px;"><strong>包含内容：</strong></div>
+        <div>• 门店基本信息（名称、区域、类型、装修形式）</div>
+        <div>• 各阶段周期明细（设计/施工前准备/施工/筹建/开业）</div>
+        <div>• 每个阶段的开始日期、结束日期、周期天数</div>
+        <div style="margin-top:8px;color:#999;font-size:12px;">应用当前周期统计看板的筛选条件</div>
+      </div>
+    `;
+    fileNameInput.value = '门店周期统计_' + new Date().toISOString().slice(0, 10);
+  } else {
+    infoBox.innerHTML = `
+      <p style="color: #666; margin-bottom: 16px;">即将导出 <strong>${STORES.length}</strong> 家门店的完整数据</p>
+      <div style="background: #f5f5f5; padding: 12px; border-radius: 8px; font-size: 13px; color: #666;">
+        <div style="margin-bottom: 8px;"><strong>包含内容：</strong></div>
+        <div>• 门店基本信息（名称、区域、状态、负责人等）</div>
+        <div>• 各阶段进度数据（开始/结束日期、完成状态）</div>
+        <div>• 自定义字段数据</div>
+      </div>
+    `;
+    fileNameInput.value = '门店进度数据_' + new Date().toISOString().slice(0, 10);
+  }
 }
 
 function closeExportModal() {
@@ -5498,51 +5537,59 @@ async function confirmExport() {
       fileName += '.xlsx';
     }
     
-    // 准备表头
-    const headers = ['门店', '区域', '门店状态', '工程负责人', '门店类型', '装修形式'];
-    // 从 PHASES 中获取所有步骤作为列
-    const allSteps = [];
-    PHASES.forEach(phase => {
-      phase.steps.forEach(step => {
-        allSteps.push({
-          phase: phase.name,
-          name: step.name,
-          key: step.name
-        });
-        headers.push(step.name);
-      });
-    });
+    const exportType = document.getElementById('exportType').value;
     
-    // 准备数据
-    const data = STORES.map(store => {
-      const row = [
-        store['门店'] || '',
-        store['区域'] || '',
-        store['门店状态'] || '',
-        store['工程负责人'] || store['姓名'] || '',
-        store['门店类型'] || '',
-        store['装修形式'] || ''
-      ];
-      
-      // 遍历所有阶段和步骤，直接获取日期值
+    if (exportType === 'cycleStats') {
+      // 门店周期统计导出
+      exportCycleStatsData(fileName);
+    } else {
+      // 完整数据导出（原有逻辑）
+      // 准备表头
+      const headers = ['门店', '区域', '门店状态', '工程负责人', '门店类型', '装修形式'];
+      // 从 PHASES 中获取所有步骤作为列
+      const allSteps = [];
       PHASES.forEach(phase => {
         phase.steps.forEach(step => {
-          // 日期直接存储在store对象中，key为step.name
-          const dateValue = store[step.name] || '';
-          row.push(dateValue);
+          allSteps.push({
+            phase: phase.name,
+            name: step.name,
+            key: step.name
+          });
+          headers.push(step.name);
         });
       });
       
-      return row;
-    });
-    
-    // 创建工作簿
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, '门店数据');
-    
-    // 使用 XLSX.writeFile 直接下载（兼容所有浏览器）
-    XLSX.writeFile(wb, fileName);
+      // 准备数据
+      const data = STORES.map(store => {
+        const row = [
+          store['门店'] || '',
+          store['区域'] || '',
+          store['门店状态'] || '',
+          store['工程负责人'] || store['姓名'] || '',
+          store['门店类型'] || '',
+          store['装修形式'] || ''
+        ];
+        
+        // 遍历所有阶段和步骤，直接获取日期值
+        PHASES.forEach(phase => {
+          phase.steps.forEach(step => {
+            // 日期直接存储在store对象中，key为step.name
+            const dateValue = store[step.name] || '';
+            row.push(dateValue);
+          });
+        });
+        
+        return row;
+      });
+      
+      // 创建工作簿
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '门店数据');
+      
+      // 使用 XLSX.writeFile 直接下载（兼容所有浏览器）
+      XLSX.writeFile(wb, fileName);
+    }
     
     showToast('文件已开始下载');
     closeExportModal();
@@ -5555,6 +5602,107 @@ async function confirmExport() {
       btn.textContent = '导出到 Excel';
     }
   }
+}
+
+// 导出门店周期统计数据
+function exportCycleStatsData(fileName) {
+  // 获取周期统计的筛选条件
+  const filters = dashboardFilters.cycleStats || {};
+  
+  // 定义5个阶段的配置
+  const cycleConfigs = [
+    { name: '设计周期', startNode: '确认门店测量时间', endNode: '施工图已确认' },
+    { name: '施工前准备周期', startNode: '工程报价已出具', endNode: '工程进场报备已结束' },
+    { name: '施工阶段周期', startNode: '工程已进场', endNode: '门店已验收' },
+    { name: '筹建周期', startNode: '确认门店测量时间', endNode: '门店已验收' },
+    { name: '开业周期', startNode: '门店已验收', endNode: '已正式开业' }
+  ];
+  
+  // 准备表头
+  const headers = ['门店名称', '区域', '门店类型', '装修形式', '阶段名称', '开始日期', '结束日期', '周期(天)'];
+  
+  // 准备数据：先筛选门店，再为每个门店生成5行数据
+  const data = [];
+  
+  STORES.forEach(store => {
+    // 应用筛选条件
+    // 区域筛选（多选）
+    if (!matchMultiValue(filters.regions, store['区域'])) return;
+    
+    // 门店状态筛选（多选）
+    if (!matchMultiValue(filters.storeStatuses, store['门店状态'])) return;
+    
+    // 默认排除非筹建中状态（已完成、已弃店），但如果用户手动选择了状态则以用户选择为准
+    const hasStatusFilter = filters.storeStatuses && filters.storeStatuses.length > 0;
+    if (!hasStatusFilter && EXCLUDED_STORE_STATUSES.includes(store['门店状态'])) return;
+    
+    // 时间筛选（基于所有阶段的日期）
+    if (filters.startDate || filters.endDate) {
+      let hasDateInRange = false;
+      let hasAnyDate = false;
+      const startStr = filters.startDate || null;
+      const endStr = filters.endDate || null;
+      
+      PHASES.forEach(phase => {
+        phase.steps.forEach(step => {
+          const value = store[step.name];
+          if (value && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+            hasAnyDate = true;
+            let inRange = true;
+            if (startStr && value < startStr) inRange = false;
+            if (endStr && value > endStr) inRange = false;
+            if (inRange) hasDateInRange = true;
+          }
+        });
+      });
+      
+      // 只有当门店有日期字段，且没有日期在范围内时，才过滤掉
+      if (hasAnyDate && !hasDateInRange) return;
+    }
+    
+    // 该门店通过筛选，为其生成5个阶段的数据行
+    cycleConfigs.forEach(config => {
+      const startDate = store[config.startNode] || '';
+      const endDate = store[config.endNode] || '';
+      
+      // 计算周期天数
+      let cycleDays = '';
+      if (config.name === '筹建周期') {
+        const cycle = calculateConstructionPreparationCycle(store);
+        if (cycle !== null) cycleDays = cycle;
+      } else if (config.name === '开业周期') {
+        const cycle = calculatePhaseCycle(store, '开业周期');
+        if (cycle !== null) cycleDays = cycle;
+      } else {
+        const phaseName = config.name === '设计周期' ? '设计阶段' :
+                         config.name === '施工前准备周期' ? '施工前准备阶段' :
+                         config.name === '施工阶段周期' ? '施工阶段' : '';
+        if (phaseName) {
+          const cycle = calculatePhaseCycle(store, phaseName);
+          if (cycle !== null) cycleDays = cycle;
+        }
+      }
+      
+      data.push([
+        store['门店'] || '',
+        store['区域'] || '',
+        store['门店类型'] || '',
+        store['装修形式'] || '',
+        config.name,
+        startDate,
+        endDate,
+        cycleDays
+      ]);
+    });
+  });
+  
+  // 创建工作簿
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '门店周期统计');
+  
+  // 使用 XLSX.writeFile 直接下载
+  XLSX.writeFile(wb, fileName);
 }
 
 function downloadFile(blob, fileName) {
