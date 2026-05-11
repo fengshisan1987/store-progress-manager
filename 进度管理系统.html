@@ -3579,7 +3579,7 @@ function generateMaterialOverdueReminders(store) {
   const constructionStart = store['工程已进场'];
   if (constructionStart && /^\d{4}-\d{2}-\d{2}$/.test(constructionStart)) {
     // 1.1 门店最晚复尺日期（+3天）
-    if (!store['门店已复尺'] || !/^\d{4}-\d{2}-\d{2}$/.test(store['门店已复尺'])) {
+    if (!store['门店已复尺']) {
       const deadline = calcDeadline(constructionStart, 3);
       reminders.push({
         text: `门店最晚复尺日期：${fmtDate(deadline)}`,
@@ -3588,7 +3588,7 @@ function generateMaterialOverdueReminders(store) {
     }
     
     // 1.2 门店灯具最晚发货日期（+5天）
-    if (!store['门店灯具已发货'] || !/^\d{4}-\d{2}-\d{2}$/.test(store['门店灯具已发货'])) {
+    if (!store['门店灯具已发货']) {
       const deadline = calcDeadline(constructionStart, 5);
       reminders.push({
         text: `门店灯具最晚发货日期：${fmtDate(deadline)}`,
@@ -3597,7 +3597,7 @@ function generateMaterialOverdueReminders(store) {
     }
     
     // 1.3 门店配电箱最晚发货日期（+3天）
-    if (!store['门店配电箱已发货'] || !/^\d{4}-\d{2}-\d{2}$/.test(store['门店配电箱已发货'])) {
+    if (!store['门店配电箱已发货']) {
       const deadline = calcDeadline(constructionStart, 3);
       reminders.push({
         text: `门店配电箱最晚发货日期：${fmtDate(deadline)}`,
@@ -3610,7 +3610,7 @@ function generateMaterialOverdueReminders(store) {
   const remeasureDate = store['门店已复尺'];
   if (remeasureDate && /^\d{4}-\d{2}-\d{2}$/.test(remeasureDate)) {
     // 2.1 门店家具最晚确认制作日期（+1天）
-    if (!store['门店家具已制作'] || !/^\d{4}-\d{2}-\d{2}$/.test(store['门店家具已制作'])) {
+    if (!store['门店家具已制作']) {
       const deadline = calcDeadline(remeasureDate, 1);
       reminders.push({
         text: `门店家具最晚确认制作日期：${fmtDate(deadline)}`,
@@ -3619,7 +3619,7 @@ function generateMaterialOverdueReminders(store) {
     }
     
     // 2.2 门店家具最晚发货日期（+7天）
-    if (!store['门店家具已发货'] || !/^\d{4}-\d{2}-\d{2}$/.test(store['门店家具已发货'])) {
+    if (!store['门店家具已发货']) {
       const deadline = calcDeadline(remeasureDate, 7);
       reminders.push({
         text: `门店家具最晚发货日期：${fmtDate(deadline)}`,
@@ -3628,7 +3628,7 @@ function generateMaterialOverdueReminders(store) {
     }
     
     // 2.3 门店广告物料最晚确认制作日期（+1天）
-    if (!store['门店广告物料已制作'] || !/^\d{4}-\d{2}-\d{2}$/.test(store['门店广告物料已制作'])) {
+    if (!store['门店广告物料已制作']) {
       const deadline = calcDeadline(remeasureDate, 1);
       reminders.push({
         text: `门店广告物料最晚确认制作日期：${fmtDate(deadline)}`,
@@ -3637,7 +3637,7 @@ function generateMaterialOverdueReminders(store) {
     }
     
     // 2.4 门店广告物料最晚发货日期（+7天）
-    if (!store['门店广告物料已发货'] || !/^\d{4}-\d{2}-\d{2}$/.test(store['门店广告物料已发货'])) {
+    if (!store['门店广告物料已发货']) {
       const deadline = calcDeadline(remeasureDate, 7);
       reminders.push({
         text: `门店广告物料最晚发货日期：${fmtDate(deadline)}`,
