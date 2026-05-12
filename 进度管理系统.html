@@ -2103,6 +2103,13 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
 .finance-store-header:hover {
   background: #f0f5ff !important;
 }
+/* 列表页展开行内嵌表格隐藏表头（已有统一表头） */
+.finance-detail-row .finance-table thead {
+  display: none;
+}
+.finance-summary-row:hover {
+  background: #f0f5ff !important;
+}
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
 </head>
@@ -7808,7 +7815,7 @@ function calcStoreTotalStatus(storeIdx) {
   return '';
 }
 
-// 渲染财务结算门店列表
+// 渲染财务结算门店列表（统一大表格）
 function renderFinanceStoreList() {
   const container = document.getElementById('finance-store-list');
   if (!container) return;
@@ -7823,48 +7830,103 @@ function renderFinanceStoreList() {
     return;
   }
   
-  let html = '';
+  let html = '<div style="overflow-x:auto;">';
+  html += '<table class="finance-table" style="width:100%;border-collapse:collapse;font-size:13px;min-width:1400px;">';
+  
+  // 统一表头
+  html += '<thead>';
+  html += '<tr style="background:#f5f5f5;">';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:100px;position:sticky;left:0;background:#f5f5f5;z-index:2;">门店名称</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:60px;position:sticky;left:100px;background:#f5f5f5;z-index:2;">区域</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:70px;position:sticky;left:160px;background:#f5f5f5;z-index:2;">门店类型</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:90px;position:sticky;left:230px;background:#f5f5f5;z-index:2;">开业日期</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:60px;position:sticky;left:320px;background:#f5f5f5;z-index:2;">门店面积</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:100px;position:sticky;left:380px;background:#f5f5f5;z-index:2;">金额类型</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:120px;position:sticky;left:480px;background:#f5f5f5;z-index:2;">类型明细</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:120px;position:sticky;left:600px;background:#f5f5f5;z-index:2;">金额备注</th>';
+  FINANCE_COLUMNS.forEach(col => {
+    html += `<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:90px;">${col.key}费用</th>`;
+  });
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:90px;">工程类费用小计</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:80px;">设备费用</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:100px;">整体筹建费用总计</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:90px;">结算状态</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:70px;">操作</th>';
+  html += '</tr>';
+  html += '</thead>';
+  
+  html += '<tbody>';
   STORES.forEach((store, idx) => {
     const status = calcStoreTotalStatus(idx);
     const statusColor = status === '已结算完成' ? '#52c41a' : (status === '已支付部分款项' ? '#fa8c16' : (status === '报价阶段' ? '#1677ff' : '#999'));
+    const openingDate = getStoreOpeningDate(store);
+    const area = store['门店面积'] || '';
     
-    html += `
-      <div class="finance-store-item" style="background:#fff;border-radius:12px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06);overflow:hidden;">
-        <div class="finance-store-header" onclick="toggleFinanceDetail(${idx})" style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;cursor:pointer;background:#fafafa;border-bottom:1px solid #f0f0f0;">
-          <div style="display:flex;align-items:center;gap:12px;">
-            <span style="font-size:16px;font-weight:600;color:#333;">${store['门店'] || '未命名门店'}</span>
-            <span style="font-size:12px;color:#888;">${store['区域'] || ''} · ${store['门店类型'] || ''}</span>
-            ${status ? `<span style="font-size:12px;padding:2px 8px;background:${statusColor}15;color:${statusColor};border-radius:4px;border:1px solid ${statusColor}40;">${status}</span>` : ''}
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            ${canEditFinance() ? `<button onclick="event.stopPropagation();openFinanceEdit(${idx})" style="padding:4px 12px;background:#1677ff;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;">编辑</button>` : ''}
-            <span id="finance-toggle-${idx}" style="font-size:12px;color:#999;transition:transform 0.2s;">▼</span>
-          </div>
-        </div>
-        <div id="finance-detail-${idx}" class="finance-detail-content" style="display:none;padding:0;">
-          ${renderFinanceTable(idx, false)}
-        </div>
-      </div>
-    `;
+    // 精简行（默认显示：最终对外报价金额）
+    html += `<tr class="finance-summary-row" data-store="${idx}" onclick="toggleFinanceDetail(${idx})" style="cursor:pointer;background:#fff;">`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;font-weight:600;position:sticky;left:0;background:#fff;z-index:1;">${store['门店'] || '未命名门店'}</td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:100px;background:#fff;z-index:1;">${store['区域'] || ''}</td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:160px;background:#fff;z-index:1;">${store['门店类型'] || ''}</td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:230px;background:#fff;z-index:1;">${openingDate}</td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:320px;background:#fff;z-index:1;">${area}</td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:380px;background:#fff;z-index:1;">最终结算数据</td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;font-weight:600;position:sticky;left:480px;background:#fff;z-index:1;">最终对外报价金额</td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:600px;background:#fff;z-index:1;"></td>`;
+    
+    // 10个费用列
+    FINANCE_COLUMNS.forEach(col => {
+      const val = calcFinanceValue(idx, 'finalQuote', col.key);
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;">${val.toFixed(2)}</td>`;
+    });
+    
+    // 工程类费用小计
+    const subtotal = calcRowSubtotal(idx, 'finalQuote');
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;color:#1677ff;font-weight:600;">${subtotal.toFixed(2)}</td>`;
+    
+    // 设备费用
+    const equip = calcFinanceValue(idx, 'finalQuote', '设备费用');
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;">${equip.toFixed(2)}</td>`;
+    
+    // 整体筹建费用总计
+    const total = calcRowTotal(idx, 'finalQuote');
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;color:#52c41a;font-weight:600;">${total.toFixed(2)}</td>`;
+    
+    // 结算状态
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;">
+      <span style="font-size:12px;padding:2px 8px;background:${statusColor}15;color:${statusColor};border-radius:4px;border:1px solid ${statusColor}40;">${status || '-'}</span>
+    </td>`;
+    
+    // 操作按钮
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;">
+      ${canEditFinance() ? `<button onclick="event.stopPropagation();openFinanceEdit(${idx})" style="padding:4px 12px;background:#1677ff;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;">编辑</button>` : ''}
+    </td>`;
+    
+    html += '</tr>';
+    
+    // 展开行（默认隐藏，内嵌完整表格）
+    html += `<tr class="finance-detail-row" data-store="${idx}" style="display:none;">
+      <td colspan="23" style="padding:0;border:none;background:#f8f9fa;">
+        <div id="finance-detail-${idx}"></div>
+      </td>
+    </tr>`;
   });
   
+  html += '</tbody></table></div>';
   container.innerHTML = html;
 }
 
 // 切换结算明细展开/折叠
 function toggleFinanceDetail(storeIdx) {
-  const detail = document.getElementById('finance-detail-' + storeIdx);
-  const toggle = document.getElementById('finance-toggle-' + storeIdx);
-  if (!detail) return;
+  const detailRow = document.querySelector(`tr.finance-detail-row[data-store="${storeIdx}"]`);
+  const detailDiv = document.getElementById('finance-detail-' + storeIdx);
+  if (!detailRow || !detailDiv) return;
   
-  if (detail.style.display === 'none') {
-    detail.style.display = 'block';
-    if (toggle) toggle.style.transform = 'rotate(180deg)';
-    // 渲染表格内容
-    detail.innerHTML = renderFinanceTable(storeIdx, false);
+  if (detailRow.style.display === 'none') {
+    detailRow.style.display = 'table-row';
+    detailDiv.innerHTML = renderFinanceTable(storeIdx, false);
   } else {
-    detail.style.display = 'none';
-    if (toggle) toggle.style.transform = 'rotate(0deg)';
+    detailRow.style.display = 'none';
+    detailDiv.innerHTML = '';
   }
 }
 
