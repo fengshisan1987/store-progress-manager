@@ -8091,8 +8091,10 @@ function updateFinanceSupplier(storeIdx, colKey, supplierName) {
   // 重新渲染编辑表单以更新禁用状态和公式列
   bd.innerHTML = renderFinanceEditForm(storeIdx);
   
-  // 恢复横向滚动位置
-  if (bd) bd.scrollLeft = scrollLeft;
+  // 恢复横向滚动位置（延迟执行，确保在浏览器自动滚动行为之后）
+  setTimeout(() => {
+    if (bd) bd.scrollLeft = scrollLeft;
+  }, 0);
 }
 
 // 更新单元格值
@@ -8105,7 +8107,9 @@ function updateFinanceCell(storeIdx, rowId, colKey, value) {
   if (!fin._suppliers || !fin._suppliers[colKey]) {
     showToast('请先选择供应商');
     bd.innerHTML = renderFinanceEditForm(storeIdx);
-    if (bd) bd.scrollLeft = scrollLeft;
+    setTimeout(() => {
+      if (bd) bd.scrollLeft = scrollLeft;
+    }, 0);
     return;
   }
   if (!fin[rowId]) fin[rowId] = {};
@@ -8115,8 +8119,10 @@ function updateFinanceCell(storeIdx, rowId, colKey, value) {
   // 重新渲染编辑表单以更新公式列
   bd.innerHTML = renderFinanceEditForm(storeIdx);
   
-  // 恢复横向滚动位置
-  if (bd) bd.scrollLeft = scrollLeft;
+  // 恢复横向滚动位置（延迟执行，确保在浏览器自动滚动行为之后）
+  setTimeout(() => {
+    if (bd) bd.scrollLeft = scrollLeft;
+  }, 0);
 }
 
 // 打开备注编辑弹窗
@@ -8171,7 +8177,9 @@ function updateFinanceRemark(storeIdx, rowId) {
   // 重新渲染编辑表单
   if (bd) {
     bd.innerHTML = renderFinanceEditForm(storeIdx);
-    bd.scrollLeft = scrollLeft;
+    setTimeout(() => {
+      bd.scrollLeft = scrollLeft;
+    }, 0);
   }
 }
 
