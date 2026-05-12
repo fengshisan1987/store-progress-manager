@@ -7688,9 +7688,30 @@ function calcFinanceValue(storeIdx, rowId, colKey) {
       return calcFinanceValue(storeIdx, 'finalPay', '工程硬装') / area;
     case 'grossMargin':
       // 毛利率 = 最终利润 / 最终对外报价金额
-      if (colKey !== '工程硬装') return 0;
-      const finalQuoteTotal = calcFinanceValue(storeIdx, 'finalQuote', '工程硬装');
-      const finalProfitTotal = calcFinanceValue(storeIdx, 'finalProfit', '工程硬装');
+      // 工程类费用小计列：用本列（小计）的最终利润 ÷ 本列（小计）的最终对外报价金额
+      if (colKey === '工程类费用小计') {
+        const sq = calcRowSubtotal(storeIdx, 'finalQuote');
+        const sp = calcRowSubtotal(storeIdx, 'finalProfit');
+        if (!sq || sq <= 0) return 0;
+        return sp / sq;
+      }
+      // 整体筹建费用总计列：用本列（总计）的最终利润 ÷ 本列（总计）的最终对外报价金额
+      if (colKey === '整体筹建费用总计') {
+        const tq = calcRowTotal(storeIdx, 'finalQuote');
+        const tp = calcRowTotal(storeIdx, 'finalProfit');
+        if (!tq || tq <= 0) return 0;
+        return tp / tq;
+      }
+      // 设备费用列也计算毛利率
+      if (colKey === '设备费用') {
+        const finalQuoteEquip = calcFinanceValue(storeIdx, 'finalQuote', '设备费用');
+        const finalProfitEquip = calcFinanceValue(storeIdx, 'finalProfit', '设备费用');
+        if (!finalQuoteEquip || finalQuoteEquip <= 0) return 0;
+        return finalProfitEquip / finalQuoteEquip;
+      }
+      // 10个工程类费用列：各列单独计算
+      const finalQuoteTotal = calcFinanceValue(storeIdx, 'finalQuote', colKey);
+      const finalProfitTotal = calcFinanceValue(storeIdx, 'finalProfit', colKey);
       if (!finalQuoteTotal || finalQuoteTotal <= 0) return 0;
       return finalProfitTotal / finalQuoteTotal;
     default:
@@ -7700,6 +7721,13 @@ function calcFinanceValue(storeIdx, rowId, colKey) {
 
 // 计算某行的工程类费用小计
 function calcRowSubtotal(storeIdx, rowId) {
+  // 毛利率行特殊处理：本列最终利润 ÷ 本列最终对外报价金额
+  if (rowId === 'grossMargin') {
+    const sq = calcRowSubtotal(storeIdx, 'finalQuote');
+    const sp = calcRowSubtotal(storeIdx, 'finalProfit');
+    if (!sq || sq <= 0) return 0;
+    return sp / sq;
+  }
   let sum = 0;
   FINANCE_COLUMNS.forEach(col => {
     sum += calcFinanceValue(storeIdx, rowId, col.key);
@@ -7709,6 +7737,13 @@ function calcRowSubtotal(storeIdx, rowId) {
 
 // 计算某行的整体筹建费用总计
 function calcRowTotal(storeIdx, rowId) {
+  // 毛利率行特殊处理：本列最终利润 ÷ 本列最终对外报价金额
+  if (rowId === 'grossMargin') {
+    const tq = calcRowTotal(storeIdx, 'finalQuote');
+    const tp = calcRowTotal(storeIdx, 'finalProfit');
+    if (!tq || tq <= 0) return 0;
+    return tp / tq;
+  }
   return calcRowSubtotal(storeIdx, rowId) + calcFinanceValue(storeIdx, rowId, '设备费用');
 }
 
@@ -7954,16 +7989,14 @@ function renderFinanceTable(storeIdx, isEdit) {
       // 单价行和毛利率行的特殊显示逻辑
       if (isUnitPriceRow) {
         // 硬装报价单价/硬装成本单价：只在工程硬装列显示
-        if (col.key === '工程硬装' && val !== 0) {
+        if (col.key === '工程硬装') {
           displayVal = val.toFixed(2);
         }
       } else if (isPercentRow) {
-        // 毛利率：只在工程硬装列显示百分比
-        if (col.key === '工程硬装' && val !== 0) {
-          displayVal = (val * 100).toFixed(2) + '%';
-        }
+        // 毛利率：所有列都显示百分比
+        displayVal = (val * 100).toFixed(2) + '%';
       } else {
-        displayVal = val !== 0 ? val.toFixed(2) : '';
+        displayVal = val.toFixed(2);
       }
       
       const hasSupplier = fin._suppliers && fin._suppliers[col.key];
@@ -7987,26 +8020,38 @@ function renderFinanceTable(storeIdx, isEdit) {
     
     // 工程类费用小计
     const subtotal = calcRowSubtotal(storeIdx, row.rowId);
-    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;color:#1677ff;font-weight:600;" data-fin-subtotal="${row.rowId}">${subtotal !== 0 ? subtotal.toFixed(2) : ''}</td>`;
+    let subtotalDisplay = subtotal.toFixed(2);
+    if (row.rowId === 'grossMargin') {
+      subtotalDisplay = (subtotal * 100).toFixed(2) + '%';
+    }
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;color:#1677ff;font-weight:600;" data-fin-subtotal="${row.rowId}">${subtotalDisplay}</td>`;
     
     // 设备费用
     const equipVal = calcFinanceValue(storeIdx, row.rowId, '设备费用');
+    let equipDisplay = equipVal.toFixed(2);
+    if (row.rowId === 'grossMargin') {
+      equipDisplay = (equipVal * 100).toFixed(2) + '%';
+    }
     if (isEdit && row.editable) {
       html += `<td style="padding:4px;border:1px solid #e8e8e8;text-align:right;">
         <input type="number" step="0.01" 
-          value="${equipVal !== 0 ? equipVal.toFixed(2) : ''}" 
+          value="${equipVal.toFixed(2)}" 
           data-row="${row.rowId}" data-col="设备费用" 
           onchange="updateFinanceCell(${storeIdx},'${row.rowId}','设备费用',this.value)"
           style="width:100%;padding:4px 6px;border:1px solid #d9d9d9;border-radius:4px;font-size:12px;text-align:right;box-sizing:border-box;"
         />
       </td>`;
     } else {
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;color:#333;" data-fin-equip="${row.rowId}">${equipVal !== 0 ? equipVal.toFixed(2) : ''}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;color:#333;" data-fin-equip="${row.rowId}">${equipDisplay}</td>`;
     }
     
     // 整体筹建费用总计
     const total = calcRowTotal(storeIdx, row.rowId);
-    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;color:#52c41a;font-weight:600;" data-fin-total="${row.rowId}">${total !== 0 ? total.toFixed(2) : ''}</td>`;
+    let totalDisplay = total.toFixed(2);
+    if (row.rowId === 'grossMargin') {
+      totalDisplay = (total * 100).toFixed(2) + '%';
+    }
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;color:#52c41a;font-weight:600;" data-fin-total="${row.rowId}">${totalDisplay}</td>`;
     
     // 结算状态（仅在特定行显示）
     if (row.rowId === 'finalPay') {
@@ -8113,11 +8158,11 @@ function refreshFinanceCells(storeIdx) {
         const val = calcFinanceValue(storeIdx, row.rowId, col.key);
         let displayVal = '';
         if (row.isUnitPrice) {
-          if (col.key === '工程硬装' && val !== 0) displayVal = val.toFixed(2);
+          if (col.key === '工程硬装') displayVal = val.toFixed(2);
         } else if (row.isPercent) {
-          if (col.key === '工程硬装' && val !== 0) displayVal = (val * 100).toFixed(2) + '%';
+          displayVal = (val * 100).toFixed(2) + '%';
         } else {
-          displayVal = val !== 0 ? val.toFixed(2) : '';
+          displayVal = val.toFixed(2);
         }
         const cell = bd.querySelector(`[data-fin-cell="${row.rowId}-${col.key}"]`);
         if (cell) cell.textContent = displayVal;
@@ -8128,24 +8173,36 @@ function refreshFinanceCells(storeIdx) {
   // 2. 更新所有行的工程类费用小计
   FINANCE_ROWS.forEach(row => {
     const subtotal = calcRowSubtotal(storeIdx, row.rowId);
+    let displayVal = subtotal.toFixed(2);
+    if (row.rowId === 'grossMargin') {
+      displayVal = (subtotal * 100).toFixed(2) + '%';
+    }
     const cell = bd.querySelector(`[data-fin-subtotal="${row.rowId}"]`);
-    if (cell) cell.textContent = subtotal !== 0 ? subtotal.toFixed(2) : '';
+    if (cell) cell.textContent = displayVal;
   });
   
   // 3. 更新所有行的设备费用（非编辑行）
   FINANCE_ROWS.forEach(row => {
     if (!row.editable) {
       const equipVal = calcFinanceValue(storeIdx, row.rowId, '设备费用');
+      let displayVal = equipVal.toFixed(2);
+      if (row.rowId === 'grossMargin') {
+        displayVal = (equipVal * 100).toFixed(2) + '%';
+      }
       const cell = bd.querySelector(`[data-fin-equip="${row.rowId}"]`);
-      if (cell) cell.textContent = equipVal !== 0 ? equipVal.toFixed(2) : '';
+      if (cell) cell.textContent = displayVal;
     }
   });
   
   // 4. 更新所有行的整体筹建费用总计
   FINANCE_ROWS.forEach(row => {
     const total = calcRowTotal(storeIdx, row.rowId);
+    let displayVal = total.toFixed(2);
+    if (row.rowId === 'grossMargin') {
+      displayVal = (total * 100).toFixed(2) + '%';
+    }
     const cell = bd.querySelector(`[data-fin-total="${row.rowId}"]`);
-    if (cell) cell.textContent = total !== 0 ? total.toFixed(2) : '';
+    if (cell) cell.textContent = displayVal;
   });
   
   // 5. 更新单列结算状态
@@ -8176,8 +8233,8 @@ function updateFinanceCell(storeIdx, rowId, colKey, value) {
   const bd = document.getElementById('financeEditBd');
   
   const fin = getStoreFinance(storeIdx);
-  // 检查是否已选供应商，未选则不允许修改
-  if (!fin._suppliers || !fin._suppliers[colKey]) {
+  // 检查是否已选供应商，未选则不允许修改（设备费用除外）
+  if (colKey !== '设备费用' && (!fin._suppliers || !fin._suppliers[colKey])) {
     showToast('请先选择供应商');
     return;
   }
