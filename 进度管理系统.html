@@ -8296,18 +8296,27 @@ function applyFinanceFilter() {
     }
     
     if (storeMatch && rowMatch) {
-      summaryRow.style.display = 'table-row';
       visibleCount++;
       if (hasRowFilter) {
-        detailRow.style.display = 'table-row';
-        detailDiv.innerHTML = renderFinanceTable(idx, false, { amountTypes, details });
-      } else {
+        // 行级筛选：隐藏精简行和展开容器，直接插入匹配行到主表格
+        summaryRow.style.display = 'none';
         detailRow.style.display = 'none';
         detailDiv.innerHTML = '';
+        document.querySelectorAll(`.finance-filter-row[data-store="${idx}"]`).forEach(r => r.remove());
+        const rowsHtml = renderFinanceTableRows(idx, { amountTypes, details });
+        summaryRow.insertAdjacentHTML('afterend', rowsHtml);
+      } else {
+        // 无行级筛选：显示精简行
+        summaryRow.style.display = 'table-row';
+        detailRow.style.display = 'none';
+        detailDiv.innerHTML = '';
+        document.querySelectorAll(`.finance-filter-row[data-store="${idx}"]`).forEach(r => r.remove());
       }
     } else {
       summaryRow.style.display = 'none';
       detailRow.style.display = 'none';
+      detailDiv.innerHTML = '';
+      document.querySelectorAll(`.finance-filter-row[data-store="${idx}"]`).forEach(r => r.remove());
     }
   });
   
@@ -8352,6 +8361,9 @@ function resetFinanceFilter() {
   updateFinDetailBtn();
   updateFinStatusBtn();
   
+  // 清除所有筛选插入的行
+  document.querySelectorAll('.finance-filter-row').forEach(r => r.remove());
+
   // 恢复所有门店显示
   STORES.forEach((_, idx) => {
     const summaryRow = document.querySelector(`tr.finance-summary-row[data-store="${idx}"]`);
@@ -8361,7 +8373,7 @@ function resetFinanceFilter() {
     if (detailRow) detailRow.style.display = 'none';
     if (detailDiv) detailDiv.innerHTML = '';
   });
-  
+
   const noDataDiv = document.getElementById('finance-no-data');
   if (noDataDiv) noDataDiv.remove();
 }
@@ -8581,6 +8593,127 @@ function renderFinanceTable(storeIdx, isEdit, rowFilter) {
   html += '</tbody></table>';
   html += '</div>';
   
+  return html;
+}
+
+// 渲染结算明细行（用于列表页筛选，直接插入主表格 tbody，非嵌套表格）
+function renderFinanceTableRows(storeIdx, rowFilter) {
+  const store = STORES[storeIdx];
+  const fin = getStoreFinance(storeIdx);
+  const openingDate = getStoreOpeningDate(store);
+  const area = store['门店面积'] || '';
+
+  let filteredRows = FINANCE_ROWS;
+  if (rowFilter) {
+    filteredRows = FINANCE_ROWS.filter(row => {
+      if (rowFilter.amountTypes && rowFilter.amountTypes.length > 0 && !rowFilter.amountTypes.includes(row.type)) return false;
+      if (rowFilter.details && rowFilter.details.length > 0 && !rowFilter.details.includes(row.detail)) return false;
+      return true;
+    });
+  }
+  const rowCount = filteredRows.length;
+
+  const typeRowSpans = {};
+  filteredRows.forEach(row => {
+    typeRowSpans[row.type] = (typeRowSpans[row.type] || 0) + 1;
+  });
+
+  let html = '';
+  let lastType = '';
+
+  filteredRows.forEach((row, rowIdx) => {
+    const isFormula = !row.editable;
+    const bgColor = isFormula ? '#fafafa' : '#fff';
+    const fontWeight = (row.detail.includes('利润') || row.detail.includes('最终')) ? '600' : '400';
+    const isUnitPriceRow = row.isUnitPrice;
+    const isPercentRow = row.isPercent;
+
+    html += `<tr class="finance-filter-row" data-store="${storeIdx}" style="background:${bgColor};">`;
+
+    // 基础信息列（只在第一行显示，rowspan 覆盖所有匹配行）
+    if (rowIdx === 0) {
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:600;position:sticky;left:0;background:${bgColor};z-index:1;" rowspan="${rowCount}">${store['门店'] || '未命名门店'}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:98px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${store['区域'] || ''}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:156px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${store['门店类型'] || ''}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:226px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${openingDate}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:316px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${area}</td>`;
+    }
+
+    // 金额类型（合并单元格）
+    if (row.type !== lastType) {
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:600;position:sticky;left:376px;background:${bgColor};z-index:1;text-align:center;vertical-align:middle;" rowspan="${typeRowSpans[row.type]}">${row.type}</td>`;
+      lastType = row.type;
+    }
+
+    // 类型明细
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:${fontWeight};position:sticky;left:476px;background:${bgColor};z-index:1;">${row.detail}</td>`;
+
+    // 金额备注
+    const remark = (fin[row.rowId] && fin[row.rowId]._remark) || '';
+    const displayRemark = remark.length > 10 ? remark.substring(0, 10) + '...' : remark;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:596px;background:${bgColor};z-index:1;" title="${remark}">${displayRemark}</td>`;
+
+    // 10个费用列
+    FINANCE_COLUMNS.forEach(col => {
+      const val = calcFinanceValue(storeIdx, row.rowId, col.key);
+      let displayVal = '';
+
+      if (isUnitPriceRow) {
+        if (col.key === '工程硬装') {
+          displayVal = val.toFixed(2);
+        }
+      } else if (isPercentRow) {
+        displayVal = (val * 100).toFixed(2) + '%';
+      } else {
+        displayVal = val.toFixed(2);
+      }
+
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;color:${isFormula ? '#1677ff' : '#333'};font-weight:${fontWeight};">${displayVal}</td>`;
+    });
+
+    // 工程类费用小计
+    const subtotal = calcRowSubtotal(storeIdx, row.rowId);
+    let subtotalDisplay = subtotal.toFixed(2);
+    if (row.rowId === 'grossMargin') {
+      subtotalDisplay = (subtotal * 100).toFixed(2) + '%';
+    }
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;color:#1677ff;font-weight:600;">${subtotalDisplay}</td>`;
+
+    // 设备费用
+    const equipVal = calcFinanceValue(storeIdx, row.rowId, '设备费用');
+    let equipDisplay = equipVal.toFixed(2);
+    if (row.rowId === 'grossMargin') {
+      equipDisplay = (equipVal * 100).toFixed(2) + '%';
+    }
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;color:#333;">${equipDisplay}</td>`;
+
+    // 整体筹建费用总计
+    const total = calcRowTotal(storeIdx, row.rowId);
+    let totalDisplay = total.toFixed(2);
+    if (row.rowId === 'grossMargin') {
+      totalDisplay = (total * 100).toFixed(2) + '%';
+    }
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;color:#52c41a;font-weight:600;">${totalDisplay}</td>`;
+
+    // 结算状态（合并单元格，只在第一行显示，rowspan 为匹配行数）
+    if (rowIdx === 0) {
+      const status = calcStoreTotalStatus(storeIdx);
+      const statusColor = status === '已结算完成' ? '#52c41a' : (status === '已支付部分款项' ? '#fa8c16' : (status === '报价阶段' ? '#1677ff' : '#999'));
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;vertical-align:middle;" rowspan="${rowCount}">
+        <span style="font-size:12px;padding:2px 8px;background:${statusColor}15;color:${statusColor};border-radius:4px;border:1px solid ${statusColor}40;">${status || '-'}</span>
+      </td>`;
+    }
+
+    // 操作列（只在第一行显示，rowspan 为匹配行数）
+    if (rowIdx === 0) {
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;vertical-align:middle;" rowspan="${rowCount}">
+        ${canEditFinance() ? `<button onclick="openFinanceEdit(${storeIdx})" style="padding:4px 12px;background:#1677ff;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;">编辑</button>` : ''}
+      </td>`;
+    }
+
+    html += '</tr>';
+  });
+
   return html;
 }
 
