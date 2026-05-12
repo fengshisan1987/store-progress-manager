@@ -8033,17 +8033,17 @@ function renderFinanceTable(storeIdx, isEdit) {
     }
     
     // 类型明细
-    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:${fontWeight};position:sticky;left:480px;background:${bgColor};z-index:1;">${row.detail}</td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:${fontWeight};position:sticky;left:476px;background:${bgColor};z-index:1;">${row.detail}</td>`;
     
     // 金额备注
     const remark = (fin[row.rowId] && fin[row.rowId]._remark) || '';
     let remarkHtml = '';
     if (isEdit && canEditFinance()) {
       const displayRemark = remark.length > 10 ? remark.substring(0, 10) + '...' : remark;
-      remarkHtml = `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;cursor:pointer;background:#fafafa;position:sticky;left:600px;z-index:1;" onclick="openFinanceRemarkEditor(${storeIdx}, '${row.rowId}')" title="${remark || '点击编辑备注'}">${displayRemark || '<span style="color:#999;font-size:11px;">点击编辑</span>'}</td>`;
+      remarkHtml = `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;cursor:pointer;background:#fafafa;position:sticky;left:596px;z-index:1;" onclick="openFinanceRemarkEditor(${storeIdx}, '${row.rowId}')" title="${remark || '点击编辑备注'}">${displayRemark || '<span style="color:#999;font-size:11px;">点击编辑</span>'}</td>`;
     } else {
       const displayRemark = remark.length > 10 ? remark.substring(0, 10) + '...' : remark;
-      remarkHtml = `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:600px;background:${bgColor};z-index:1;" title="${remark}">${displayRemark}</td>`;
+      remarkHtml = `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:596px;background:${bgColor};z-index:1;" title="${remark}">${displayRemark}</td>`;
     }
     html += remarkHtml;
     
