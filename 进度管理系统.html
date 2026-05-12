@@ -7894,7 +7894,7 @@ function renderFinanceTable(storeIdx, isEdit) {
   FINANCE_COLUMNS.forEach(col => {
     const status = calcColumnStatus(storeIdx, col.key);
     const statusColor = status === '已结算完成' ? '#52c41a' : (status === '已付首款' ? '#fa8c16' : (status === '报价阶段' ? '#1677ff' : '#999'));
-    html += `<th style="padding:6px 4px;border:1px solid #e8e8e8;text-align:center;font-size:11px;font-weight:500;color:${statusColor};">${status || ''}</th>`;
+    html += `<th style="padding:6px 4px;border:1px solid #e8e8e8;text-align:center;font-size:11px;font-weight:500;color:${statusColor};" data-fin-col-status="${col.key}">${status || ''}</th>`;
   });
   html += '<th colspan="4" style="border:1px solid #e8e8e8;"></th>';
   html += '</tr>';
@@ -7981,13 +7981,13 @@ function renderFinanceTable(storeIdx, isEdit) {
           />
         </td>`;
       } else {
-        html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;color:${isFormula ? '#1677ff' : '#333'};font-weight:${fontWeight};">${displayVal}</td>`;
+        html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;color:${isFormula ? '#1677ff' : '#333'};font-weight:${fontWeight};" data-fin-cell="${row.rowId}-${col.key}">${displayVal}</td>`;
       }
     });
     
     // 工程类费用小计
     const subtotal = calcRowSubtotal(storeIdx, row.rowId);
-    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;color:#1677ff;font-weight:600;">${subtotal !== 0 ? subtotal.toFixed(2) : ''}</td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;color:#1677ff;font-weight:600;" data-fin-subtotal="${row.rowId}">${subtotal !== 0 ? subtotal.toFixed(2) : ''}</td>`;
     
     // 设备费用
     const equipVal = calcFinanceValue(storeIdx, row.rowId, '设备费用');
@@ -8001,18 +8001,18 @@ function renderFinanceTable(storeIdx, isEdit) {
         />
       </td>`;
     } else {
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;color:#333;">${equipVal !== 0 ? equipVal.toFixed(2) : ''}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;color:#333;" data-fin-equip="${row.rowId}">${equipVal !== 0 ? equipVal.toFixed(2) : ''}</td>`;
     }
     
     // 整体筹建费用总计
     const total = calcRowTotal(storeIdx, row.rowId);
-    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;color:#52c41a;font-weight:600;">${total !== 0 ? total.toFixed(2) : ''}</td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;color:#52c41a;font-weight:600;" data-fin-total="${row.rowId}">${total !== 0 ? total.toFixed(2) : ''}</td>`;
     
     // 结算状态（仅在特定行显示）
     if (row.rowId === 'finalPay') {
       const status = calcStoreTotalStatus(storeIdx);
       const statusColor = status === '已结算完成' ? '#52c41a' : (status === '已支付部分款项' ? '#fa8c16' : (status === '报价阶段' ? '#1677ff' : '#999'));
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;">
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;" data-fin-store-status>
         <span style="font-size:12px;padding:2px 8px;background:${statusColor}15;color:${statusColor};border-radius:4px;border:1px solid ${statusColor}40;">${status || '-'}</span>
       </td>`;
     } else {
@@ -8091,38 +8091,102 @@ function updateFinanceSupplier(storeIdx, colKey, supplierName) {
   // 重新渲染编辑表单以更新禁用状态和公式列
   bd.innerHTML = renderFinanceEditForm(storeIdx);
   
-  // 恢复横向滚动位置（延迟执行，确保在浏览器自动滚动行为之后）
-  setTimeout(() => {
-    if (bd) bd.scrollLeft = scrollLeft;
-  }, 0);
+  // 使用 requestAnimationFrame 在浏览器完成所有自动滚动行为后恢复位置
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      if (bd) bd.scrollLeft = scrollLeft;
+    });
+  });
+}
+
+// 刷新编辑表单中受影响的单元格（不重新渲染整个表单）
+function refreshFinanceCells(storeIdx) {
+  const bd = document.getElementById('financeEditBd');
+  if (!bd) return;
+  
+  const fin = getStoreFinance(storeIdx);
+  
+  // 1. 更新所有公式行的显示值
+  FINANCE_ROWS.forEach(row => {
+    if (!row.editable) {
+      FINANCE_COLUMNS.forEach(col => {
+        const val = calcFinanceValue(storeIdx, row.rowId, col.key);
+        let displayVal = '';
+        if (row.isUnitPrice) {
+          if (col.key === '工程硬装' && val !== 0) displayVal = val.toFixed(2);
+        } else if (row.isPercent) {
+          if (col.key === '工程硬装' && val !== 0) displayVal = (val * 100).toFixed(2) + '%';
+        } else {
+          displayVal = val !== 0 ? val.toFixed(2) : '';
+        }
+        const cell = bd.querySelector(`[data-fin-cell="${row.rowId}-${col.key}"]`);
+        if (cell) cell.textContent = displayVal;
+      });
+    }
+  });
+  
+  // 2. 更新所有行的工程类费用小计
+  FINANCE_ROWS.forEach(row => {
+    const subtotal = calcRowSubtotal(storeIdx, row.rowId);
+    const cell = bd.querySelector(`[data-fin-subtotal="${row.rowId}"]`);
+    if (cell) cell.textContent = subtotal !== 0 ? subtotal.toFixed(2) : '';
+  });
+  
+  // 3. 更新所有行的设备费用（非编辑行）
+  FINANCE_ROWS.forEach(row => {
+    if (!row.editable) {
+      const equipVal = calcFinanceValue(storeIdx, row.rowId, '设备费用');
+      const cell = bd.querySelector(`[data-fin-equip="${row.rowId}"]`);
+      if (cell) cell.textContent = equipVal !== 0 ? equipVal.toFixed(2) : '';
+    }
+  });
+  
+  // 4. 更新所有行的整体筹建费用总计
+  FINANCE_ROWS.forEach(row => {
+    const total = calcRowTotal(storeIdx, row.rowId);
+    const cell = bd.querySelector(`[data-fin-total="${row.rowId}"]`);
+    if (cell) cell.textContent = total !== 0 ? total.toFixed(2) : '';
+  });
+  
+  // 5. 更新单列结算状态
+  FINANCE_COLUMNS.forEach(col => {
+    const status = calcColumnStatus(storeIdx, col.key);
+    const statusColor = status === '已结算完成' ? '#52c41a' : (status === '已付首款' ? '#fa8c16' : (status === '报价阶段' ? '#1677ff' : '#999'));
+    const cell = bd.querySelector(`[data-fin-col-status="${col.key}"]`);
+    if (cell) {
+      cell.textContent = status || '';
+      cell.style.color = statusColor;
+    }
+  });
+  
+  // 6. 更新门店总结算状态
+  const storeStatus = calcStoreTotalStatus(storeIdx);
+  const storeStatusColor = storeStatus === '已结算完成' ? '#52c41a' : (storeStatus === '已支付部分款项' ? '#fa8c16' : (storeStatus === '报价阶段' ? '#1677ff' : '#999'));
+  const storeStatusCell = bd.querySelector('[data-fin-store-status] span');
+  if (storeStatusCell) {
+    storeStatusCell.textContent = storeStatus || '-';
+    storeStatusCell.style.backgroundColor = storeStatusColor + '15';
+    storeStatusCell.style.color = storeStatusColor;
+    storeStatusCell.style.borderColor = storeStatusColor + '40';
+  }
 }
 
 // 更新单元格值
 function updateFinanceCell(storeIdx, rowId, colKey, value) {
   const bd = document.getElementById('financeEditBd');
-  const scrollLeft = bd ? bd.scrollLeft : 0;
   
   const fin = getStoreFinance(storeIdx);
   // 检查是否已选供应商，未选则不允许修改
   if (!fin._suppliers || !fin._suppliers[colKey]) {
     showToast('请先选择供应商');
-    bd.innerHTML = renderFinanceEditForm(storeIdx);
-    setTimeout(() => {
-      if (bd) bd.scrollLeft = scrollLeft;
-    }, 0);
     return;
   }
   if (!fin[rowId]) fin[rowId] = {};
   const numVal = parseFloat(value);
   fin[rowId][colKey] = isNaN(numVal) ? 0 : numVal;
   
-  // 重新渲染编辑表单以更新公式列
-  bd.innerHTML = renderFinanceEditForm(storeIdx);
-  
-  // 恢复横向滚动位置（延迟执行，确保在浏览器自动滚动行为之后）
-  setTimeout(() => {
-    if (bd) bd.scrollLeft = scrollLeft;
-  }, 0);
+  // 只刷新受影响的单元格，不重新渲染整个表单
+  refreshFinanceCells(storeIdx);
 }
 
 // 打开备注编辑弹窗
@@ -8177,9 +8241,11 @@ function updateFinanceRemark(storeIdx, rowId) {
   // 重新渲染编辑表单
   if (bd) {
     bd.innerHTML = renderFinanceEditForm(storeIdx);
-    setTimeout(() => {
-      bd.scrollLeft = scrollLeft;
-    }, 0);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        bd.scrollLeft = scrollLeft;
+      });
+    });
   }
 }
 
