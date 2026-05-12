@@ -2561,6 +2561,29 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
   </div>
 </div>
 
+<!-- 门店面积筛选弹窗 -->
+<div class="panel-overlay" id="finAreaOverlay" onclick="closeFinAreaModal()"></div>
+<div class="stop-work-modal" id="finAreaModal">
+  <div class="stop-work-hd">
+    <span>门店面积筛选</span>
+    <button class="stop-work-close" onclick="closeFinAreaModal()">✕</button>
+  </div>
+  <div class="stop-work-bd">
+    <div class="stop-work-input-wrapper">
+      <label class="stop-work-label">最小面积（㎡）：</label>
+      <input type="number" class="stop-work-input" id="finAreaMinInput" min="0" placeholder="请输入最小面积" onkeydown="if(event.key==='Enter')confirmFinAreaModal()">
+    </div>
+    <div class="stop-work-input-wrapper" style="margin-top:12px;">
+      <label class="stop-work-label">最大面积（㎡）：</label>
+      <input type="number" class="stop-work-input" id="finAreaMaxInput" min="0" placeholder="请输入最大面积" onkeydown="if(event.key==='Enter')confirmFinAreaModal()">
+    </div>
+    <div class="stop-work-actions">
+      <button class="btn btn-secondary" onclick="closeFinAreaModal()">取消</button>
+      <button class="btn btn-primary" onclick="confirmFinAreaModal()">确定</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ═════════════════════════════════════════════════════════════════════════════
 // 多选下拉框通用组件
@@ -7882,8 +7905,8 @@ function renderFinanceStoreList() {
   // 开业日期（区间 - 美化输入框）
   headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;"><div style="display:flex;gap:2px;align-items:center;"><input type="date" id="fin-filter-date-from" style="flex:1;padding:4px 6px;border:1px solid #d0d0d0;border-radius:20px;font-size:10px;outline:none;min-width:0;"><span style="font-size:10px;color:#999;">-</span><input type="date" id="fin-filter-date-to" style="flex:1;padding:4px 6px;border:1px solid #d0d0d0;border-radius:20px;font-size:10px;outline:none;min-width:0;"></div></td>`;
   
-  // 门店面积（区间 - 假密码诱饵+type=search阻止Chrome密码管理器）
-  headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;"><div style="display:flex;gap:2px;align-items:center;position:relative;"><input type="password" style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;" tabindex="-1" autocomplete="off"><input type="search" id="fin-filter-area-min" placeholder="最小" inputmode="numeric" pattern="[0-9.]*" autocomplete="off" name="search-area-min" data-lpignore="true" style="flex:1;padding:4px 6px;border:1px solid #d0d0d0;border-radius:20px;font-size:10px;outline:none;min-width:0;appearance:none;-webkit-appearance:none;"><span style="font-size:10px;color:#999;">-</span><input type="search" id="fin-filter-area-max" placeholder="最大" inputmode="numeric" pattern="[0-9.]*" autocomplete="off" name="search-area-max" data-lpignore="true" style="flex:1;padding:4px 6px;border:1px solid #d0d0d0;border-radius:20px;font-size:10px;outline:none;min-width:0;appearance:none;-webkit-appearance:none;"></div></td>`;
+  // 门店面积（弹窗填写）
+  headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;"><div style="display:flex;gap:2px;align-items:center;position:relative;"><input type="text" id="fin-area-range-min" placeholder="最小" readonly onclick="openFinAreaModal()" style="flex:1;padding:4px 6px;border:1px solid #d0d0d0;border-radius:20px;font-size:10px;outline:none;min-width:0;background:#fff;cursor:pointer;text-align:center;"><span style="font-size:10px;color:#999;">-</span><input type="text" id="fin-area-range-max" placeholder="最大" readonly onclick="openFinAreaModal()" style="flex:1;padding:4px 6px;border:1px solid #d0d0d0;border-radius:20px;font-size:10px;outline:none;min-width:0;background:#fff;cursor:pointer;text-align:center;"></div></td>`;
   
   // 金额类型（多选自定义下拉）
   headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;"><div class="dropdown-filter" id="fin-dropdown-amount" style="position:relative;"><button class="filter-btn" onclick="toggleFinAmountDropdown()" style="width:100%;padding:4px 8px;font-size:11px;">全部 ▼</button><div id="fin-amount-menu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:200;min-width:120px;max-height:300px;overflow-y:auto;"><div id="fin-amount-items" style="padding:4px;"></div></div></div></td>`;
@@ -8002,6 +8025,8 @@ let finFilterType = '';
 let finFilterAmountTypes = [];
 let finFilterDetails = [];
 let finFilterStatus = '';
+let finFilterAreaMin = '';
+let finFilterAreaMax = '';
 
 // 关闭所有结算明细下拉
 function closeAllFinDropdowns() {
@@ -8139,6 +8164,44 @@ function updateFinStatusBtn() {
   btn.textContent = (labels[finFilterStatus] || '全部') + ' ▼';
 }
 
+// ── 门店面积弹窗 ──
+function openFinAreaModal() {
+  const overlay = document.getElementById('finAreaOverlay');
+  const modal = document.getElementById('finAreaModal');
+  if (!overlay || !modal) return;
+  const minInput = document.getElementById('finAreaMinInput');
+  const maxInput = document.getElementById('finAreaMaxInput');
+  if (minInput) minInput.value = finFilterAreaMin;
+  if (maxInput) maxInput.value = finFilterAreaMax;
+  overlay.classList.add('show');
+  modal.classList.add('show');
+  if (minInput) { setTimeout(() => { minInput.focus(); minInput.select(); }, 50); }
+}
+
+function closeFinAreaModal() {
+  const overlay = document.getElementById('finAreaOverlay');
+  const modal = document.getElementById('finAreaModal');
+  if (overlay) overlay.classList.remove('show');
+  if (modal) modal.classList.remove('show');
+}
+
+function confirmFinAreaModal() {
+  const minInput = document.getElementById('finAreaMinInput');
+  const maxInput = document.getElementById('finAreaMaxInput');
+  finFilterAreaMin = (minInput ? minInput.value.trim() : '');
+  finFilterAreaMax = (maxInput ? maxInput.value.trim() : '');
+  updateFinAreaRangeBtn();
+  closeFinAreaModal();
+  applyFinanceFilter();
+}
+
+function updateFinAreaRangeBtn() {
+  const minInput = document.getElementById('fin-area-range-min');
+  const maxInput = document.getElementById('fin-area-range-max');
+  if (minInput) minInput.value = finFilterAreaMin;
+  if (maxInput) maxInput.value = finFilterAreaMax;
+}
+
 // 点击外部关闭下拉
 document.addEventListener('click', function(e) {
   const ids = ['fin-dropdown-area','fin-dropdown-type','fin-dropdown-amount','fin-dropdown-detail','fin-dropdown-status'];
@@ -8153,8 +8216,8 @@ function applyFinanceFilter() {
   const storeType = finFilterType;
   const dateFrom = document.getElementById('fin-filter-date-from')?.value || '';
   const dateTo = document.getElementById('fin-filter-date-to')?.value || '';
-  const areaMin = parseFloat(document.getElementById('fin-filter-area-min')?.value) || 0;
-  const areaMax = parseFloat(document.getElementById('fin-filter-area-max')?.value) || Infinity;
+  const areaMin = parseFloat(finFilterAreaMin) || 0;
+  const areaMax = parseFloat(finFilterAreaMax) || Infinity;
   const amountTypes = finFilterAmountTypes;
   const details = finFilterDetails;
   const status = finFilterStatus;
@@ -8238,22 +8301,25 @@ function applyFinanceFilter() {
 
 // 重置结算明细筛选
 function resetFinanceFilter() {
-  // 重置文本/日期/数字输入框
-  ['fin-filter-store', 'fin-filter-date-from', 'fin-filter-date-to', 'fin-filter-area-min', 'fin-filter-area-max'].forEach(id => {
+  // 重置文本/日期输入框
+  ['fin-filter-store', 'fin-filter-date-from', 'fin-filter-date-to'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
-  
+
   // 重置自定义下拉状态
   finFilterAreas = [];
   finFilterType = '';
+  finFilterAreaMin = '';
+  finFilterAreaMax = '';
   finFilterAmountTypes = [];
   finFilterDetails = [];
   finFilterStatus = '';
-  
+
   // 更新按钮文字
   updateFinAreaBtn();
   updateFinTypeBtn();
+  updateFinAreaRangeBtn();
   updateFinAmountBtn();
   updateFinDetailBtn();
   updateFinStatusBtn();
