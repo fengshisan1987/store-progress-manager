@@ -7939,6 +7939,12 @@ function renderFinanceTable(storeIdx, isEdit) {
   // 表体
   html += '<tbody>';
   
+  // 计算每个金额类型的行数（用于合并单元格）
+  const typeRowSpans = {};
+  FINANCE_ROWS.forEach(row => {
+    typeRowSpans[row.type] = (typeRowSpans[row.type] || 0) + 1;
+  });
+  
   let lastType = '';
   FINANCE_ROWS.forEach((row, rowIdx) => {
     const isFormula = !row.editable;
@@ -7958,12 +7964,10 @@ function renderFinanceTable(storeIdx, isEdit) {
       html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:320px;background:${bgColor};z-index:1;" rowspan="${FINANCE_ROWS.length}">${area}</td>`;
     }
     
-    // 金额类型（合并单元格效果）
+    // 金额类型（合并单元格）
     if (row.type !== lastType) {
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:600;position:sticky;left:380px;background:${bgColor};z-index:1;" rowspan="">${row.type}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:600;position:sticky;left:380px;background:${bgColor};z-index:1;text-align:center;vertical-align:middle;" rowspan="${typeRowSpans[row.type]}">${row.type}</td>`;
       lastType = row.type;
-    } else {
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:380px;background:${bgColor};z-index:1;"></td>`;
     }
     
     // 类型明细
@@ -8053,15 +8057,13 @@ function renderFinanceTable(storeIdx, isEdit) {
     }
     html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;color:#52c41a;font-weight:600;" data-fin-total="${row.rowId}">${totalDisplay}</td>`;
     
-    // 结算状态（仅在特定行显示）
-    if (row.rowId === 'finalPay') {
+    // 结算状态（合并单元格，只在第一行显示）
+    if (rowIdx === 0) {
       const status = calcStoreTotalStatus(storeIdx);
       const statusColor = status === '已结算完成' ? '#52c41a' : (status === '已支付部分款项' ? '#fa8c16' : (status === '报价阶段' ? '#1677ff' : '#999'));
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;" data-fin-store-status>
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;vertical-align:middle;" rowspan="${FINANCE_ROWS.length}" data-fin-store-status>
         <span style="font-size:12px;padding:2px 8px;background:${statusColor}15;color:${statusColor};border-radius:4px;border:1px solid ${statusColor}40;">${status || '-'}</span>
       </td>`;
-    } else {
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;"></td>`;
     }
     
     html += '</tr>';
