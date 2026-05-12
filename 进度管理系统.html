@@ -2796,7 +2796,7 @@ const DEFAULT_PHASES = [
       { name: '工程已进场', requireDate: true },
       { name: '工程项目启动会完成以及物料下单', requireDate: false },
       { name: '确认围挡已安装', requireDate: false },
-      { name: '门店已复尺', requireDate: false },
+      { name: '门店已复尺', requireDate: true },
       { name: '门头报备已完成', requireDate: false },
       { name: '门店灯具已发货', requireDate: false },
       { name: '门店灯具已安装', requireDate: false },
@@ -2805,16 +2805,16 @@ const DEFAULT_PHASES = [
       { name: '门店家具已制作', requireDate: false },
       { name: '门店家具已发货', requireDate: false },
       { name: '门店家具已安装', requireDate: false },
-      { name: '门店空调已安装', requireDate: false },
-      { name: '门店网络已完成', requireDate: false },
       { name: '门店广告物料已制作', requireDate: false },
       { name: '门店广告物料已发货', requireDate: false },
       { name: '门店广告物料已安装', requireDate: false },
+      { name: '门店空调已安装', requireDate: false },
+      { name: '门店网络已完成', requireDate: false },
+      { name: '门店是否有停工情况', requireDate: false },
       { name: '门店设备已安装', requireDate: false },
       { name: '提醒设备到场需本人签字验收', requireDate: false },
       { name: '提醒开业活动报备', requireDate: false },
       { name: '预估验收日期', requireDate: true },
-      { name: '门店是否有停工情况', requireDate: false },
       { name: '门店已验收', requireDate: true, requireConfirm: true, confirmText: '门店是否已填验收表并按照验收表整改好？' },
     ]
   },
@@ -2849,7 +2849,7 @@ const DEFAULT_PHASES = [
 ];
 
 // 阶段配置版本号（仅用于标记，不再强制重置用户数据）
-const PHASES_VERSION = '2026-04-20-v1';
+const PHASES_VERSION = '2026-05-11-v1';
 
 // 阶段配置初始化：先用默认值，然后从服务器加载（服务器优先）
 let PHASES = JSON.parse(JSON.stringify(DEFAULT_PHASES));
@@ -3607,7 +3607,11 @@ function generateMaterialOverdueReminders(store) {
   }
   
   // 2. 基于"门店已复尺"的提醒（+1天家具制作、+7天家具发货、+1天广告物料制作、+7天广告物料发货）
-  const remeasureDate = store['门店已复尺'];
+  let remeasureDate = store['门店已复尺'];
+  // 兼容旧数据：如果节点值为'已完成'（非日期格式），回退到使用"工程已进场"+3天作为基准
+  if (remeasureDate === '已完成' && constructionStart && /^\d{4}-\d{2}-\d{2}$/.test(constructionStart)) {
+    remeasureDate = constructionStart;
+  }
   if (remeasureDate && /^\d{4}-\d{2}-\d{2}$/.test(remeasureDate)) {
     // 2.1 门店家具最晚确认制作日期（+1天）
     if (!store['门店家具已制作']) {
@@ -7622,7 +7626,10 @@ const FINANCE_ROWS = [
   { type: '最终结算数据', detail: '最终利润', editable: false, rowId: 'finalProfit', formula: 'final-quote-pay' },
   { type: '实际支付数据', detail: '首次结算支付金额', editable: true, rowId: 'firstPay' },
   { type: '实际支付数据', detail: '后续结算支付金额', editable: true, rowId: 'secondPay' },
-  { type: '实际支付数据', detail: '未支付金额', editable: false, rowId: 'unpaid', formula: 'pay-first-second' }
+  { type: '实际支付数据', detail: '未支付金额', editable: false, rowId: 'unpaid', formula: 'pay-first-second' },
+  { type: '平米单价数据', detail: '硬装报价单价', editable: false, rowId: 'unitQuotePrice', formula: 'unit-quote', isUnitPrice: true },
+  { type: '平米单价数据', detail: '硬装成本单价', editable: false, rowId: 'unitCostPrice', formula: 'unit-cost', isUnitPrice: true },
+  { type: '毛利率数据', detail: '毛利率', editable: false, rowId: 'grossMargin', formula: 'margin', isPercent: true }
 ];
 
 // 获取门店的结算数据（如果没有则初始化）
@@ -7653,6 +7660,11 @@ function calcFinanceValue(storeIdx, rowId, colKey) {
     return isNaN(val) ? 0 : val;
   };
   
+  // 获取门店面积
+  const store = STORES[storeIdx];
+  const area = store ? parseFloat(store['门店面积']) : 0;
+  const hasArea = area && area > 0;
+  
   switch (rowId) {
     case 'initProfit':
       return v('initQuote', colKey) - v('initCost', colKey);
@@ -7666,6 +7678,21 @@ function calcFinanceValue(storeIdx, rowId, colKey) {
       return calcFinanceValue(storeIdx, 'finalQuote', colKey) - calcFinanceValue(storeIdx, 'finalPay', colKey);
     case 'unpaid':
       return calcFinanceValue(storeIdx, 'finalPay', colKey) - v('firstPay', colKey) - v('secondPay', colKey);
+    case 'unitQuotePrice':
+      // 硬装报价单价 = 工程硬装最终对外报价金额 / 门店面积
+      if (!hasArea || colKey !== '工程硬装') return 0;
+      return calcFinanceValue(storeIdx, 'finalQuote', '工程硬装') / area;
+    case 'unitCostPrice':
+      // 硬装成本单价 = 工程硬装最终应支付结算金额 / 门店面积
+      if (!hasArea || colKey !== '工程硬装') return 0;
+      return calcFinanceValue(storeIdx, 'finalPay', '工程硬装') / area;
+    case 'grossMargin':
+      // 毛利率 = 最终利润 / 最终对外报价金额
+      if (colKey !== '工程硬装') return 0;
+      const finalQuoteTotal = calcFinanceValue(storeIdx, 'finalQuote', '工程硬装');
+      const finalProfitTotal = calcFinanceValue(storeIdx, 'finalProfit', '工程硬装');
+      if (!finalQuoteTotal || finalQuoteTotal <= 0) return 0;
+      return finalProfitTotal / finalQuoteTotal;
     default:
       return v(rowId, colKey);
   }
@@ -7811,18 +7838,26 @@ function renderFinanceTable(storeIdx, isEdit) {
   const store = STORES[storeIdx];
   const fin = getStoreFinance(storeIdx);
   const openingDate = getStoreOpeningDate(store);
+  const area = store['门店面积'] || '';
   
   let html = '<div style="overflow-x:auto;">';
-  html += '<table class="finance-table" style="width:100%;border-collapse:collapse;font-size:13px;min-width:900px;">';
+  html += '<table class="finance-table" style="width:100%;border-collapse:collapse;font-size:13px;min-width:1200px;">';
   
   // 表头
   html += '<thead>';
   
   // 第一行：列标题
   html += '<tr style="background:#f5f5f5;">';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:left;font-weight:600;color:#333;width:100px;">金额类型</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:left;font-weight:600;color:#333;width:120px;">类型明细</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:left;font-weight:600;color:#333;width:140px;">金额备注</th>';
+  // 基础信息固定列
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:100px;position:sticky;left:0;background:#f5f5f5;z-index:2;">门店名称</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:60px;position:sticky;left:100px;background:#f5f5f5;z-index:2;">区域</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:70px;position:sticky;left:160px;background:#f5f5f5;z-index:2;">门店类型</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:90px;position:sticky;left:230px;background:#f5f5f5;z-index:2;">开业日期</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:60px;position:sticky;left:320px;background:#f5f5f5;z-index:2;">门店面积</th>';
+  // 金额列
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:left;font-weight:600;color:#333;width:100px;position:sticky;left:380px;background:#f5f5f5;z-index:2;">金额类型</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:left;font-weight:600;color:#333;width:120px;position:sticky;left:480px;background:#f5f5f5;z-index:2;">类型明细</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:left;font-weight:600;color:#333;width:120px;position:sticky;left:600px;background:#f5f5f5;z-index:2;">金额备注</th>';
   FINANCE_COLUMNS.forEach(col => {
     const supplierName = (fin._suppliers && fin._suppliers[col.key]) || '';
     const colTitle = (!isEdit && supplierName) ? `${col.key}费用<br><span style="font-size:11px;color:#666;font-weight:400;">(${supplierName})</span>` : `${col.key}费用`;
@@ -7837,7 +7872,7 @@ function renderFinanceTable(storeIdx, isEdit) {
   // 编辑模式下增加供应商选择行
   if (isEdit) {
     html += '<tr style="background:#fafafa;">';
-    html += '<th colspan="3" style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;">供应商选择 ↓</th>';
+    html += '<th colspan="8" style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:0;background:#fafafa;z-index:2;">供应商选择 ↓</th>';
     FINANCE_COLUMNS.forEach(col => {
       const suppliers = getSuppliersByCategory(col.category);
       const selected = (fin._suppliers && fin._suppliers[col.key]) || '';
@@ -7855,7 +7890,7 @@ function renderFinanceTable(storeIdx, isEdit) {
   
   // 单列结算状态行（编辑模式和展示模式都显示）
   html += '<tr style="background:#fafafa;">';
-  html += `<th colspan="3" style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;">${isEdit ? '结算状态' : ''}</th>`;
+  html += `<th colspan="8" style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:0;background:#fafafa;z-index:2;">${isEdit ? '结算状态' : ''}</th>`;
   FINANCE_COLUMNS.forEach(col => {
     const status = calcColumnStatus(storeIdx, col.key);
     const statusColor = status === '已结算完成' ? '#52c41a' : (status === '已付首款' ? '#fa8c16' : (status === '报价阶段' ? '#1677ff' : '#999'));
@@ -7870,43 +7905,67 @@ function renderFinanceTable(storeIdx, isEdit) {
   html += '<tbody>';
   
   let lastType = '';
-  FINANCE_ROWS.forEach(row => {
+  FINANCE_ROWS.forEach((row, rowIdx) => {
     const isFormula = !row.editable;
     const bgColor = isFormula ? '#fafafa' : '#fff';
     const fontWeight = (row.detail.includes('利润') || row.detail.includes('最终')) ? '600' : '400';
+    const isUnitPriceRow = row.isUnitPrice;
+    const isPercentRow = row.isPercent;
     
     html += `<tr style="background:${bgColor};">`;
     
+    // 基础信息列（只在第一行显示，其他行留空，但保留sticky定位）
+    if (rowIdx === 0) {
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:600;position:sticky;left:0;background:${bgColor};z-index:1;" rowspan="${FINANCE_ROWS.length}">${store['门店'] || '未命名门店'}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:100px;background:${bgColor};z-index:1;" rowspan="${FINANCE_ROWS.length}">${store['区域'] || ''}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:160px;background:${bgColor};z-index:1;" rowspan="${FINANCE_ROWS.length}">${store['门店类型'] || ''}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:230px;background:${bgColor};z-index:1;" rowspan="${FINANCE_ROWS.length}">${openingDate}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:320px;background:${bgColor};z-index:1;" rowspan="${FINANCE_ROWS.length}">${area}</td>`;
+    }
+    
     // 金额类型（合并单元格效果）
     if (row.type !== lastType) {
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:600;" rowspan="">${row.type}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:600;position:sticky;left:380px;background:${bgColor};z-index:1;" rowspan="">${row.type}</td>`;
       lastType = row.type;
     } else {
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;"></td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:380px;background:${bgColor};z-index:1;"></td>`;
     }
     
     // 类型明细
-    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:${fontWeight};">${row.detail}</td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:${fontWeight};position:sticky;left:480px;background:${bgColor};z-index:1;">${row.detail}</td>`;
     
     // 金额备注
     const remark = (fin[row.rowId] && fin[row.rowId]._remark) || '';
     let remarkHtml = '';
     if (isEdit && canEditFinance()) {
-      // 编辑模式：可点击编辑
       const displayRemark = remark.length > 10 ? remark.substring(0, 10) + '...' : remark;
-      remarkHtml = `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;cursor:pointer;background:#fafafa;" onclick="openFinanceRemarkEditor(${storeIdx}, '${row.rowId}')" title="${remark || '点击编辑备注'}">${displayRemark || '<span style="color:#999;font-size:11px;">点击编辑</span>'}</td>`;
+      remarkHtml = `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;cursor:pointer;background:#fafafa;position:sticky;left:600px;z-index:1;" onclick="openFinanceRemarkEditor(${storeIdx}, '${row.rowId}')" title="${remark || '点击编辑备注'}">${displayRemark || '<span style="color:#999;font-size:11px;">点击编辑</span>'}</td>`;
     } else {
-      // 展示模式：只读，过长截断，悬停显示完整
       const displayRemark = remark.length > 10 ? remark.substring(0, 10) + '...' : remark;
-      remarkHtml = `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;" title="${remark}">${displayRemark}</td>`;
+      remarkHtml = `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:600px;background:${bgColor};z-index:1;" title="${remark}">${displayRemark}</td>`;
     }
     html += remarkHtml;
     
     // 10个费用列
     FINANCE_COLUMNS.forEach(col => {
       const val = calcFinanceValue(storeIdx, row.rowId, col.key);
-      const displayVal = val !== 0 ? val.toFixed(2) : '';
-      const colStatus = (row.rowId === 'finalPay' || row.rowId === 'firstPay' || row.rowId === 'unpaid') ? '' : calcColumnStatus(storeIdx, col.key);
+      let displayVal = '';
+      
+      // 单价行和毛利率行的特殊显示逻辑
+      if (isUnitPriceRow) {
+        // 硬装报价单价/硬装成本单价：只在工程硬装列显示
+        if (col.key === '工程硬装' && val !== 0) {
+          displayVal = val.toFixed(2);
+        }
+      } else if (isPercentRow) {
+        // 毛利率：只在工程硬装列显示百分比
+        if (col.key === '工程硬装' && val !== 0) {
+          displayVal = (val * 100).toFixed(2) + '%';
+        }
+      } else {
+        displayVal = val !== 0 ? val.toFixed(2) : '';
+      }
+      
       const hasSupplier = fin._suppliers && fin._suppliers[col.key];
       
       if (isEdit && row.editable) {
@@ -10727,7 +10786,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 <!-- 结算明细编辑面板 -->
-<div class="detail-panel" id="financeEditPanel" style="width:1100px;z-index:203;max-width:95vw;">
+<div class="detail-panel" id="financeEditPanel" style="width:1400px;z-index:203;max-width:98vw;">
   <div class="panel-hd" style="background:linear-gradient(135deg,#52c41a,#389e0d);">
     <h3 id="financeEditTitle">💰 门店结算明细</h3>
     <button class="panel-close" onclick="closeFinanceEdit()">✕</button>
