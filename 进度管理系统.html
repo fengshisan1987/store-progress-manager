@@ -7838,8 +7838,16 @@ function renderFinanceStoreList() {
   ];
   const colGroup = '<colgroup>' + colWidths.map(w => `<col style="width:${w};">`).join('') + '</colgroup>';
   
+  // 获取筛选选项数据
+  const allAreas = [...new Set(STORES.map(s => s['区域']).filter(Boolean))].sort();
+  const allStoreTypes = [...new Set(STORES.map(s => s['门店类型']).filter(Boolean))].sort();
+  const allAmountTypes = [...new Set(FINANCE_ROWS.map(r => r.type))];
+  const allDetails = [...new Set(FINANCE_ROWS.map(r => r.detail))];
+  
   // 构建固定表头（放在 overflow-x 容器外，才能相对于视口 sticky）
   let headerHtml = '<div id="finance-list-header" style="position:sticky;top:48px;z-index:100;background:#f5f5f5;border-bottom:1px solid #e8e8e8;overflow:hidden;">';
+  
+  // 标题行
   headerHtml += `<table style="width:100%;border-collapse:collapse;font-size:13px;min-width:1400px;table-layout:fixed;">${colGroup}<thead><tr style="background:#f5f5f5;">`;
   headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;">门店名称</th>';
   headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;">区域</th>';
@@ -7857,7 +7865,47 @@ function renderFinanceStoreList() {
   headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;">整体筹建费用总计</th>';
   headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;">结算状态</th>';
   headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;">操作</th>';
-  headerHtml += '</tr></thead></table></div>';
+  headerHtml += '</tr></thead></table>';
+  
+  // 筛选行
+  headerHtml += `<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:1400px;table-layout:fixed;">${colGroup}<tbody><tr style="background:#fff;">`;
+  
+  // 门店名称
+  headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;"><input type="text" id="fin-filter-store" placeholder="搜索门店" style="width:100%;padding:3px 4px;border:1px solid #d9d9d9;border-radius:3px;font-size:11px;box-sizing:border-box;"></td>`;
+  
+  // 区域（多选）
+  headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;"><select id="fin-filter-area" multiple style="width:100%;height:26px;font-size:11px;border:1px solid #d9d9d9;border-radius:3px;">${allAreas.map(a => `<option value="${a}">${a}</option>`).join('')}</select></td>`;
+  
+  // 门店类型（单选）
+  headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;"><select id="fin-filter-type" style="width:100%;font-size:11px;border:1px solid #d9d9d9;border-radius:3px;padding:2px;"><option value="">全部</option>${allStoreTypes.map(t => `<option value="${t}">${t}</option>`).join('')}</select></td>`;
+  
+  // 开业日期（区间）
+  headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;"><input type="date" id="fin-filter-date-from" style="width:48%;font-size:10px;padding:2px;border:1px solid #d9d9d9;border-radius:3px;"><input type="date" id="fin-filter-date-to" style="width:48%;font-size:10px;padding:2px;border:1px solid #d9d9d9;border-radius:3px;float:right;"></td>`;
+  
+  // 门店面积（区间）
+  headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;"><input type="number" id="fin-filter-area-min" placeholder="最小" style="width:48%;font-size:10px;padding:2px;border:1px solid #d9d9d9;border-radius:3px;"><input type="number" id="fin-filter-area-max" placeholder="最大" style="width:48%;font-size:10px;padding:2px;border:1px solid #d9d9d9;border-radius:3px;float:right;"></td>`;
+  
+  // 金额类型（多选）
+  headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;"><select id="fin-filter-amount-type" multiple style="width:100%;height:26px;font-size:11px;border:1px solid #d9d9d9;border-radius:3px;">${allAmountTypes.map(t => `<option value="${t}">${t}</option>`).join('')}</select></td>`;
+  
+  // 类型明细（多选）
+  headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;"><select id="fin-filter-detail" multiple style="width:100%;height:26px;font-size:11px;border:1px solid #d9d9d9;border-radius:3px;">${allDetails.map(d => `<option value="${d}">${d}</option>`).join('')}</select></td>`;
+  
+  // 金额备注 - 无筛选
+  headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;"></td>`;
+  
+  // 费用列（10个 + 小计 + 设备 + 总计 = 13列）- 无筛选
+  for (let i = 0; i < 13; i++) {
+    headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;"></td>`;
+  }
+  
+  // 结算状态（单选）
+  headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;"><select id="fin-filter-status" style="width:100%;font-size:11px;border:1px solid #d9d9d9;border-radius:3px;padding:2px;"><option value="">全部</option><option value="报价阶段">报价阶段</option><option value="已支付部分款项">已支付部分款项</option><option value="已结算完成">已结算完成</option></select></td>`;
+  
+  // 操作按钮
+  headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;text-align:center;white-space:nowrap;"><button onclick="applyFinanceFilter()" style="padding:2px 8px;background:#1677ff;color:#fff;border:none;border-radius:3px;font-size:11px;cursor:pointer;margin-right:4px;">应用</button><button onclick="resetFinanceFilter()" style="padding:2px 8px;background:#f5f5f5;color:#666;border:1px solid #d9d9d9;border-radius:3px;font-size:11px;cursor:pointer;">重置</button></td>`;
+  
+  headerHtml += '</tr></tbody></table></div>';
   
   // 构建可滚动内容
   let html = headerHtml;
@@ -7948,8 +7996,129 @@ function toggleFinanceDetail(storeIdx) {
   }
 }
 
+// 应用结算明细筛选
+function applyFinanceFilter() {
+  const storeName = document.getElementById('fin-filter-store')?.value.trim() || '';
+  const areaEls = document.getElementById('fin-filter-area')?.selectedOptions;
+  const areas = areaEls ? Array.from(areaEls).map(o => o.value) : [];
+  const storeType = document.getElementById('fin-filter-type')?.value || '';
+  const dateFrom = document.getElementById('fin-filter-date-from')?.value || '';
+  const dateTo = document.getElementById('fin-filter-date-to')?.value || '';
+  const areaMin = parseFloat(document.getElementById('fin-filter-area-min')?.value) || 0;
+  const areaMax = parseFloat(document.getElementById('fin-filter-area-max')?.value) || Infinity;
+  const amountTypeEls = document.getElementById('fin-filter-amount-type')?.selectedOptions;
+  const amountTypes = amountTypeEls ? Array.from(amountTypeEls).map(o => o.value) : [];
+  const detailEls = document.getElementById('fin-filter-detail')?.selectedOptions;
+  const details = detailEls ? Array.from(detailEls).map(o => o.value) : [];
+  const status = document.getElementById('fin-filter-status')?.value || '';
+  
+  const hasAmountFilter = amountTypes.length > 0;
+  const hasDetailFilter = details.length > 0;
+  const hasRowFilter = hasAmountFilter || hasDetailFilter;
+  
+  let visibleCount = 0;
+  
+  STORES.forEach((store, idx) => {
+    const summaryRow = document.querySelector(`tr.finance-summary-row[data-store="${idx}"]`);
+    const detailRow = document.querySelector(`tr.finance-detail-row[data-store="${idx}"]`);
+    const detailDiv = document.getElementById('finance-detail-' + idx);
+    if (!summaryRow) return;
+    
+    // 门店基本信息匹配
+    let storeMatch = true;
+    if (storeName && !(store['门店'] || '').includes(storeName)) storeMatch = false;
+    if (areas.length > 0 && !areas.includes(store['区域'] || '')) storeMatch = false;
+    if (storeType && store['门店类型'] !== storeType) storeMatch = false;
+    
+    const openingDate = getStoreOpeningDate(store);
+    if (dateFrom && openingDate < dateFrom) storeMatch = false;
+    if (dateTo && openingDate > dateTo) storeMatch = false;
+    
+    const area = parseFloat(store['门店面积']) || 0;
+    if (areaMin && area < areaMin) storeMatch = false;
+    if (areaMax !== Infinity && area > areaMax) storeMatch = false;
+    
+    const storeStatus = calcStoreTotalStatus(idx);
+    if (status && storeStatus !== status) storeMatch = false;
+    
+    // 行级筛选匹配
+    let rowMatch = false;
+    if (!hasRowFilter) {
+      rowMatch = true;
+    } else {
+      for (const row of FINANCE_ROWS) {
+        let match = true;
+        if (hasAmountFilter && !amountTypes.includes(row.type)) match = false;
+        if (hasDetailFilter && !details.includes(row.detail)) match = false;
+        if (match) {
+          rowMatch = true;
+          break;
+        }
+      }
+    }
+    
+    if (storeMatch && rowMatch) {
+      summaryRow.style.display = 'table-row';
+      visibleCount++;
+      if (hasRowFilter) {
+        detailRow.style.display = 'table-row';
+        detailDiv.innerHTML = renderFinanceTable(idx, false, { amountTypes, details });
+      } else {
+        detailRow.style.display = 'none';
+        detailDiv.innerHTML = '';
+      }
+    } else {
+      summaryRow.style.display = 'none';
+      detailRow.style.display = 'none';
+    }
+  });
+  
+  // 无匹配数据提示
+  const bodyDiv = document.getElementById('finance-list-body');
+  let noDataDiv = document.getElementById('finance-no-data');
+  if (visibleCount === 0) {
+    if (!noDataDiv) {
+      noDataDiv = document.createElement('div');
+      noDataDiv.id = 'finance-no-data';
+      noDataDiv.style.cssText = 'text-align:center;padding:60px;color:#999;font-size:14px;';
+      noDataDiv.textContent = '无匹配数据';
+      bodyDiv.appendChild(noDataDiv);
+    }
+  } else {
+    if (noDataDiv) noDataDiv.remove();
+  }
+}
+
+// 重置结算明细筛选
+function resetFinanceFilter() {
+  const els = ['fin-filter-store', 'fin-filter-area', 'fin-filter-type', 'fin-filter-date-from', 'fin-filter-date-to', 'fin-filter-area-min', 'fin-filter-area-max', 'fin-filter-amount-type', 'fin-filter-detail', 'fin-filter-status'];
+  els.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      if (el.tagName === 'SELECT' && el.multiple) {
+        Array.from(el.options).forEach(o => o.selected = false);
+      } else {
+        el.value = '';
+      }
+    }
+  });
+  
+  // 恢复所有门店显示
+  STORES.forEach((_, idx) => {
+    const summaryRow = document.querySelector(`tr.finance-summary-row[data-store="${idx}"]`);
+    const detailRow = document.querySelector(`tr.finance-detail-row[data-store="${idx}"]`);
+    const detailDiv = document.getElementById('finance-detail-' + idx);
+    if (summaryRow) summaryRow.style.display = 'table-row';
+    if (detailRow) detailRow.style.display = 'none';
+    if (detailDiv) detailDiv.innerHTML = '';
+  });
+  
+  const noDataDiv = document.getElementById('finance-no-data');
+  if (noDataDiv) noDataDiv.remove();
+}
+
 // 渲染结算明细表格（isEdit=true表示编辑模式）
-function renderFinanceTable(storeIdx, isEdit) {
+function renderFinanceTable(storeIdx, isEdit, rowFilter) {
   const store = STORES[storeIdx];
   const fin = getStoreFinance(storeIdx);
   const openingDate = getStoreOpeningDate(store);
@@ -8019,14 +8188,25 @@ function renderFinanceTable(storeIdx, isEdit) {
   // 表体
   html += '<tbody>';
   
+  // 根据 rowFilter 过滤行
+  let filteredRows = FINANCE_ROWS;
+  if (rowFilter) {
+    filteredRows = FINANCE_ROWS.filter(row => {
+      if (rowFilter.amountTypes && rowFilter.amountTypes.length > 0 && !rowFilter.amountTypes.includes(row.type)) return false;
+      if (rowFilter.details && rowFilter.details.length > 0 && !rowFilter.details.includes(row.detail)) return false;
+      return true;
+    });
+  }
+  const rowCount = filteredRows.length;
+  
   // 计算每个金额类型的行数（用于合并单元格）
   const typeRowSpans = {};
-  FINANCE_ROWS.forEach(row => {
+  filteredRows.forEach(row => {
     typeRowSpans[row.type] = (typeRowSpans[row.type] || 0) + 1;
   });
   
   let lastType = '';
-  FINANCE_ROWS.forEach((row, rowIdx) => {
+  filteredRows.forEach((row, rowIdx) => {
     const isFormula = !row.editable;
     const bgColor = isFormula ? '#fafafa' : '#fff';
     const fontWeight = (row.detail.includes('利润') || row.detail.includes('最终')) ? '600' : '400';
@@ -8037,11 +8217,11 @@ function renderFinanceTable(storeIdx, isEdit) {
     
     // 基础信息列（只在第一行显示，其他行留空，但保留sticky定位）
     if (rowIdx === 0) {
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:600;position:sticky;left:0;background:${bgColor};z-index:1;" rowspan="${FINANCE_ROWS.length}">${store['门店'] || '未命名门店'}</td>`;
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:98px;background:${bgColor};z-index:1;" rowspan="${FINANCE_ROWS.length}">${store['区域'] || ''}</td>`;
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:156px;background:${bgColor};z-index:1;" rowspan="${FINANCE_ROWS.length}">${store['门店类型'] || ''}</td>`;
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:226px;background:${bgColor};z-index:1;" rowspan="${FINANCE_ROWS.length}">${openingDate}</td>`;
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:316px;background:${bgColor};z-index:1;" rowspan="${FINANCE_ROWS.length}">${area}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:600;position:sticky;left:0;background:${bgColor};z-index:1;" rowspan="${rowCount}">${store['门店'] || '未命名门店'}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:98px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${store['区域'] || ''}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:156px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${store['门店类型'] || ''}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:226px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${openingDate}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:316px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${area}</td>`;
     }
     
     // 金额类型（合并单元格）
