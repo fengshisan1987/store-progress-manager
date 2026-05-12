@@ -7830,32 +7830,39 @@ function renderFinanceStoreList() {
     return;
   }
   
-  let html = '<div style="overflow-x:auto;">';
-  html += '<table class="finance-table" style="width:100%;border-collapse:collapse;font-size:13px;min-width:1400px;">';
+  // 列宽定义（两个表格保持一致）
+  const colWidths = [
+    '100px', '60px', '70px', '90px', '60px', '100px', '120px', '120px',
+    ...FINANCE_COLUMNS.map(() => '90px'),
+    '90px', '80px', '100px', '90px', '70px'
+  ];
+  const colGroup = '<colgroup>' + colWidths.map(w => `<col style="width:${w};">`).join('') + '</colgroup>';
   
-  // 统一表头
-  html += '<thead>';
-  html += '<tr style="background:#f5f5f5;">';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:100px;position:sticky;top:0;left:0;background:#f5f5f5;z-index:2;">门店名称</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:60px;position:sticky;top:0;left:98px;background:#f5f5f5;z-index:2;">区域</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:70px;position:sticky;top:0;left:156px;background:#f5f5f5;z-index:2;">门店类型</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:90px;position:sticky;top:0;left:226px;background:#f5f5f5;z-index:2;">开业日期</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:60px;position:sticky;top:0;left:316px;background:#f5f5f5;z-index:2;">门店面积</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:100px;position:sticky;top:0;left:376px;background:#f5f5f5;z-index:2;">金额类型</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:120px;position:sticky;top:0;left:476px;background:#f5f5f5;z-index:2;">类型明细</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:120px;position:sticky;top:0;left:596px;background:#f5f5f5;z-index:2;">金额备注</th>';
+  // 构建固定表头（放在 overflow-x 容器外，才能相对于视口 sticky）
+  let headerHtml = '<div id="finance-list-header" style="position:sticky;top:48px;z-index:100;background:#f5f5f5;border-bottom:1px solid #e8e8e8;overflow:hidden;">';
+  headerHtml += `<table style="width:100%;border-collapse:collapse;font-size:13px;min-width:1400px;table-layout:fixed;">${colGroup}<thead><tr style="background:#f5f5f5;">`;
+  headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;">门店名称</th>';
+  headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;">区域</th>';
+  headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;">门店类型</th>';
+  headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;">开业日期</th>';
+  headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;">门店面积</th>';
+  headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;">金额类型</th>';
+  headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;">类型明细</th>';
+  headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;">金额备注</th>';
   FINANCE_COLUMNS.forEach(col => {
-    html += `<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:90px;position:sticky;top:0;background:#f5f5f5;z-index:1;">${col.key}费用</th>`;
+    headerHtml += `<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;">${col.key}费用</th>`;
   });
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:90px;position:sticky;top:0;background:#f5f5f5;z-index:1;">工程类费用小计</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:80px;position:sticky;top:0;background:#f5f5f5;z-index:1;">设备费用</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:100px;position:sticky;top:0;background:#f5f5f5;z-index:1;">整体筹建费用总计</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:90px;position:sticky;top:0;background:#f5f5f5;z-index:1;">结算状态</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:70px;position:sticky;top:0;background:#f5f5f5;z-index:1;">操作</th>';
-  html += '</tr>';
-  html += '</thead>';
+  headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;">工程类费用小计</th>';
+  headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;">设备费用</th>';
+  headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;">整体筹建费用总计</th>';
+  headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;">结算状态</th>';
+  headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;">操作</th>';
+  headerHtml += '</tr></thead></table></div>';
   
-  html += '<tbody>';
+  // 构建可滚动内容
+  let html = headerHtml;
+  html += '<div id="finance-list-body" style="overflow-x:auto;max-height:calc(100vh - 220px);">';
+  html += `<table class="finance-table" style="width:100%;border-collapse:collapse;font-size:13px;min-width:1400px;table-layout:fixed;">${colGroup}<tbody>`;
   STORES.forEach((store, idx) => {
     const status = calcStoreTotalStatus(idx);
     const statusColor = status === '已结算完成' ? '#52c41a' : (status === '已支付部分款项' ? '#fa8c16' : (status === '报价阶段' ? '#1677ff' : '#999'));
@@ -7913,6 +7920,17 @@ function renderFinanceStoreList() {
   
   html += '</tbody></table></div>';
   container.innerHTML = html;
+  
+  // 同步横向滚动：内容滚动时固定表头同步跟随
+  setTimeout(() => {
+    const headerDiv = document.getElementById('finance-list-header');
+    const bodyDiv = document.getElementById('finance-list-body');
+    if (headerDiv && bodyDiv) {
+      bodyDiv.addEventListener('scroll', () => {
+        headerDiv.scrollLeft = bodyDiv.scrollLeft;
+      });
+    }
+  }, 0);
 }
 
 // 切换结算明细展开/折叠
