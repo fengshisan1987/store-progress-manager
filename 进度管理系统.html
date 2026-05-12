@@ -8637,7 +8637,11 @@ function renderFinanceTableRows(storeIdx, rowFilter, rowClass) {
 
     // 基础信息列（只在第一行显示，rowspan 覆盖所有匹配行）
     if (rowIdx === 0) {
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:600;position:sticky;left:0;background:${bgColor};z-index:1;" rowspan="${rowCount}">${store['门店'] || '未命名门店'}</td>`;
+      const isExpand = cls === 'finance-expand-row';
+      const clickAttr = isExpand ? `onclick="toggleFinanceDetail(${storeIdx})"` : '';
+      const cursorStyle = isExpand ? 'cursor:pointer;' : '';
+      const arrow = isExpand ? ' <span style="color:#999;font-size:11px;">▲</span>' : '';
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:600;position:sticky;left:0;background:${bgColor};z-index:1;${cursorStyle}" rowspan="${rowCount}" ${clickAttr}>${store['门店'] || '未命名门店'}${arrow}</td>`;
       html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:98px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${store['区域'] || ''}</td>`;
       html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:156px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${store['门店类型'] || ''}</td>`;
       html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:226px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${openingDate}</td>`;
