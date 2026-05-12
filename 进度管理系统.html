@@ -7836,22 +7836,22 @@ function renderFinanceStoreList() {
   // 统一表头
   html += '<thead>';
   html += '<tr style="background:#f5f5f5;">';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:100px;position:sticky;left:0;background:#f5f5f5;z-index:2;">门店名称</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:60px;position:sticky;left:100px;background:#f5f5f5;z-index:2;">区域</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:70px;position:sticky;left:160px;background:#f5f5f5;z-index:2;">门店类型</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:90px;position:sticky;left:230px;background:#f5f5f5;z-index:2;">开业日期</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:60px;position:sticky;left:320px;background:#f5f5f5;z-index:2;">门店面积</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:100px;position:sticky;left:380px;background:#f5f5f5;z-index:2;">金额类型</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:120px;position:sticky;left:480px;background:#f5f5f5;z-index:2;">类型明细</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:120px;position:sticky;left:600px;background:#f5f5f5;z-index:2;">金额备注</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:100px;position:sticky;top:0;left:0;background:#f5f5f5;z-index:2;">门店名称</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:60px;position:sticky;top:0;left:98px;background:#f5f5f5;z-index:2;">区域</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:70px;position:sticky;top:0;left:156px;background:#f5f5f5;z-index:2;">门店类型</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:90px;position:sticky;top:0;left:226px;background:#f5f5f5;z-index:2;">开业日期</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:60px;position:sticky;top:0;left:316px;background:#f5f5f5;z-index:2;">门店面积</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:100px;position:sticky;top:0;left:376px;background:#f5f5f5;z-index:2;">金额类型</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:120px;position:sticky;top:0;left:476px;background:#f5f5f5;z-index:2;">类型明细</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:120px;position:sticky;top:0;left:596px;background:#f5f5f5;z-index:2;">金额备注</th>';
   FINANCE_COLUMNS.forEach(col => {
-    html += `<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:90px;">${col.key}费用</th>`;
+    html += `<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:90px;position:sticky;top:0;background:#f5f5f5;z-index:1;">${col.key}费用</th>`;
   });
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:90px;">工程类费用小计</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:80px;">设备费用</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:100px;">整体筹建费用总计</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:90px;">结算状态</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:70px;">操作</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:90px;position:sticky;top:0;background:#f5f5f5;z-index:1;">工程类费用小计</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:80px;position:sticky;top:0;background:#f5f5f5;z-index:1;">设备费用</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:100px;position:sticky;top:0;background:#f5f5f5;z-index:1;">整体筹建费用总计</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:90px;position:sticky;top:0;background:#f5f5f5;z-index:1;">结算状态</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:70px;position:sticky;top:0;background:#f5f5f5;z-index:1;">操作</th>';
   html += '</tr>';
   html += '</thead>';
   
@@ -7865,13 +7865,13 @@ function renderFinanceStoreList() {
     // 精简行（默认显示：最终对外报价金额）
     html += `<tr class="finance-summary-row" data-store="${idx}" onclick="toggleFinanceDetail(${idx})" style="cursor:pointer;background:#fff;">`;
     html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;font-weight:600;position:sticky;left:0;background:#fff;z-index:1;">${store['门店'] || '未命名门店'}</td>`;
-    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:100px;background:#fff;z-index:1;">${store['区域'] || ''}</td>`;
-    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:160px;background:#fff;z-index:1;">${store['门店类型'] || ''}</td>`;
-    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:230px;background:#fff;z-index:1;">${openingDate}</td>`;
-    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:320px;background:#fff;z-index:1;">${area}</td>`;
-    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:380px;background:#fff;z-index:1;">最终结算数据</td>`;
-    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;font-weight:600;position:sticky;left:480px;background:#fff;z-index:1;">最终对外报价金额</td>`;
-    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:600px;background:#fff;z-index:1;"></td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:98px;background:#fff;z-index:1;">${store['区域'] || ''}</td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:156px;background:#fff;z-index:1;">${store['门店类型'] || ''}</td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:226px;background:#fff;z-index:1;">${openingDate}</td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:316px;background:#fff;z-index:1;">${area}</td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:376px;background:#fff;z-index:1;">最终结算数据</td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;font-weight:600;position:sticky;left:476px;background:#fff;z-index:1;">最终对外报价金额</td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:596px;background:#fff;z-index:1;"></td>`;
     
     // 10个费用列
     FINANCE_COLUMNS.forEach(col => {
@@ -7947,14 +7947,14 @@ function renderFinanceTable(storeIdx, isEdit) {
   html += '<tr style="background:#f5f5f5;">';
   // 基础信息固定列
   html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:100px;position:sticky;left:0;background:#f5f5f5;z-index:2;">门店名称</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:60px;position:sticky;left:100px;background:#f5f5f5;z-index:2;">区域</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:70px;position:sticky;left:160px;background:#f5f5f5;z-index:2;">门店类型</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:90px;position:sticky;left:230px;background:#f5f5f5;z-index:2;">开业日期</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:60px;position:sticky;left:320px;background:#f5f5f5;z-index:2;">门店面积</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:60px;position:sticky;left:98px;background:#f5f5f5;z-index:2;">区域</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:70px;position:sticky;left:156px;background:#f5f5f5;z-index:2;">门店类型</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:90px;position:sticky;left:226px;background:#f5f5f5;z-index:2;">开业日期</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:60px;position:sticky;left:316px;background:#f5f5f5;z-index:2;">门店面积</th>';
   // 金额列
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:left;font-weight:600;color:#333;width:100px;position:sticky;left:380px;background:#f5f5f5;z-index:2;">金额类型</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:left;font-weight:600;color:#333;width:120px;position:sticky;left:480px;background:#f5f5f5;z-index:2;">类型明细</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:left;font-weight:600;color:#333;width:120px;position:sticky;left:600px;background:#f5f5f5;z-index:2;">金额备注</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:left;font-weight:600;color:#333;width:100px;position:sticky;left:376px;background:#f5f5f5;z-index:2;">金额类型</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:left;font-weight:600;color:#333;width:120px;position:sticky;left:476px;background:#f5f5f5;z-index:2;">类型明细</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:left;font-weight:600;color:#333;width:120px;position:sticky;left:596px;background:#f5f5f5;z-index:2;">金额备注</th>';
   FINANCE_COLUMNS.forEach(col => {
     const supplierName = (fin._suppliers && fin._suppliers[col.key]) || '';
     const colTitle = (!isEdit && supplierName) ? `${col.key}费用<br><span style="font-size:11px;color:#666;font-weight:400;">(${supplierName})</span>` : `${col.key}费用`;
@@ -8020,15 +8020,15 @@ function renderFinanceTable(storeIdx, isEdit) {
     // 基础信息列（只在第一行显示，其他行留空，但保留sticky定位）
     if (rowIdx === 0) {
       html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:600;position:sticky;left:0;background:${bgColor};z-index:1;" rowspan="${FINANCE_ROWS.length}">${store['门店'] || '未命名门店'}</td>`;
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:100px;background:${bgColor};z-index:1;" rowspan="${FINANCE_ROWS.length}">${store['区域'] || ''}</td>`;
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:160px;background:${bgColor};z-index:1;" rowspan="${FINANCE_ROWS.length}">${store['门店类型'] || ''}</td>`;
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:230px;background:${bgColor};z-index:1;" rowspan="${FINANCE_ROWS.length}">${openingDate}</td>`;
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:320px;background:${bgColor};z-index:1;" rowspan="${FINANCE_ROWS.length}">${area}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:98px;background:${bgColor};z-index:1;" rowspan="${FINANCE_ROWS.length}">${store['区域'] || ''}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:156px;background:${bgColor};z-index:1;" rowspan="${FINANCE_ROWS.length}">${store['门店类型'] || ''}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:226px;background:${bgColor};z-index:1;" rowspan="${FINANCE_ROWS.length}">${openingDate}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:316px;background:${bgColor};z-index:1;" rowspan="${FINANCE_ROWS.length}">${area}</td>`;
     }
     
     // 金额类型（合并单元格）
     if (row.type !== lastType) {
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:600;position:sticky;left:380px;background:${bgColor};z-index:1;text-align:center;vertical-align:middle;" rowspan="${typeRowSpans[row.type]}">${row.type}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:600;position:sticky;left:376px;background:${bgColor};z-index:1;text-align:center;vertical-align:middle;" rowspan="${typeRowSpans[row.type]}">${row.type}</td>`;
       lastType = row.type;
     }
     
