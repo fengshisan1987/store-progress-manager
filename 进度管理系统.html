@@ -8229,8 +8229,9 @@ function onMaintenanceAreaChange(area, preselectStore) {
 
   const storesInArea = STORES.filter(s => s['区域'] === area);
   storesInArea.forEach(s => {
-    const selected = (preselectStore === s.name) ? 'selected' : '';
-    storeSelect.innerHTML += `<option value="${s.name}" ${selected}>${s.name}</option>`;
+    const storeName = s['门店名称'] || '';
+    const selected = (preselectStore === storeName) ? 'selected' : '';
+    storeSelect.innerHTML += `<option value="${storeName}" ${selected}>${storeName}</option>`;
   });
 
   // 如果有预选门店，自动触发门店变化
@@ -8241,7 +8242,7 @@ function onMaintenanceAreaChange(area, preselectStore) {
 
 // 门店变化时自动填充开业日期
 function onMaintenanceStoreChange(storeName) {
-  const store = STORES.find(s => s.name === storeName);
+  const store = STORES.find(s => s['门店名称'] === storeName);
   if (!store) return;
 
   // 填充门店名称到输入框
