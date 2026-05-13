@@ -46,10 +46,15 @@ jobs:
             fuser -k 3001/tcp 2>/dev/null || true
             fuser -k 3002/tcp 2>/dev/null || true
             fuser -k 3003/tcp 2>/dev/null || true
-            echo "=== Starting new backend ==="
-            pm2 start /var/www/store-progress-manager/backend/server.js --name store-progress-api
+            fuser -k 3004/tcp 2>/dev/null || true
+            echo "=== Updating nginx config to port 3004 ==="
+            sudo sed -i 's/localhost:3002/localhost:3004/g' /etc/nginx/nginx.conf
+            sudo sed -i 's/localhost:3003/localhost:3004/g' /etc/nginx/nginx.conf
+            sudo nginx -t && sudo nginx -s reload || echo "nginx reload failed"
+            echo "=== Starting new backend on port 3004 ==="
+            cd /var/www/store-progress-manager/backend && PORT=3004 pm2 start server.js --name store-progress-api
             sleep 3
             echo "=== Checking backend status ==="
             pm2 list
-            curl -s http://localhost:3002/api/health || echo "WARNING: health check failed"
+            curl -s http://localhost:3004/api/health || echo "WARNING: health check failed"
             echo "Deploy completed at $(date)"
