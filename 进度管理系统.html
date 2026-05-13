@@ -8328,8 +8328,20 @@ function renderFinanceStoreList() {
     </tr>`;
   });
   
+  // 综合数据看板行（在筛选栏下方，显示所有可见行的平均值）
+  html += '<tr id="finance-summary-board" style="background:#e6f7ff;font-weight:600;">';
+  html += '<td colspan="8" style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;color:#1677ff;position:sticky;left:0;background:#e6f7ff;z-index:1;">综合数据看板</td>';
+  for (let i = 0; i < 13; i++) {
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;" data-sum-col="${i}">-</td>`;
+  }
+  html += '<td colspan="2" style="padding:8px 10px;border:1px solid #e8e8e8;"></td>';
+  html += '</tr>';
+
   html += '</tbody></table></div>';
   container.innerHTML = html;
+
+  // 初始化综合数据看板
+  setTimeout(() => { updateFinanceSummaryRow(); }, 0);
   
   // 同步横向滚动：内容滚动时固定表头同步跟随
   setTimeout(() => {
@@ -8361,6 +8373,45 @@ function toggleFinanceDetail(storeIdx) {
     // 折叠：删除展开行，恢复精简行
     document.querySelectorAll(`.finance-expand-row[data-store="${storeIdx}"]`).forEach(r => r.remove());
     summaryRow.style.display = 'table-row';
+  }
+
+  // 更新综合数据看板
+  updateFinanceSummaryRow();
+}
+
+// 更新综合数据看板（计算当前所有可见行的各列平均值）
+function updateFinanceSummaryRow() {
+  const board = document.getElementById('finance-summary-board');
+  if (!board) return;
+
+  const tbody = board.closest('tbody');
+  const allRows = tbody.querySelectorAll('tr');
+  const dataRows = [];
+
+  allRows.forEach(row => {
+    if (row.id === 'finance-summary-board') return;
+    if (row.classList.contains('finance-detail-row')) return;
+    if (row.style.display === 'none') return;
+    dataRows.push(row);
+  });
+
+  // 对第9-21列（索引8-20，费用相关列）计算平均值
+  for (let colIdx = 8; colIdx <= 20; colIdx++) {
+    let sum = 0;
+    let count = 0;
+    dataRows.forEach(row => {
+      const cell = row.cells[colIdx];
+      if (!cell) return;
+      const text = cell.textContent.trim().replace(/,/g, '');
+      const val = parseFloat(text);
+      if (!isNaN(val)) {
+        sum += val;
+        count++;
+      }
+    });
+    const avg = count > 0 ? (sum / count).toFixed(2) : '-';
+    const sumCell = board.querySelector(`[data-sum-col="${colIdx - 8}"]`);
+    if (sumCell) sumCell.textContent = avg;
   }
 }
 
@@ -8790,6 +8841,9 @@ function applyFinanceFilter() {
   } else {
     if (noDataDiv) noDataDiv.remove();
   }
+
+  // 更新综合数据看板
+  updateFinanceSummaryRow();
 }
 
 // 重置结算明细筛选
@@ -8834,6 +8888,9 @@ function resetFinanceFilter() {
 
   const noDataDiv = document.getElementById('finance-no-data');
   if (noDataDiv) noDataDiv.remove();
+
+  // 更新综合数据看板
+  updateFinanceSummaryRow();
 }
 
 // 渲染结算明细表格（isEdit=true表示编辑模式）
