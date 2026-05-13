@@ -8044,12 +8044,7 @@ function renderMaintenanceList() {
   });
   colGroup += '<col style="width:120px;"></colgroup>';
 
-  let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">';
-  html += '<div style="font-size:14px;color:#666;">共 ' + MAINTENANCE_RECORDS.length + ' 条维保记录</div>';
-  if (canEditMaintenance()) {
-    html += '<button onclick="openMaintenanceEditor()" style="padding:6px 16px;background:#1677ff;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;">+ 添加维保记录</button>';
-  }
-  html += '</div>';
+  let html = '<div style="font-size:14px;color:#666;margin-bottom:12px;">共 ' + MAINTENANCE_RECORDS.length + ' 条维保记录</div>';
 
   html += '<div style="overflow-x:auto;border:1px solid #e8e8e8;border-radius:8px;">';
   html += `<table style="width:100%;border-collapse:collapse;font-size:13px;min-width:1300px;table-layout:fixed;">${colGroup}`;
@@ -8098,7 +8093,7 @@ function openMaintenanceEditor(idx) {
   const record = isEdit ? MAINTENANCE_RECORDS[idx] : {};
 
   // 获取所有区域（从门店数据动态提取）
-  const areas = [...new Set(STORES.map(s => s.area).filter(Boolean))];
+  const areas = [...new Set(STORES.map(s => s['区域']).filter(Boolean))];
 
   let html = '<div style="padding:20px;">';
   html += `<h3 style="margin:0 0 20px 0;font-size:16px;">${isEdit ? '编辑' : '添加'}维保记录</h3>`;
@@ -8232,7 +8227,7 @@ function onMaintenanceAreaChange(area, preselectStore) {
   storeSelect.innerHTML = '<option value="">请选择门店</option>';
   if (!area) return;
 
-  const storesInArea = STORES.filter(s => s.area === area);
+  const storesInArea = STORES.filter(s => s['区域'] === area);
   storesInArea.forEach(s => {
     const selected = (preselectStore === s.name) ? 'selected' : '';
     storeSelect.innerHTML += `<option value="${s.name}" ${selected}>${s.name}</option>`;
