@@ -8038,9 +8038,11 @@ let finFilterAreaMax = '';
 function closeAllFinDropdowns() {
   const menus = ['fin-area-menu','fin-type-menu','fin-amount-menu','fin-detail-menu','fin-status-menu'];
   menus.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
-  // 恢复表头 overflow，防止下拉菜单打开时表头超出主界面
+  // 恢复表头和内容区域 overflow
   const headerScroll = document.getElementById('finance-list-header-scroll');
-  if (headerScroll) headerScroll.style.overflowX = 'hidden';
+  if (headerScroll) headerScroll.style.overflowX = 'auto';
+  const bodyDiv = document.getElementById('finance-list-body');
+  if (bodyDiv) bodyDiv.style.overflowX = 'auto';
 }
 
 // ── 区域多选下拉 ──
@@ -8052,6 +8054,8 @@ function toggleFinAreaDropdown() {
   closeAllFinDropdowns();
   if (!isVisible) {
     if (headerScroll) headerScroll.style.overflowX = 'visible';
+    const bodyDiv = document.getElementById('finance-list-body');
+    if (bodyDiv) bodyDiv.style.overflowX = 'visible';
     menu.style.display = 'block';
     refreshFinAreaDropdown();
     if (headerScroll) headerScroll.scrollLeft = savedScrollLeft;
@@ -8084,6 +8088,8 @@ function toggleFinTypeDropdown() {
   closeAllFinDropdowns();
   if (!isVisible) {
     if (headerScroll) headerScroll.style.overflowX = 'visible';
+    const bodyDiv = document.getElementById('finance-list-body');
+    if (bodyDiv) bodyDiv.style.overflowX = 'visible';
     menu.style.display = 'block';
     refreshFinTypeDropdown();
     if (headerScroll) headerScroll.scrollLeft = savedScrollLeft;
@@ -8120,6 +8126,8 @@ function toggleFinAmountDropdown() {
   closeAllFinDropdowns();
   if (!isVisible) {
     if (headerScroll) headerScroll.style.overflowX = 'visible';
+    const bodyDiv = document.getElementById('finance-list-body');
+    if (bodyDiv) bodyDiv.style.overflowX = 'visible';
     menu.style.display = 'block';
     refreshFinAmountDropdown();
     if (headerScroll) headerScroll.scrollLeft = savedScrollLeft;
@@ -8152,6 +8160,8 @@ function toggleFinDetailDropdown() {
   closeAllFinDropdowns();
   if (!isVisible) {
     if (headerScroll) headerScroll.style.overflowX = 'visible';
+    const bodyDiv = document.getElementById('finance-list-body');
+    if (bodyDiv) bodyDiv.style.overflowX = 'visible';
     menu.style.display = 'block';
     refreshFinDetailDropdown();
     if (headerScroll) headerScroll.scrollLeft = savedScrollLeft;
@@ -8184,6 +8194,8 @@ function toggleFinStatusDropdown() {
   closeAllFinDropdowns();
   if (!isVisible) {
     if (headerScroll) headerScroll.style.overflowX = 'visible';
+    const bodyDiv = document.getElementById('finance-list-body');
+    if (bodyDiv) bodyDiv.style.overflowX = 'visible';
     menu.style.display = 'block';
     refreshFinStatusDropdown();
     if (headerScroll) headerScroll.scrollLeft = savedScrollLeft;
