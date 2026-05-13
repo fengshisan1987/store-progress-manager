@@ -2128,15 +2128,132 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
 
 <!-- Tab 导航栏 -->
 <div class="tab-nav" id="tabNav">
-  <div class="tab-item active" data-tab="detail" onclick="switchTab('detail')">📋 筹建门店详细进度</div>
-  <div class="tab-item" data-tab="dashboard" onclick="switchTab('dashboard')">📊 筹建进度概述看板</div>
+  <div class="tab-item active" data-tab="detail" onclick="switchTab('detail')">📋 筹建门店进度相关</div>
   <div class="tab-item" data-tab="maintenance" onclick="switchTab('maintenance')" id="tabMaintenanceNav" style="display:none;">🔧 维保相关</div>
   <div class="tab-item" data-tab="finance" onclick="switchTab('finance')" id="tabFinanceNav" style="display:none;">💰 工程结算相关</div>
   <div class="tab-item" data-tab="settings" onclick="switchTab('settings')">⚙️ 设置</div>
 </div>
 
-<!-- Tab 2: 筹建进度概述看板 -->
-<div id="tab-dashboard" class="tab-content">
+<!-- Tab 1: 筹建门店进度相关 -->
+<div id="tab-detail" class="tab-content active">
+
+<!-- 标题和子tab -->
+<div style="padding:20px 20px 0 20px;">
+  <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+    <div style="font-size:18px;font-weight:600;color:#333;">📋 筹建门店进度相关</div>
+    <div style="display:flex;gap:2px;background:#e8e8e8;border-radius:6px;padding:3px;">
+      <button id="detail-subtab-progress" onclick="switchDetailSubTab('progress')" style="padding:6px 16px;border:none;border-radius:4px;font-size:13px;cursor:pointer;background:#fff;color:#1677ff;font-weight:500;">门店详细进度</button>
+      <button id="detail-subtab-dashboard" onclick="switchDetailSubTab('dashboard')" style="padding:6px 16px;border:none;border-radius:4px;font-size:13px;cursor:pointer;background:transparent;color:#666;">概述看板</button>
+    </div>
+  </div>
+</div>
+
+<!-- 子tab 1: 门店详细进度 -->
+<div id="detail-subtab-progress-content">
+
+<!-- 筹建门店详细进度标题 -->
+<div class="section-title-bar">
+  <div class="section-title">📋 筹建门店详细进度</div>
+</div>
+
+<!-- 工具栏 -->
+<div class="toolbar">
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="搜索门店、负责人…" oninput="render()">
+  </div>
+  <!-- 区域下拉 -->
+  <div class="dropdown-filter" id="regionDropdown" style="position:relative;">
+    <button class="filter-btn" onclick="toggleRegionDropdown()">区域：全部 ▼</button>
+    <div id="regionDropdownMenu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:200;min-width:120px;max-height:300px;overflow-y:auto;">
+      <div id="regionDropdownItems" style="padding:4px;"></div>
+    </div>
+  </div>
+  <!-- 状态下拉 -->
+  <div class="dropdown-filter" id="statusDropdown" style="position:relative;">
+    <button class="filter-btn" onclick="toggleStatusDropdown()">状态：全部 ▼</button>
+    <div id="statusDropdownMenu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:200;min-width:120px;">
+      <div style="padding:4px;">
+        <div class="dropdown-item" onclick="setStatusFilter('all')" data-status="all">全部（不含已完成）</div>
+        <div class="dropdown-item" onclick="setStatusFilter('选址中')" data-status="选址中">选址中</div>
+        <div class="dropdown-item" onclick="setStatusFilter('设计中')" data-status="设计中">设计中</div>
+        <div class="dropdown-item" onclick="setStatusFilter('施工前准备中')" data-status="施工前准备中">施工前准备中</div>
+        <div class="dropdown-item" onclick="setStatusFilter('施工中')" data-status="施工中">施工中</div>
+        <div class="dropdown-item" onclick="setStatusFilter('整改中')" data-status="整改中">整改中</div>
+        <div class="dropdown-item" onclick="setStatusFilter('待开业')" data-status="待开业">待开业</div>
+        <div class="dropdown-item" onclick="setStatusFilter('已完成')" data-status="已完成">已完成</div>
+        <div class="dropdown-item" onclick="setStatusFilter('已弃店')" data-status="已弃店">已弃店</div>
+      </div>
+    </div>
+  </div>
+  <!-- 门店类型下拉 -->
+  <div class="dropdown-filter" id="storeTypeDropdown" style="position:relative;">
+    <button class="filter-btn" onclick="toggleStoreTypeDropdown()">门店类型：全部 ▼</button>
+    <div id="storeTypeDropdownMenu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:200;min-width:120px;max-height:300px;overflow-y:auto;">
+      <div id="storeTypeDropdownItems" style="padding:4px;"></div>
+    </div>
+  </div>
+  <!-- 工程负责人下拉 -->
+  <div class="dropdown-filter" id="engineerDropdown" style="position:relative;">
+    <button class="filter-btn" onclick="toggleEngineerDropdown()">工程负责人：全部 ▼</button>
+    <div id="engineerDropdownMenu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:200;min-width:120px;max-height:300px;overflow-y:auto;">
+      <div id="engineerDropdownItems" style="padding:4px;"></div>
+    </div>
+  </div>
+  <!-- 装修形式下拉 -->
+  <div class="dropdown-filter" id="renovationTypeDropdown" style="position:relative;">
+    <button class="filter-btn" onclick="toggleRenovationTypeDropdown()">装修形式：全部 ▼</button>
+    <div id="renovationTypeDropdownMenu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:200;min-width:120px;max-height:300px;overflow-y:auto;">
+      <div id="renovationTypeDropdownItems" style="padding:4px;"></div>
+    </div>
+  </div>
+  <!-- 施工队伍名称下拉 -->
+  <div class="dropdown-filter" id="teamDropdown" style="position:relative;">
+    <button class="filter-btn" onclick="toggleTeamDropdown()">施工队伍：全部 ▼</button>
+    <div id="teamDropdownMenu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:200;min-width:120px;max-height:300px;overflow-y:auto;">
+      <div id="teamDropdownItems" style="padding:4px;"></div>
+    </div>
+  </div>
+  <!-- 开业日期范围筛选 -->
+  <div class="dropdown-filter" id="openingDateFilter" style="position:relative;display:flex;align-items:center;gap:6px;">
+    <span style="font-size:12px;color:#666;white-space:nowrap;">开业日期：</span>
+    <input type="date" id="openingDateStart" class="filter-date-input" style="padding:4px 8px;border:1px solid #d0d0d0;border-radius:4px;font-size:12px;width:120px;" onchange="setOpeningDateFilter()" placeholder="开始日期">
+    <span style="font-size:12px;color:#999;">-</span>
+    <input type="date" id="openingDateEnd" class="filter-date-input" style="padding:4px 8px;border:1px solid #d0d0d0;border-radius:4px;font-size:12px;width:120px;" onchange="setOpeningDateFilter()" placeholder="结束日期">
+    <button class="filter-btn" onclick="clearOpeningDateFilter()" style="padding:4px 8px;font-size:11px;margin-left:4px;">清空</button>
+  </div>
+</div>
+
+<!-- 图例 -->
+<div class="legend-bar">
+  <span style="font-size:12px;color:#555;font-weight:600;">图例：</span>
+  <div class="legend-item"><div class="legend-dot done"></div>已完成</div>
+  <div class="legend-item"><div class="legend-dot current"></div>进行中（最新进展）</div>
+  <div class="legend-item"><div class="legend-dot todo"></div>待完成</div>
+  <span style="font-size:11px;color:#aaa;margin-left:8px;">· 鼠标悬停节点可查看名称 · 点击行查看全部详情</span>
+</div>
+
+<!-- 甘特图 -->
+<div class="gantt-outer">
+  <!-- 阶段表头：独立 sticky 层，在 overflow-x 容器外，通过 JS 同步横向滚动 -->
+  <div class="phase-header-sticky" id="phaseHeaderSticky">
+    <div class="phase-header-inner">
+      <div class="store-col"><div class="phase-th" style="background:#64748b;">门店信息</div></div>
+      <div class="phase-headers" id="phaseHeaders"></div>
+      <div style="width:60px;flex-shrink:0;"></div>
+    </div>
+  </div>
+  <!-- 数据行（可横向滚动） -->
+  <div class="gantt-wrap" id="ganttWrap">
+    <div class="gantt-container">
+      <div id="ganttBody" style="padding:12px 0;background:#f5f7fa;border-radius:12px;"></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- 子tab 1: 门店详细进度 -->
+
+<!-- 子tab 2: 概述看板 -->
+<div id="detail-subtab-dashboard-content" style="display:none;">
 
 <!-- 筹建进度概述看板（可折叠） -->
 <div class="dashboard-wrapper">
@@ -2335,109 +2452,7 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
   </div>
 </div>
 
-</div><!-- tab-dashboard -->
-
-<!-- Tab 1: 筹建门店详细进度 -->
-<div id="tab-detail" class="tab-content active">
-
-<!-- 筹建门店详细进度标题 -->
-<div class="section-title-bar">
-  <div class="section-title">📋 筹建门店详细进度</div>
-</div>
-
-<!-- 工具栏 -->
-<div class="toolbar">
-  <div class="search-box">
-    <input type="text" id="searchInput" placeholder="搜索门店、负责人…" oninput="render()">
-  </div>
-  <!-- 区域下拉 -->
-  <div class="dropdown-filter" id="regionDropdown" style="position:relative;">
-    <button class="filter-btn" onclick="toggleRegionDropdown()">区域：全部 ▼</button>
-    <div id="regionDropdownMenu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:200;min-width:120px;max-height:300px;overflow-y:auto;">
-      <div id="regionDropdownItems" style="padding:4px;"></div>
-    </div>
-  </div>
-  <!-- 状态下拉 -->
-  <div class="dropdown-filter" id="statusDropdown" style="position:relative;">
-    <button class="filter-btn" onclick="toggleStatusDropdown()">状态：全部 ▼</button>
-    <div id="statusDropdownMenu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:200;min-width:120px;">
-      <div style="padding:4px;">
-        <div class="dropdown-item" onclick="setStatusFilter('all')" data-status="all">全部（不含已完成）</div>
-        <div class="dropdown-item" onclick="setStatusFilter('选址中')" data-status="选址中">选址中</div>
-        <div class="dropdown-item" onclick="setStatusFilter('设计中')" data-status="设计中">设计中</div>
-        <div class="dropdown-item" onclick="setStatusFilter('施工前准备中')" data-status="施工前准备中">施工前准备中</div>
-        <div class="dropdown-item" onclick="setStatusFilter('施工中')" data-status="施工中">施工中</div>
-        <div class="dropdown-item" onclick="setStatusFilter('整改中')" data-status="整改中">整改中</div>
-        <div class="dropdown-item" onclick="setStatusFilter('待开业')" data-status="待开业">待开业</div>
-        <div class="dropdown-item" onclick="setStatusFilter('已完成')" data-status="已完成">已完成</div>
-        <div class="dropdown-item" onclick="setStatusFilter('已弃店')" data-status="已弃店">已弃店</div>
-      </div>
-    </div>
-  </div>
-  <!-- 门店类型下拉 -->
-  <div class="dropdown-filter" id="storeTypeDropdown" style="position:relative;">
-    <button class="filter-btn" onclick="toggleStoreTypeDropdown()">门店类型：全部 ▼</button>
-    <div id="storeTypeDropdownMenu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:200;min-width:120px;max-height:300px;overflow-y:auto;">
-      <div id="storeTypeDropdownItems" style="padding:4px;"></div>
-    </div>
-  </div>
-  <!-- 工程负责人下拉 -->
-  <div class="dropdown-filter" id="engineerDropdown" style="position:relative;">
-    <button class="filter-btn" onclick="toggleEngineerDropdown()">工程负责人：全部 ▼</button>
-    <div id="engineerDropdownMenu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:200;min-width:120px;max-height:300px;overflow-y:auto;">
-      <div id="engineerDropdownItems" style="padding:4px;"></div>
-    </div>
-  </div>
-  <!-- 装修形式下拉 -->
-  <div class="dropdown-filter" id="renovationTypeDropdown" style="position:relative;">
-    <button class="filter-btn" onclick="toggleRenovationTypeDropdown()">装修形式：全部 ▼</button>
-    <div id="renovationTypeDropdownMenu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:200;min-width:120px;max-height:300px;overflow-y:auto;">
-      <div id="renovationTypeDropdownItems" style="padding:4px;"></div>
-    </div>
-  </div>
-  <!-- 施工队伍名称下拉 -->
-  <div class="dropdown-filter" id="teamDropdown" style="position:relative;">
-    <button class="filter-btn" onclick="toggleTeamDropdown()">施工队伍：全部 ▼</button>
-    <div id="teamDropdownMenu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:200;min-width:120px;max-height:300px;overflow-y:auto;">
-      <div id="teamDropdownItems" style="padding:4px;"></div>
-    </div>
-  </div>
-  <!-- 开业日期范围筛选 -->
-  <div class="dropdown-filter" id="openingDateFilter" style="position:relative;display:flex;align-items:center;gap:6px;">
-    <span style="font-size:12px;color:#666;white-space:nowrap;">开业日期：</span>
-    <input type="date" id="openingDateStart" class="filter-date-input" style="padding:4px 8px;border:1px solid #d0d0d0;border-radius:4px;font-size:12px;width:120px;" onchange="setOpeningDateFilter()" placeholder="开始日期">
-    <span style="font-size:12px;color:#999;">-</span>
-    <input type="date" id="openingDateEnd" class="filter-date-input" style="padding:4px 8px;border:1px solid #d0d0d0;border-radius:4px;font-size:12px;width:120px;" onchange="setOpeningDateFilter()" placeholder="结束日期">
-    <button class="filter-btn" onclick="clearOpeningDateFilter()" style="padding:4px 8px;font-size:11px;margin-left:4px;">清空</button>
-  </div>
-</div>
-
-<!-- 图例 -->
-<div class="legend-bar">
-  <span style="font-size:12px;color:#555;font-weight:600;">图例：</span>
-  <div class="legend-item"><div class="legend-dot done"></div>已完成</div>
-  <div class="legend-item"><div class="legend-dot current"></div>进行中（最新进展）</div>
-  <div class="legend-item"><div class="legend-dot todo"></div>待完成</div>
-  <span style="font-size:11px;color:#aaa;margin-left:8px;">· 鼠标悬停节点可查看名称 · 点击行查看全部详情</span>
-</div>
-
-<!-- 甘特图 -->
-<div class="gantt-outer">
-  <!-- 阶段表头：独立 sticky 层，在 overflow-x 容器外，通过 JS 同步横向滚动 -->
-  <div class="phase-header-sticky" id="phaseHeaderSticky">
-    <div class="phase-header-inner">
-      <div class="store-col"><div class="phase-th" style="background:#64748b;">门店信息</div></div>
-      <div class="phase-headers" id="phaseHeaders"></div>
-      <div style="width:60px;flex-shrink:0;"></div>
-    </div>
-  </div>
-  <!-- 数据行（可横向滚动） -->
-  <div class="gantt-wrap" id="ganttWrap">
-    <div class="gantt-container">
-      <div id="ganttBody" style="padding:12px 0;background:#f5f7fa;border-radius:12px;"></div>
-    </div>
-  </div>
-</div>
+</div><!-- 子tab 2: 概述看板 -->
 
 </div><!-- tab-detail -->
 
@@ -5261,20 +5276,41 @@ function switchTab(tabName) {
   if (tabName === 'settings') {
     renderSettingsCards();
   }
-  
-  // 如果切换到概述看板 tab，自动展开并渲染统计
-  if (tabName === 'dashboard') {
-    const dashboardContent = document.getElementById('dashboardContent');
-    const dashboardToggle = document.getElementById('dashboardToggle');
-    if (dashboardContent && dashboardContent.classList.contains('collapsed')) {
-      dashboardContent.classList.remove('collapsed');
-      dashboardToggle.classList.remove('collapsed');
+
+  // 如果切换到门店进度相关 tab，默认显示子tab 1（门店详细进度）
+  if (tabName === 'detail') {
+    switchDetailSubTab('progress');
+  }
+
+  // 滚动到顶部
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── 切换门店进度相关子tab ────────────────────────────────────────────────────────
+function switchDetailSubTab(tab) {
+  const progressBtn = document.getElementById('detail-subtab-progress');
+  const dashboardBtn = document.getElementById('detail-subtab-dashboard');
+  const progressContent = document.getElementById('detail-subtab-progress-content');
+  const dashboardContent = document.getElementById('detail-subtab-dashboard-content');
+  if (tab === 'progress') {
+    if (progressBtn) progressBtn.style.cssText = 'padding:6px 16px;border:none;border-radius:4px;font-size:13px;cursor:pointer;background:#fff;color:#1677ff;font-weight:500;';
+    if (dashboardBtn) dashboardBtn.style.cssText = 'padding:6px 16px;border:none;border-radius:4px;font-size:13px;cursor:pointer;background:transparent;color:#666;';
+    if (progressContent) progressContent.style.display = 'block';
+    if (dashboardContent) dashboardContent.style.display = 'none';
+  } else {
+    if (progressBtn) progressBtn.style.cssText = 'padding:6px 16px;border:none;border-radius:4px;font-size:13px;cursor:pointer;background:transparent;color:#666;';
+    if (dashboardBtn) dashboardBtn.style.cssText = 'padding:6px 16px;border:none;border-radius:4px;font-size:13px;cursor:pointer;background:#fff;color:#1677ff;font-weight:500;';
+    if (progressContent) progressContent.style.display = 'none';
+    if (dashboardContent) dashboardContent.style.display = 'block';
+    // 自动展开概述看板并渲染统计
+    const dbContent = document.getElementById('dashboardContent');
+    const dbToggle = document.getElementById('dashboardToggle');
+    if (dbContent && dbContent.classList.contains('collapsed')) {
+      dbContent.classList.remove('collapsed');
+      if (dbToggle) dbToggle.classList.remove('collapsed');
     }
     updateStats();
   }
-  
-  // 滚动到顶部
-  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ── 切换单个区域折叠状态 ────────────────────────────────────────────────────────
