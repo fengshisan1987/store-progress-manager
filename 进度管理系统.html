@@ -8273,6 +8273,16 @@ function renderFinanceStoreList() {
   let html = headerHtml;
   html += '<div id="finance-list-body" style="overflow-x:auto;max-height:calc(100vh - 220px);">';
   html += `<table class="finance-table" style="width:100%;border-collapse:collapse;font-size:13px;min-width:1400px;table-layout:fixed;">${colGroup}<tbody>`;
+
+  // 综合数据看板行（筛选栏下方，门店数据上方，只统计精简行）
+  html += '<tr id="finance-summary-board" style="background:#e6f7ff;font-weight:600;">';
+  html += '<td colspan="8" style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;color:#1677ff;position:sticky;left:0;background:#e6f7ff;z-index:1;">综合数据看板</td>';
+  for (let i = 0; i < 13; i++) {
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;" data-sum-col="${i}">-</td>`;
+  }
+  html += '<td colspan="2" style="padding:8px 10px;border:1px solid #e8e8e8;"></td>';
+  html += '</tr>';
+
   STORES.forEach((store, idx) => {
     const status = calcStoreTotalStatus(idx);
     const statusColor = status === '已结算完成' ? '#52c41a' : (status === '已支付部分款项' ? '#fa8c16' : (status === '报价阶段' ? '#1677ff' : '#999'));
@@ -8327,15 +8337,6 @@ function renderFinanceStoreList() {
       </td>
     </tr>`;
   });
-  
-  // 综合数据看板行（在筛选栏下方，显示所有可见行的平均值）
-  html += '<tr id="finance-summary-board" style="background:#e6f7ff;font-weight:600;">';
-  html += '<td colspan="8" style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;color:#1677ff;position:sticky;left:0;background:#e6f7ff;z-index:1;">综合数据看板</td>';
-  for (let i = 0; i < 13; i++) {
-    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;" data-sum-col="${i}">-</td>`;
-  }
-  html += '<td colspan="2" style="padding:8px 10px;border:1px solid #e8e8e8;"></td>';
-  html += '</tr>';
 
   html += '</tbody></table></div>';
   container.innerHTML = html;
@@ -8379,27 +8380,24 @@ function toggleFinanceDetail(storeIdx) {
   updateFinanceSummaryRow();
 }
 
-// 更新综合数据看板（计算当前所有可见行的各列平均值）
+// 更新综合数据看板（只统计当前可见的精简行，避免重复计算展开明细）
 function updateFinanceSummaryRow() {
   const board = document.getElementById('finance-summary-board');
   if (!board) return;
 
   const tbody = board.closest('tbody');
-  const allRows = tbody.querySelectorAll('tr');
-  const dataRows = [];
-
-  allRows.forEach(row => {
-    if (row.id === 'finance-summary-board') return;
-    if (row.classList.contains('finance-detail-row')) return;
-    if (row.style.display === 'none') return;
-    dataRows.push(row);
+  // 只取精简行（finance-summary-row），且可见的行
+  const summaryRows = tbody.querySelectorAll('tr.finance-summary-row');
+  const visibleRows = [];
+  summaryRows.forEach(row => {
+    if (row.style.display !== 'none') visibleRows.push(row);
   });
 
   // 对第9-21列（索引8-20，费用相关列）计算平均值
   for (let colIdx = 8; colIdx <= 20; colIdx++) {
     let sum = 0;
     let count = 0;
-    dataRows.forEach(row => {
+    visibleRows.forEach(row => {
       const cell = row.cells[colIdx];
       if (!cell) return;
       const text = cell.textContent.trim().replace(/,/g, '');
