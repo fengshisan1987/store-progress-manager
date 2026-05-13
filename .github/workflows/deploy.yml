@@ -29,7 +29,7 @@ jobs:
           KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SOURCE: "backend/server.js"
           TARGET: "/var/www/store-progress-manager/backend/"
-          strip_components: 0
+          strip_components: 1
 
       - name: Restart backend and set permissions
         uses: appleboy/ssh-action@v1.0.3
@@ -39,7 +39,5 @@ jobs:
           KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             chmod 644 /var/www/store-progress-manager/进度管理系统.html
-            cp /var/www/store-progress-manager/backend/server.js /var/www/store-progress-manager/backend/server.js.new
-            mv /var/www/store-progress-manager/backend/server.js.new /var/www/store-progress-manager/backend/server.js
             pm2 restart store-progress-api || pm2 start /var/www/store-progress-manager/backend/server.js --name store-progress-api
             echo "Deploy completed at $(date)"
