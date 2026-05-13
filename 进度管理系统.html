@@ -8047,12 +8047,14 @@ function closeAllFinDropdowns() {
 function toggleFinAreaDropdown() {
   const menu = document.getElementById('fin-area-menu');
   const isVisible = menu.style.display === 'block';
+  const headerScroll = document.getElementById('finance-list-header-scroll');
+  const savedScrollLeft = headerScroll ? headerScroll.scrollLeft : 0;
   closeAllFinDropdowns();
   if (!isVisible) {
-    const headerScroll = document.getElementById('finance-list-header-scroll');
     if (headerScroll) headerScroll.style.overflowX = 'visible';
     menu.style.display = 'block';
     refreshFinAreaDropdown();
+    if (headerScroll) headerScroll.scrollLeft = savedScrollLeft;
   }
 }
 function refreshFinAreaDropdown() {
@@ -8077,12 +8079,14 @@ function updateFinAreaBtn() {
 function toggleFinTypeDropdown() {
   const menu = document.getElementById('fin-type-menu');
   const isVisible = menu.style.display === 'block';
+  const headerScroll = document.getElementById('finance-list-header-scroll');
+  const savedScrollLeft = headerScroll ? headerScroll.scrollLeft : 0;
   closeAllFinDropdowns();
   if (!isVisible) {
-    const headerScroll = document.getElementById('finance-list-header-scroll');
     if (headerScroll) headerScroll.style.overflowX = 'visible';
     menu.style.display = 'block';
     refreshFinTypeDropdown();
+    if (headerScroll) headerScroll.scrollLeft = savedScrollLeft;
   }
 }
 function refreshFinTypeDropdown() {
@@ -8111,12 +8115,14 @@ function updateFinTypeBtn() {
 function toggleFinAmountDropdown() {
   const menu = document.getElementById('fin-amount-menu');
   const isVisible = menu.style.display === 'block';
+  const headerScroll = document.getElementById('finance-list-header-scroll');
+  const savedScrollLeft = headerScroll ? headerScroll.scrollLeft : 0;
   closeAllFinDropdowns();
   if (!isVisible) {
-    const headerScroll = document.getElementById('finance-list-header-scroll');
     if (headerScroll) headerScroll.style.overflowX = 'visible';
     menu.style.display = 'block';
     refreshFinAmountDropdown();
+    if (headerScroll) headerScroll.scrollLeft = savedScrollLeft;
   }
 }
 function refreshFinAmountDropdown() {
@@ -8141,12 +8147,14 @@ function updateFinAmountBtn() {
 function toggleFinDetailDropdown() {
   const menu = document.getElementById('fin-detail-menu');
   const isVisible = menu.style.display === 'block';
+  const headerScroll = document.getElementById('finance-list-header-scroll');
+  const savedScrollLeft = headerScroll ? headerScroll.scrollLeft : 0;
   closeAllFinDropdowns();
   if (!isVisible) {
-    const headerScroll = document.getElementById('finance-list-header-scroll');
     if (headerScroll) headerScroll.style.overflowX = 'visible';
     menu.style.display = 'block';
     refreshFinDetailDropdown();
+    if (headerScroll) headerScroll.scrollLeft = savedScrollLeft;
   }
 }
 function refreshFinDetailDropdown() {
@@ -8171,12 +8179,14 @@ function updateFinDetailBtn() {
 function toggleFinStatusDropdown() {
   const menu = document.getElementById('fin-status-menu');
   const isVisible = menu.style.display === 'block';
+  const headerScroll = document.getElementById('finance-list-header-scroll');
+  const savedScrollLeft = headerScroll ? headerScroll.scrollLeft : 0;
   closeAllFinDropdowns();
   if (!isVisible) {
-    const headerScroll = document.getElementById('finance-list-header-scroll');
     if (headerScroll) headerScroll.style.overflowX = 'visible';
     menu.style.display = 'block';
     refreshFinStatusDropdown();
+    if (headerScroll) headerScroll.scrollLeft = savedScrollLeft;
   }
 }
 function refreshFinStatusDropdown() {
