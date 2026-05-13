@@ -2454,12 +2454,21 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
   </div>
 </div>
 
-<!-- Tab 4: 门店财务结算明细 -->
+<!-- Tab 4: 工程结算明细 -->
 <div id="tab-finance" class="tab-content">
   <div style="padding:20px;">
-    <div style="font-size:18px;font-weight:600;color:#333;margin-bottom:20px;">💰 工程结算明细</div>
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+      <div style="font-size:18px;font-weight:600;color:#333;">💰 工程结算明细</div>
+      <div style="display:flex;gap:2px;background:#e8e8e8;border-radius:6px;padding:3px;">
+        <button id="fin-subtab-finance" onclick="switchFinanceSubTab('finance')" style="padding:6px 16px;border:none;border-radius:4px;font-size:13px;cursor:pointer;background:#fff;color:#1677ff;font-weight:500;">工程结算明细</button>
+        <button id="fin-subtab-supplier" onclick="switchFinanceSubTab('supplier')" style="padding:6px 16px;border:none;border-radius:4px;font-size:13px;cursor:pointer;background:transparent;color:#666;">供应商管理</button>
+      </div>
+    </div>
     <div id="finance-store-list" style="max-width:100%;">
       <!-- 动态填充门店列表 -->
+    </div>
+    <div id="supplier-list" style="max-width:100%;display:none;">
+      <!-- 动态填充供应商列表 -->
     </div>
   </div>
 </div>
@@ -3002,7 +3011,7 @@ async function loadStoresFromServer() {
       
       // 优先从服务器加载供应商配置
       if (data.suppliers && Array.isArray(data.suppliers)) {
-        SUPPLIERS = data.suppliers;
+        SUPPLIERS = migrateSuppliers(data.suppliers);
         localStorage.setItem('storeSuppliers', JSON.stringify(SUPPLIERS));
         console.log('供应商配置已从服务器加载');
       } else {
@@ -3010,7 +3019,7 @@ async function loadStoresFromServer() {
         const localSuppliers = localStorage.getItem('storeSuppliers');
         if (localSuppliers) {
           try {
-            SUPPLIERS = JSON.parse(localSuppliers);
+            SUPPLIERS = migrateSuppliers(JSON.parse(localSuppliers));
             console.log('供应商配置从 localStorage 加载');
           } catch (e) {
             console.log('localStorage 供应商配置解析失败，使用默认值');
@@ -5190,8 +5199,9 @@ function switchTab(tabName) {
   if (tabContent) tabContent.classList.add('active');
   if (tabItem) tabItem.classList.add('active');
   
-  // 如果切换到财务结算 tab，渲染列表
+  // 如果切换到财务结算 tab，渲染列表并重置子tab
   if (tabName === 'finance') {
+    switchFinanceSubTab('finance');
     renderFinanceStoreList();
   }
   
@@ -7568,6 +7578,33 @@ const SUPPLIER_CATEGORIES = ['工程硬装','广告物料','安装收尾','家�
 // 供应商数据（从服务器加载，localStorage备份）
 let SUPPLIERS = JSON.parse(localStorage.getItem('storeSuppliers') || '[]');
 
+// 兼容老数据：将 {name, category} 转换为新格式
+function migrateSuppliers(list) {
+  if (!Array.isArray(list)) return [];
+  return list.map(s => {
+    if (s.categories && Array.isArray(s.categories)) {
+      // 已经是新格式
+      return s;
+    }
+    // 老格式转换
+    return {
+      name: s.name || '',
+      categories: s.category ? [s.category] : [],
+      contractType: '',
+      contactName: '',
+      contactPhone: '',
+      coverageArea: '',
+      hasContract: '',
+      contractStart: '',
+      contractEnd: '',
+      hasDeposit: '',
+      depositAmount: '',
+      remainingDeposit: '',
+      remark: ''
+    };
+  });
+}
+
 // 打开供应商管理面板
 function openSupplierManager() {
   renderSupplierPanel();
@@ -7579,7 +7616,246 @@ function closeSupplierManager() {
   document.getElementById('supplierPanel').classList.remove('open');
 }
 
-// 渲染供应商管理面板
+// 供应商管理表格列定义
+const SUPPLIER_TABLE_COLS = [
+  { key: 'name', title: '供应商名称', width: 140, fixed: true },
+  { key: 'categories', title: '供应商性质', width: 200 },
+  { key: 'contractType', title: '合同性质', width: 100 },
+  { key: 'contactName', title: '联系人姓名', width: 100 },
+  { key: 'contactPhone', title: '联系人电话', width: 120 },
+  { key: 'coverageArea', title: '覆盖区域', width: 120 },
+  { key: 'hasContract', title: '是否签署合同', width: 100 },
+  { key: 'contractStart', title: '合同开始日期', width: 120 },
+  { key: 'contractEnd', title: '合同结束日期', width: 120 },
+  { key: 'hasDeposit', title: '保证金是否缴纳', width: 110 },
+  { key: 'depositAmount', title: '实际缴纳保证金', width: 120 },
+  { key: 'remainingDeposit', title: '剩余保证金', width: 100 },
+  { key: 'remark', title: '备注', width: 150 }
+];
+
+// 渲染供应商管理列表（独立页面13列表格）
+function renderSupplierList() {
+  const container = document.getElementById('supplier-list');
+  if (!container) return;
+
+  // 构建colgroup
+  let colGroup = '<colgroup>';
+  SUPPLIER_TABLE_COLS.forEach(col => {
+    colGroup += `<col style="width:${col.width}px;">`;
+  });
+  colGroup += '<col style="width:100px;"></colgroup>';
+
+  // 表头
+  let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">';
+  html += '<div style="font-size:14px;color:#666;">共 ' + SUPPLIERS.length + ' 家供应商</div>';
+  html += '<button onclick="openSupplierAddModal()" style="padding:6px 16px;background:#1677ff;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;">+ 添加供应商</button>';
+  html += '</div>';
+
+  html += '<div style="overflow-x:auto;border:1px solid #e8e8e8;border-radius:8px;">';
+  html += `<table style="width:100%;border-collapse:collapse;font-size:13px;min-width:1200px;table-layout:fixed;">${colGroup}`;
+  html += '<thead><tr style="background:#f5f5f5;">';
+  SUPPLIER_TABLE_COLS.forEach((col, i) => {
+    const sticky = col.fixed ? 'position:sticky;left:0;background:#f5f5f5;z-index:2;' : '';
+    html += `<th style="padding:10px 8px;border:1px solid #e8e8e8;text-align:left;font-weight:600;color:#333;font-size:12px;white-space:nowrap;${sticky}">${col.title}</th>`;
+  });
+  html += '<th style="padding:10px 8px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;font-size:12px;white-space:nowrap;">操作</th>';
+  html += '</tr></thead><tbody>';
+
+  // 数据行
+  if (SUPPLIERS.length === 0) {
+    html += `<tr><td colspan="14" style="padding:40px;text-align:center;color:#999;font-size:14px;">暂无供应商数据，点击右上角"添加供应商"</td></tr>`;
+  } else {
+    SUPPLIERS.forEach((s, idx) => {
+      const bg = idx % 2 === 0 ? '#fff' : '#fafafa';
+      html += `<tr style="background:${bg};">`;
+      SUPPLIER_TABLE_COLS.forEach((col, ci) => {
+        let val = s[col.key] || '';
+        if (col.key === 'categories' && Array.isArray(val)) {
+          val = val.join('、') || '-';
+        }
+        const sticky = col.fixed ? `position:sticky;left:0;background:${bg};z-index:1;` : '';
+        html += `<td style="padding:8px;border:1px solid #e8e8e8;color:#333;font-size:12px;${sticky}">${val || '-'}</td>`;
+      });
+      html += `<td style="padding:8px;border:1px solid #e8e8e8;text-align:center;">
+        <button onclick="openSupplierEditModal(${idx})" style="padding:3px 10px;background:#1677ff;color:#fff;border:none;border-radius:4px;font-size:11px;cursor:pointer;margin-right:4px;">编辑</button>
+        <button onclick="deleteSupplierNew(${idx})" style="padding:3px 10px;background:#ff4d4f;color:#fff;border:none;border-radius:4px;font-size:11px;cursor:pointer;">删除</button>
+      </td>`;
+      html += '</tr>';
+    });
+  }
+
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+
+// 打开添加供应商弹窗
+function openSupplierAddModal() {
+  openSupplierEditModal(-1);
+}
+
+// 打开编辑供应商弹窗（idx=-1表示新增）
+function openSupplierEditModal(idx) {
+  const isEdit = idx >= 0;
+  const s = isEdit ? SUPPLIERS[idx] : {};
+  const title = isEdit ? '编辑供应商' : '添加供应商';
+
+  // 构建分类多选
+  let catHtml = '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">';
+  SUPPLIER_CATEGORIES.forEach(cat => {
+    const checked = (s.categories || []).includes(cat) ? 'checked' : '';
+    catHtml += `<label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:4px 8px;background:#f5f5f5;border-radius:4px;border:1px solid #e8e8e8;"><input type="checkbox" name="sup-cat" value="${cat}" ${checked}>${cat}</label>`;
+  });
+  catHtml += '</div>';
+
+  const overlay = document.createElement('div');
+  overlay.id = 'supplierModalOverlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;';
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:12px;width:600px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+      <div style="padding:16px 20px;border-bottom:1px solid #e8e8e8;display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="margin:0;font-size:16px;">${title}</h3>
+        <button onclick="closeSupplierModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#999;">✕</button>
+      </div>
+      <div style="padding:20px;">
+        <div style="margin-bottom:16px;">
+          <label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">供应商名称 <span style="color:#ff4d4f;">*</span></label>
+          <input type="text" id="sup-name" value="${s.name || ''}" style="width:100%;padding:8px 12px;border:1px solid #d0d0d0;border-radius:6px;font-size:13px;box-sizing:border-box;">
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">供应商性质 <span style="color:#ff4d4f;">*</span></label>
+          ${catHtml}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+          <div>
+            <label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">合同性质</label>
+            <select id="sup-contractType" style="width:100%;padding:8px 12px;border:1px solid #d0d0d0;border-radius:6px;font-size:13px;">
+              <option value="">请选择</option>
+              <option value="装修合同" ${s.contractType === '装修合同' ? 'selected' : ''}>装修合同</option>
+              <option value="采购合同" ${s.contractType === '采购合同' ? 'selected' : ''}>采购合同</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">是否签署合同</label>
+            <select id="sup-hasContract" style="width:100%;padding:8px 12px;border:1px solid #d0d0d0;border-radius:6px;font-size:13px;">
+              <option value="">请选择</option>
+              <option value="是" ${s.hasContract === '是' ? 'selected' : ''}>是</option>
+              <option value="否" ${s.hasContract === '否' ? 'selected' : ''}>否</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+          <div>
+            <label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">联系人姓名</label>
+            <input type="text" id="sup-contactName" value="${s.contactName || ''}" style="width:100%;padding:8px 12px;border:1px solid #d0d0d0;border-radius:6px;font-size:13px;box-sizing:border-box;">
+          </div>
+          <div>
+            <label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">联系人电话</label>
+            <input type="text" id="sup-contactPhone" value="${s.contactPhone || ''}" style="width:100%;padding:8px 12px;border:1px solid #d0d0d0;border-radius:6px;font-size:13px;box-sizing:border-box;">
+          </div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">覆盖区域</label>
+          <input type="text" id="sup-coverageArea" value="${s.coverageArea || ''}" style="width:100%;padding:8px 12px;border:1px solid #d0d0d0;border-radius:6px;font-size:13px;box-sizing:border-box;">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+          <div>
+            <label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">合同开始日期</label>
+            <input type="date" id="sup-contractStart" value="${s.contractStart || ''}" style="width:100%;padding:8px 12px;border:1px solid #d0d0d0;border-radius:6px;font-size:13px;box-sizing:border-box;">
+          </div>
+          <div>
+            <label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">合同结束日期</label>
+            <input type="date" id="sup-contractEnd" value="${s.contractEnd || ''}" style="width:100%;padding:8px 12px;border:1px solid #d0d0d0;border-radius:6px;font-size:13px;box-sizing:border-box;">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+          <div>
+            <label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">保证金是否缴纳</label>
+            <select id="sup-hasDeposit" style="width:100%;padding:8px 12px;border:1px solid #d0d0d0;border-radius:6px;font-size:13px;">
+              <option value="">请选择</option>
+              <option value="是" ${s.hasDeposit === '是' ? 'selected' : ''}>是</option>
+              <option value="否" ${s.hasDeposit === '否' ? 'selected' : ''}>否</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">实际缴纳保证金</label>
+            <input type="text" id="sup-depositAmount" value="${s.depositAmount || ''}" style="width:100%;padding:8px 12px;border:1px solid #d0d0d0;border-radius:6px;font-size:13px;box-sizing:border-box;">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+          <div>
+            <label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">剩余保证金</label>
+            <input type="text" id="sup-remainingDeposit" value="${s.remainingDeposit || ''}" style="width:100%;padding:8px 12px;border:1px solid #d0d0d0;border-radius:6px;font-size:13px;box-sizing:border-box;">
+          </div>
+          <div>
+            <label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">备注</label>
+            <input type="text" id="sup-remark" value="${s.remark || ''}" style="width:100%;padding:8px 12px;border:1px solid #d0d0d0;border-radius:6px;font-size:13px;box-sizing:border-box;">
+          </div>
+        </div>
+      </div>
+      <div style="padding:16px 20px;border-top:1px solid #e8e8e8;display:flex;justify-content:flex-end;gap:10px;">
+        <button onclick="closeSupplierModal()" style="padding:8px 20px;border:1px solid #d0d0d0;background:#fff;border-radius:6px;font-size:13px;cursor:pointer;">取消</button>
+        <button onclick="saveSupplierModal(${idx})" style="padding:8px 20px;background:#1677ff;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;">保存</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
+// 关闭供应商弹窗
+function closeSupplierModal() {
+  const overlay = document.getElementById('supplierModalOverlay');
+  if (overlay) overlay.remove();
+}
+
+// 保存供应商弹窗数据
+async function saveSupplierModal(idx) {
+  const name = document.getElementById('sup-name').value.trim();
+  if (!name) { showToast('请输入供应商名称'); return; }
+
+  const catCheckboxes = document.querySelectorAll('input[name="sup-cat"]:checked');
+  const categories = Array.from(catCheckboxes).map(cb => cb.value);
+  if (categories.length === 0) { showToast('请至少选择一个供应商性质'); return; }
+
+  const newSupplier = {
+    name,
+    categories,
+    contractType: document.getElementById('sup-contractType').value,
+    contactName: document.getElementById('sup-contactName').value.trim(),
+    contactPhone: document.getElementById('sup-contactPhone').value.trim(),
+    coverageArea: document.getElementById('sup-coverageArea').value.trim(),
+    hasContract: document.getElementById('sup-hasContract').value,
+    contractStart: document.getElementById('sup-contractStart').value,
+    contractEnd: document.getElementById('sup-contractEnd').value,
+    hasDeposit: document.getElementById('sup-hasDeposit').value,
+    depositAmount: document.getElementById('sup-depositAmount').value.trim(),
+    remainingDeposit: document.getElementById('sup-remainingDeposit').value.trim(),
+    remark: document.getElementById('sup-remark').value.trim()
+  };
+
+  if (idx >= 0) {
+    SUPPLIERS[idx] = newSupplier;
+  } else {
+    SUPPLIERS.push(newSupplier);
+  }
+
+  localStorage.setItem('storeSuppliers', JSON.stringify(SUPPLIERS));
+  await saveStoresToServer();
+  closeSupplierModal();
+  renderSupplierList();
+  showToast(idx >= 0 ? '供应商已更新' : '供应商添加成功');
+}
+
+// 删除供应商（新页面用）
+async function deleteSupplierNew(idx) {
+  if (!confirm(`确定删除供应商「${SUPPLIERS[idx].name}」吗？`)) return;
+  SUPPLIERS.splice(idx, 1);
+  localStorage.setItem('storeSuppliers', JSON.stringify(SUPPLIERS));
+  await saveStoresToServer();
+  renderSupplierList();
+  showToast('供应商已删除');
+}
+
+// 渲染供应商管理面板（保留旧版右侧滑动面板，设置中仍可用）
 function renderSupplierPanel() {
   const bd = document.getElementById('supplierPanelBd');
   if (!bd) return;
@@ -7588,7 +7864,7 @@ function renderSupplierPanel() {
   
   // 按分类分组显示
   SUPPLIER_CATEGORIES.forEach(cat => {
-    const list = SUPPLIERS.filter(s => s.category === cat);
+    const list = SUPPLIERS.filter(s => (s.categories || []).includes(cat));
     html += `
       <div style="margin-bottom:20px;">
         <div style="font-size:15px;font-weight:600;color:#333;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
@@ -7616,17 +7892,31 @@ function renderSupplierPanel() {
 async function addSupplier(category) {
   const name = prompt(`请输入【${category}】供应商名称：`);
   if (!name || !name.trim()) return;
-  
-  SUPPLIERS.push({ category, name: name.trim() });
+
+  SUPPLIERS.push({
+    name: name.trim(),
+    categories: [category],
+    contractType: '',
+    contactName: '',
+    contactPhone: '',
+    coverageArea: '',
+    hasContract: '',
+    contractStart: '',
+    contractEnd: '',
+    hasDeposit: '',
+    depositAmount: '',
+    remainingDeposit: '',
+    remark: ''
+  });
   localStorage.setItem('storeSuppliers', JSON.stringify(SUPPLIERS));
   await saveStoresToServer();
   renderSupplierPanel();
   showToast('供应商添加成功');
 }
 
-// 删除供应商
+// 删除供应商（旧版设置面板用）
 async function deleteSupplier(category, idx) {
-  const globalIdx = SUPPLIERS.findIndex((s, i) => s.category === category && SUPPLIERS.filter(x => x.category === category).indexOf(s) === idx);
+  const globalIdx = SUPPLIERS.findIndex((s, i) => (s.categories || []).includes(category) && SUPPLIERS.filter(x => (x.categories || []).includes(category)).indexOf(s) === idx);
   if (globalIdx >= 0) {
     if (confirm(`确定删除供应商「${SUPPLIERS[globalIdx].name}」吗？`)) {
       SUPPLIERS.splice(globalIdx, 1);
@@ -7640,7 +7930,7 @@ async function deleteSupplier(category, idx) {
 
 // 获取某分类下的供应商列表
 function getSuppliersByCategory(category) {
-  return SUPPLIERS.filter(s => s.category === category).map(s => s.name);
+  return SUPPLIERS.filter(s => (s.categories || []).includes(category)).map(s => s.name);
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -7854,6 +8144,26 @@ function calcStoreTotalStatus(storeIdx) {
   if (hasFirstPay && !allUnpaidZero) return '已支付部分款项';
   if (hasFinalPay && allUnpaidZero) return '已结算完成';
   return '';
+}
+
+// 切换工程结算明细子tab
+function switchFinanceSubTab(tab) {
+  const financeBtn = document.getElementById('fin-subtab-finance');
+  const supplierBtn = document.getElementById('fin-subtab-supplier');
+  const financeList = document.getElementById('finance-store-list');
+  const supplierList = document.getElementById('supplier-list');
+  if (tab === 'finance') {
+    financeBtn.style.cssText = 'padding:6px 16px;border:none;border-radius:4px;font-size:13px;cursor:pointer;background:#fff;color:#1677ff;font-weight:500;';
+    supplierBtn.style.cssText = 'padding:6px 16px;border:none;border-radius:4px;font-size:13px;cursor:pointer;background:transparent;color:#666;';
+    financeList.style.display = 'block';
+    supplierList.style.display = 'none';
+  } else {
+    financeBtn.style.cssText = 'padding:6px 16px;border:none;border-radius:4px;font-size:13px;cursor:pointer;background:transparent;color:#666;';
+    supplierBtn.style.cssText = 'padding:6px 16px;border:none;border-radius:4px;font-size:13px;cursor:pointer;background:#fff;color:#1677ff;font-weight:500;';
+    financeList.style.display = 'none';
+    supplierList.style.display = 'block';
+    renderSupplierList();
+  }
 }
 
 // 渲染财务结算门店列表（统一大表格）
