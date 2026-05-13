@@ -5554,8 +5554,10 @@ function openImportModal() {
         <div style="margin-bottom: 16px;">
           <p style="color: #666; margin-bottom: 12px;">请上传 Excel 文件 (.xlsx 或 .xls)</p>
           <p style="color: #999; font-size: 12px; margin-bottom: 16px;">
-            表格需包含以下列：门店名称、区域、状态、工程负责人、门店类型、装修形式<br>
-            以及各阶段日期：选址日期、设计日期、合同日期、施工日期、设备日期、准备日期、整改日期、开业日期
+            <strong>支持格式：</strong><br>
+            1. 完整详细进度格式：门店名称、区域、门店状态、工程负责人、姓名、门店类型、装修形式、门店面积、施工队伍名称、推荐队伍名称、最新进展内容、最新进展日期、工程增减项备注、停工天数 + 所有节点日期列 + 预估验收日期、预估开业日期<br>
+            2. 旧格式（兼容）：门店名称、区域、状态、工程负责人、门店类型、装修形式 + 选址日期、设计日期、合同日期、施工日期、设备日期、准备日期、整改日期、开业日期<br>
+            <strong>导入规则：</strong>以"门店名称"匹配，已存在则更新，不存在则创建
           </p>
         </div>
         <div class="form-group">
@@ -5635,72 +5637,230 @@ function handleFileSelect(input) {
 
 function confirmImport() {
   if (!window._importData) return;
-  
+
   const data = window._importData;
   const headers = data[0];
-  
-  // 映射列索引
-  const colIndex = {};
-  headers.forEach((h, i) => colIndex[h] = i);
-  
-  const newStores = [];
+
+  // 辅助：规范化字符串用于模糊匹配
+  function normalize(str) {
+    if (!str) return '';
+    return String(str).replace(/[\s\u3000]/g, '').replace(/[\uff00-\uffef]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xfee0)).toLowerCase();
+  }
+
+  // 辅助：查找列索引，支持精确和模糊匹配
+  function findColIndex(headers, ...possibleNames) {
+    // 先精确匹配
+    for (const name of possibleNames) {
+      const idx = headers.indexOf(name);
+      if (idx >= 0) return { idx, matched: name };
+    }
+    // 再模糊匹配
+    const normTargets = possibleNames.map(n => normalize(n));
+    for (let i = 0; i < headers.length; i++) {
+      const h = normalize(headers[i]);
+      for (let j = 0; j < normTargets.length; j++) {
+        if (h === normTargets[j] || h.includes(normTargets[j]) || normTargets[j].includes(h)) {
+          return { idx: i, matched: headers[i] };
+        }
+      }
+    }
+    return { idx: -1, matched: null };
+  }
+
+  // 获取门店名称列索引
+  const storeNameResult = findColIndex(headers, '门店名称', '门店');
+  if (storeNameResult.idx < 0) {
+    alert('未找到"门店名称"列，请检查表格格式');
+    return;
+  }
+  const storeNameCol = storeNameResult.idx;
+
+  // 基本信息列映射
+  const basicFieldMap = {
+    '区域': findColIndex(headers, '区域'),
+    '门店状态': findColIndex(headers, '门店状态', '状态'),
+    '工程负责人': findColIndex(headers, '工程负责人'),
+    '姓名': findColIndex(headers, '姓名'),
+    '门店类型': findColIndex(headers, '门店类型'),
+    '装修形式': findColIndex(headers, '装修形式'),
+    '门店面积': findColIndex(headers, '门店面积', '面积'),
+    '施工队伍名称': findColIndex(headers, '施工队伍名称'),
+    '推荐队伍名称': findColIndex(headers, '推荐队伍名称'),
+    '最新进展内容': findColIndex(headers, '最新进展内容', '进展内容'),
+    '最新进展日期': findColIndex(headers, '最新进展日期', '进展日期'),
+    '工程增减项备注': findColIndex(headers, '工程增减项备注', '增减项备注'),
+    '停工天数': findColIndex(headers, '停工天数')
+  };
+
+  // 节点列映射：建立 Excel 列名 -> 当前节点名的映射
+  const nodeColMap = {}; // { excelColIndex: currentStepName }
+  // 收集当前所有节点名
+  const currentNodeNames = [];
+  PHASES.forEach(phase => {
+    phase.steps.forEach(step => {
+      currentNodeNames.push(step.name);
+    });
+  });
+
+  // 先精确匹配
+  headers.forEach((h, colIdx) => {
+    if (currentNodeNames.includes(h)) {
+      nodeColMap[colIdx] = h;
+    }
+  });
+  // 再模糊匹配未匹配的列
+  headers.forEach((h, colIdx) => {
+    if (nodeColMap[colIdx]) return; // 已匹配
+    const normH = normalize(h);
+    for (const nodeName of currentNodeNames) {
+      if (normalize(nodeName) === normH) {
+        nodeColMap[colIdx] = nodeName;
+        break;
+      }
+    }
+  });
+
+  // 预估日期列
+  const estAcceptCol = findColIndex(headers, '预估验收日期').idx;
+  const estOpenCol = findColIndex(headers, '预估开业日期').idx;
+
+  // 兼容旧格式：8阶段日期列
+  const legacyPhaseMap = {
+    '选址日期': '选址阶段',
+    '设计日期': '设计阶段',
+    '合同日期': '施工前准备阶段',
+    '施工日期': '施工阶段',
+    '设备日期': '施工阶段',
+    '准备日期': '施工前准备阶段',
+    '整改日期': '整改阶段',
+    '开业日期': '开业阶段'
+  };
+  const legacyColMap = {};
+  Object.keys(legacyPhaseMap).forEach(legacyKey => {
+    const res = findColIndex(headers, legacyKey);
+    if (res.idx >= 0) legacyColMap[legacyKey] = res.idx;
+  });
+
+  let createdCount = 0;
+  let updatedCount = 0;
+
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
-    if (!row[0]) continue; // 跳过空行
-    
-    const store = {
-      '门店名称': row[colIndex['门店名称']] || '',
-      '区域': row[colIndex['区域']] || '',
-      '状态': row[colIndex['状态']] || '施工中',
-      '工程负责人': row[colIndex['工程负责人']] || '',
-      '门店类型': row[colIndex['门店类型']] || '',
-      '装修形式': row[colIndex['装修形式']] || '',
-      '节点': {}
-    };
-    
-    // 映射各阶段日期
-    const phaseMap = {
-      '选址': '选址日期',
-      '设计': '设计日期',
-      '合同': '合同日期',
-      '施工': '施工日期',
-      '设备': '设备日期',
-      '准备': '准备日期',
-      '整改': '整改日期',
-      '开业': '开业日期'
-    };
-    
-    NODES.forEach(node => {
-      const dateKey = phaseMap[node.name];
-      if (dateKey && colIndex[dateKey] !== undefined) {
-        const dateVal = row[colIndex[dateKey]];
-        if (dateVal) {
-          // 处理 Excel 日期格式
-          let dateStr = dateVal;
-          if (typeof dateVal === 'number') {
-            const date = XLSX.SSF.parse_date_code(dateVal);
-            dateStr = `${date.y}-${String(date.m).padStart(2, '0')}-${String(date.d).padStart(2, '0')}`;
+    const storeName = row[storeNameCol];
+    if (!storeName || String(storeName).trim() === '') continue; // 跳过空行
+
+    // 查找现有门店（按"门店"字段匹配）
+    let existingIdx = STORES.findIndex(s => (s['门店'] || '') === String(storeName).trim());
+    let store;
+    if (existingIdx >= 0) {
+      store = STORES[existingIdx];
+      updatedCount++;
+    } else {
+      store = {};
+      createdCount++;
+    }
+
+    // 设置门店名称
+    store['门店'] = String(storeName).trim();
+
+    // 导入基本信息（非空才覆盖）
+    Object.keys(basicFieldMap).forEach(fieldKey => {
+      const colInfo = basicFieldMap[fieldKey];
+      if (colInfo.idx >= 0) {
+        const val = row[colInfo.idx];
+        if (val !== undefined && val !== null && String(val).trim() !== '') {
+          let finalVal = val;
+          // 处理日期格式
+          if (fieldKey === '最新进展日期' && typeof val === 'number') {
+            const d = XLSX.SSF.parse_date_code(val);
+            finalVal = `${d.y}-${String(d.m).padStart(2, '0')}-${String(d.d).padStart(2, '0')}`;
           }
-          store['节点'][node.id] = {
-            start: dateStr,
-            end: dateStr,
-            status: '已完成'
-          };
+          store[fieldKey] = String(finalVal).trim();
         }
       }
     });
-    
-    newStores.push(store);
+
+    // 如果没有门店状态，设置默认值
+    if (!store['门店状态']) {
+      store['门店状态'] = '选址中';
+    }
+
+    // 导入节点日期（非空才覆盖）
+    Object.keys(nodeColMap).forEach(colIdx => {
+      const stepName = nodeColMap[colIdx];
+      const val = row[colIdx];
+      if (val !== undefined && val !== null && String(val).trim() !== '') {
+        let dateStr = val;
+        // 处理 Excel 数字日期格式
+        if (typeof val === 'number') {
+          const d = XLSX.SSF.parse_date_code(val);
+          dateStr = `${d.y}-${String(d.m).padStart(2, '0')}-${String(d.d).padStart(2, '0')}`;
+        } else {
+          dateStr = String(val).trim();
+        }
+        store[stepName] = dateStr;
+      }
+    });
+
+    // 兼容旧格式导入
+    Object.keys(legacyColMap).forEach(legacyKey => {
+      const colIdx = legacyColMap[legacyKey];
+      const val = row[colIdx];
+      if (val !== undefined && val !== null && String(val).trim() !== '') {
+        let dateStr = val;
+        if (typeof val === 'number') {
+          const d = XLSX.SSF.parse_date_code(val);
+          dateStr = `${d.y}-${String(d.m).padStart(2, '0')}-${String(d.d).padStart(2, '0')}`;
+        } else {
+          dateStr = String(val).trim();
+        }
+        // 旧格式日期映射到对应阶段的第一个节点
+        const phaseName = legacyPhaseMap[legacyKey];
+        const phase = PHASES.find(p => p.name === phaseName);
+        if (phase && phase.steps.length > 0) {
+          // 查找该阶段中是否有 requireDate=true 的节点，或第一个节点
+          const targetStep = phase.steps.find(s => s.requireDate) || phase.steps[0];
+          store[targetStep.name] = dateStr;
+        }
+      }
+    });
+
+    // 导入预估日期
+    if (estAcceptCol >= 0) {
+      const val = row[estAcceptCol];
+      if (val !== undefined && val !== null && String(val).trim() !== '') {
+        let dateStr = val;
+        if (typeof val === 'number') {
+          const d = XLSX.SSF.parse_date_code(val);
+          dateStr = `${d.y}-${String(d.m).padStart(2, '0')}-${String(d.d).padStart(2, '0')}`;
+        }
+        store['预估验收日期'] = String(dateStr).trim();
+      }
+    }
+    if (estOpenCol >= 0) {
+      const val = row[estOpenCol];
+      if (val !== undefined && val !== null && String(val).trim() !== '') {
+        let dateStr = val;
+        if (typeof val === 'number') {
+          const d = XLSX.SSF.parse_date_code(val);
+          dateStr = `${d.y}-${String(d.m).padStart(2, '0')}-${String(d.d).padStart(2, '0')}`;
+        }
+        store['预估开业日期'] = String(dateStr).trim();
+      }
+    }
+
+    // 如果是新门店，添加到 STORES
+    if (existingIdx < 0) {
+      STORES.push(store);
+    }
   }
-  
-  // 合并到现有数据
-  STORES = [...STORES, ...newStores];
+
   saveStores();
   renderTable();
   updateStats();
   refreshAllDropdowns();
-  
-  alert(`成功导入 ${newStores.length} 家门店`);
+
+  alert(`导入完成！创建 ${createdCount} 家新店，更新 ${updatedCount} 家现有门店`);
   closeImportModal();
 }
 
@@ -5746,6 +5906,7 @@ function openExportModal() {
           <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">导出类型</label>
           <select id="exportType" onchange="updateExportModalUI()" style="width:100%;padding:10px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;background:#fff;">
             <option value="full">完整数据（门店基本信息 + 各阶段进度）</option>
+            <option value="detailed">门店详细进度完整数据（含全部节点+基本信息）</option>
             <option value="cycleStats">门店周期统计（各阶段周期明细）</option>
           </select>
         </div>
@@ -5823,6 +5984,21 @@ function updateExportModalUI() {
     `;
     fileNameInput.value = '门店周期统计_' + new Date().toISOString().slice(0, 10);
     if (filtersBox) filtersBox.style.display = 'block';
+  } else if (exportType === 'detailed') {
+    const nodeCount = ALL_STEPS.length;
+    infoBox.innerHTML = `
+      <p style="color: #666; margin-bottom: 16px;">即将导出 <strong>${STORES.length}</strong> 家门店的详细进度完整数据</p>
+      <div style="background: #f5f5f5; padding: 12px; border-radius: 8px; font-size: 13px; color: #666;">
+        <div style="margin-bottom: 8px;"><strong>包含内容：</strong></div>
+        <div>• 门店基本信息（名称、区域、状态、负责人、面积等）</div>
+        <div>• 全部节点日期（共 ${nodeCount} 个节点，按当前配置动态生成）</div>
+        <div>• 最新进展、工程增减项备注、停工天数</div>
+        <div>• 预估验收日期、预估开业日期</div>
+        <div style="margin-top:8px;color:#999;font-size:12px;">即使门店数为0，也会导出空白模板供填写后重新上传</div>
+      </div>
+    `;
+    fileNameInput.value = '门店详细进度_' + new Date().toISOString().slice(0, 10);
+    if (filtersBox) filtersBox.style.display = 'none';
   } else {
     infoBox.innerHTML = `
       <p style="color: #666; margin-bottom: 16px;">即将导出 <strong>${STORES.length}</strong> 家门店的完整数据</p>
@@ -5875,6 +6051,55 @@ async function confirmExport() {
     if (exportType === 'cycleStats') {
       // 门店周期统计导出
       exportCycleStatsData(fileName);
+    } else if (exportType === 'detailed') {
+      // 门店详细进度完整数据导出
+      // 基本信息列
+      const baseHeaders = ['门店名称', '区域', '门店状态', '工程负责人', '姓名', '门店类型', '装修形式', '门店面积', '施工队伍名称', '推荐队伍名称', '最新进展内容', '最新进展日期', '工程增减项备注', '停工天数'];
+      // 所有节点列（按当前PHASES配置动态生成）
+      const nodeHeaders = [];
+      PHASES.forEach(phase => {
+        phase.steps.forEach(step => {
+          nodeHeaders.push(step.name);
+        });
+      });
+      // 预估日期列
+      const extraHeaders = ['预估验收日期', '预估开业日期'];
+      const headers = [...baseHeaders, ...nodeHeaders, ...extraHeaders];
+
+      // 准备数据（即使STORES为空也导出表头）
+      const data = STORES.map(store => {
+        const row = [
+          store['门店'] || '',
+          store['区域'] || '',
+          store['门店状态'] || '',
+          store['工程负责人'] || '',
+          store['姓名'] || '',
+          store['门店类型'] || '',
+          store['装修形式'] || '',
+          store['门店面积'] || '',
+          store['施工队伍名称'] || '',
+          store['推荐队伍名称'] || '',
+          store['最新进展内容'] || '',
+          store['最新进展日期'] || '',
+          store['工程增减项备注'] || '',
+          store['停工天数'] || ''
+        ];
+        // 遍历所有节点，获取日期值
+        PHASES.forEach(phase => {
+          phase.steps.forEach(step => {
+            row.push(store[step.name] || '');
+          });
+        });
+        row.push(store['预估验收日期'] || '');
+        row.push(store['预估开业日期'] || '');
+        return row;
+      });
+
+      // 创建工作簿
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '门店详细进度');
+      XLSX.writeFile(wb, fileName);
     } else {
       // 完整数据导出（原有逻辑）
       // 准备表头
