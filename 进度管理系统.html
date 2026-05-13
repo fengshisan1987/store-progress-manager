@@ -2130,6 +2130,7 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
 <div class="tab-nav" id="tabNav">
   <div class="tab-item active" data-tab="detail" onclick="switchTab('detail')">📋 筹建门店详细进度</div>
   <div class="tab-item" data-tab="dashboard" onclick="switchTab('dashboard')">📊 筹建进度概述看板</div>
+  <div class="tab-item" data-tab="maintenance" onclick="switchTab('maintenance')" id="tabMaintenanceNav" style="display:none;">🔧 维保相关</div>
   <div class="tab-item" data-tab="finance" onclick="switchTab('finance')" id="tabFinanceNav" style="display:none;">💰 工程结算相关</div>
   <div class="tab-item" data-tab="settings" onclick="switchTab('settings')">⚙️ 设置</div>
 </div>
@@ -2454,7 +2455,20 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
   </div>
 </div>
 
-<!-- Tab 4: 工程结算相关 -->
+<!-- Tab 4: 维保相关 -->
+<div id="tab-maintenance" class="tab-content">
+  <div style="padding:20px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div style="font-size:18px;font-weight:600;color:#333;">🔧 维保相关</div>
+      <button onclick="openMaintenanceEditor()" style="padding:8px 16px;background:#1890ff;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;">+ 添加维保记录</button>
+    </div>
+    <div id="maintenance-list" style="max-width:100%;">
+      <!-- 动态填充维保列表 -->
+    </div>
+  </div>
+</div>
+
+<!-- Tab 5: 工程结算相关 -->
 <div id="tab-finance" class="tab-content">
   <div style="padding:20px;">
     <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
@@ -3026,7 +3040,25 @@ async function loadStoresFromServer() {
           }
         }
       }
-      
+
+      // 优先从服务器加载维保记录
+      if (data.maintenanceRecords && Array.isArray(data.maintenanceRecords)) {
+        MAINTENANCE_RECORDS = data.maintenanceRecords;
+        localStorage.setItem('maintenanceRecords', JSON.stringify(MAINTENANCE_RECORDS));
+        console.log('维保记录已从服务器加载');
+      } else {
+        // 服务器没有维保记录，尝试从 localStorage 回退
+        const localRecords = localStorage.getItem('maintenanceRecords');
+        if (localRecords) {
+          try {
+            MAINTENANCE_RECORDS = JSON.parse(localRecords);
+            console.log('维保记录从 localStorage 加载');
+          } catch (e) {
+            console.log('localStorage 维保记录解析失败');
+          }
+        }
+      }
+
       // 如果服务器有数据，同步到 localStorage 作为备份
       if (serverDataLoaded) {
         localStorage.setItem('storeData', JSON.stringify(STORES));
@@ -3063,6 +3095,16 @@ function loadFromLocalStorage() {
     ALL_STEPS = [].concat.apply([], PHASES.map(p => p.steps.map(s => ({step:s.name, phase:p, requireDate:s.requireDate}))));
     console.log('阶段节点配置从 localStorage 加载');
   }
+
+  const localMaintenance = localStorage.getItem('maintenanceRecords');
+  if (localMaintenance) {
+    try {
+      MAINTENANCE_RECORDS = JSON.parse(localMaintenance);
+      console.log('维保记录从 localStorage 加载');
+    } catch (e) {
+      console.log('localStorage 维保记录解析失败');
+    }
+  }
 }
 
 // 保存门店数据到后端
@@ -3071,7 +3113,7 @@ async function saveStoresToServer() {
     const response = await fetch(`${API_BASE}/data`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ stores: STORES, basicFields: BASIC_FIELDS, storePhases: PHASES, suppliers: SUPPLIERS })
+      body: JSON.stringify({ stores: STORES, basicFields: BASIC_FIELDS, storePhases: PHASES, suppliers: SUPPLIERS, maintenanceRecords: MAINTENANCE_RECORDS })
     });
     if (response.ok) {
       console.log('数据已保存到服务器');
@@ -3122,8 +3164,8 @@ async function syncFromServer() {
     const data = await response.json();
     const serverHash = _dataHash(data.stores);
 
-    // 计算完整数据指纹（包含门店、字段、节点配置）
-    const fullServerHash = _dataHash({ stores: data.stores, basicFields: data.basicFields, storePhases: data.storePhases });
+    // 计算完整数据指纹（包含门店、字段、节点配置、维保记录）
+    const fullServerHash = _dataHash({ stores: data.stores, basicFields: data.basicFields, storePhases: data.storePhases, maintenanceRecords: data.maintenanceRecords });
     if (fullServerHash && fullServerHash !== _lastSyncHash) {
       // 数据有变化，更新本地
       if (data.stores && data.stores.length > 0) {
@@ -3139,6 +3181,10 @@ async function syncFromServer() {
         ALL_STEPS = [].concat.apply([], PHASES.map(p => p.steps.map(s => ({step:s.name, phase:p, requireDate:s.requireDate}))));
         localStorage.setItem('storePhases', JSON.stringify(PHASES));
       }
+      if (data.maintenanceRecords && Array.isArray(data.maintenanceRecords)) {
+        MAINTENANCE_RECORDS = data.maintenanceRecords;
+        localStorage.setItem('maintenanceRecords', JSON.stringify(MAINTENANCE_RECORDS));
+      }
       _lastSyncHash = fullServerHash;
 
       // 重新渲染页面
@@ -3146,6 +3192,7 @@ async function syncFromServer() {
       if (typeof renderOverview === 'function') renderOverview();
       if (typeof renderDetail === 'function') renderDetail();
       if (typeof updateStats === 'function') updateStats();
+      if (typeof renderMaintenanceList === 'function') renderMaintenanceList();
       console.log('数据已从服务器同步更新');
     }
   } catch (e) {
@@ -3155,8 +3202,8 @@ async function syncFromServer() {
 
 // 启动轮询
 function startSyncPolling() {
-  // 初始化 hash（包含门店、字段、节点配置）
-  _lastSyncHash = _dataHash({ stores: STORES, basicFields: BASIC_FIELDS, storePhases: PHASES });
+  // 初始化 hash（包含门店、字段、节点配置、维保记录）
+  _lastSyncHash = _dataHash({ stores: STORES, basicFields: BASIC_FIELDS, storePhases: PHASES, maintenanceRecords: MAINTENANCE_RECORDS });
   // 启动定时器
   if (_syncTimer) clearInterval(_syncTimer);
   _syncTimer = setInterval(syncFromServer, SYNC_INTERVAL);
@@ -3179,7 +3226,7 @@ saveStoresToServer = async function() {
     const result = await _origSaveToServer();
     // 保存成功后更新本地 hash，避免轮询把自己刚存的当成"远程更新"
     if (result) {
-      _lastSyncHash = _dataHash(STORES);
+      _lastSyncHash = _dataHash({ stores: STORES, basicFields: BASIC_FIELDS, storePhases: PHASES, maintenanceRecords: MAINTENANCE_RECORDS });
     }
     return result;
   } finally {
@@ -5199,12 +5246,17 @@ function switchTab(tabName) {
   if (tabContent) tabContent.classList.add('active');
   if (tabItem) tabItem.classList.add('active');
   
+  // 如果切换到维保相关 tab，渲染列表
+  if (tabName === 'maintenance') {
+    renderMaintenanceList();
+  }
+
   // 如果切换到财务结算 tab，渲染列表并重置子tab
   if (tabName === 'finance') {
     switchFinanceSubTab('finance');
     renderFinanceStoreList();
   }
-  
+
   // 如果切换到设置 tab，渲染设置卡片
   if (tabName === 'settings') {
     renderSettingsCards();
@@ -7273,6 +7325,16 @@ function canViewFinance() {
   return role === 'superadmin' || role === 'admin' || role === 'engineer';
 }
 
+function canEditMaintenance() {
+  const role = checkRole();
+  return role === 'superadmin' || role === 'engineer';
+}
+
+function canViewMaintenance() {
+  const role = checkRole();
+  return role === 'superadmin' || role === 'admin' || role === 'engineer';
+}
+
 // ── 初始化 ────────────────────────────────────────────────────────────────────
 async function init() {
   // 先初始化账号系统
@@ -7495,6 +7557,12 @@ function updateUserRoleDisplay() {
   const financeTab = document.getElementById('tabFinanceNav');
   if (financeTab) {
     financeTab.style.display = canViewFinance() ? 'block' : 'none';
+  }
+
+  // 根据权限显示/隐藏维保相关Tab
+  const maintenanceTab = document.getElementById('tabMaintenanceNav');
+  if (maintenanceTab) {
+    maintenanceTab.style.display = canViewMaintenance() ? 'block' : 'none';
   }
 }
 
@@ -7931,6 +7999,377 @@ async function deleteSupplier(category, idx) {
 // 获取某分类下的供应商列表
 function getSuppliersByCategory(category) {
   return SUPPLIERS.filter(s => (s.categories || []).includes(category)).map(s => s.name);
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// 维保相关
+// ═════════════════════════════════════════════════════════════════════════════
+
+// 维保记录数据（从服务器加载，localStorage备份）
+let MAINTENANCE_RECORDS = JSON.parse(localStorage.getItem('maintenanceRecords') || '[]');
+
+// 维保类型列表（与工程结算费用列一一对应）
+const MAINTENANCE_TYPES = ['工程硬装','广告物料','安装收尾','家具','灯具','配电箱','设计','空调','消防','其他工程类'];
+
+// 维保表格列定义
+const MAINTENANCE_TABLE_COLS = [
+  { key: 'storeName', title: '报修门店', width: 150, fixed: true },
+  { key: 'storeArea', title: '区域', width: 80 },
+  { key: 'openingDate', title: '开业日期', width: 110 },
+  { key: 'maintenanceType', title: '维保类型', width: 100 },
+  { key: 'supplier', title: '所属供应商', width: 130 },
+  { key: 'content', title: '维保内容', width: 180 },
+  { key: 'isUnderWarranty', title: '是否保内', width: 80 },
+  { key: 'extraCost', title: '额外费用', width: 100 },
+  { key: 'reportDate', title: '报修日期', width: 110 },
+  { key: 'completeDate', title: '完成日期', width: 110 },
+  { key: 'durationDays', title: '维保用时', width: 80 },
+  { key: 'remark', title: '备注', width: 150 }
+];
+
+// 渲染维保记录列表
+function renderMaintenanceList() {
+  const container = document.getElementById('maintenance-list');
+  if (!container) return;
+
+  if (!canViewMaintenance()) {
+    container.innerHTML = '<div style="text-align:center;padding:60px;color:#999;">您没有权限查看维保记录</div>';
+    return;
+  }
+
+  // 构建colgroup
+  let colGroup = '<colgroup>';
+  MAINTENANCE_TABLE_COLS.forEach(col => {
+    colGroup += `<col style="width:${col.width}px;">`;
+  });
+  colGroup += '<col style="width:120px;"></colgroup>';
+
+  let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">';
+  html += '<div style="font-size:14px;color:#666;">共 ' + MAINTENANCE_RECORDS.length + ' 条维保记录</div>';
+  if (canEditMaintenance()) {
+    html += '<button onclick="openMaintenanceEditor()" style="padding:6px 16px;background:#1677ff;color:#fff;border:none;border-radius:6px;font-size:13px;cursor:pointer;">+ 添加维保记录</button>';
+  }
+  html += '</div>';
+
+  html += '<div style="overflow-x:auto;border:1px solid #e8e8e8;border-radius:8px;">';
+  html += `<table style="width:100%;border-collapse:collapse;font-size:13px;min-width:1300px;table-layout:fixed;">${colGroup}`;
+  html += '<thead><tr style="background:#f5f5f5;">';
+  MAINTENANCE_TABLE_COLS.forEach((col, i) => {
+    const sticky = col.fixed ? 'position:sticky;left:0;background:#f5f5f5;z-index:2;' : '';
+    html += `<th style="padding:10px 8px;border:1px solid #e8e8e8;text-align:left;font-weight:600;color:#333;font-size:12px;white-space:nowrap;${sticky}">${col.title}</th>`;
+  });
+  html += '<th style="padding:10px 8px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;font-size:12px;white-space:nowrap;">操作</th>';
+  html += '</tr></thead><tbody>';
+
+  if (MAINTENANCE_RECORDS.length === 0) {
+    html += `<tr><td colspan="${MAINTENANCE_TABLE_COLS.length + 1}" style="padding:40px;text-align:center;color:#999;border:1px solid #e8e8e8;">暂无维保记录</td></tr>`;
+  } else {
+    MAINTENANCE_RECORDS.forEach((record, idx) => {
+      html += '<tr style="border-bottom:1px solid #f0f0f0;">';
+      MAINTENANCE_TABLE_COLS.forEach((col, ci) => {
+        let val = record[col.key] || '-';
+        if (col.key === 'isUnderWarranty') val = record.isUnderWarranty ? '是' : '否';
+        if (col.key === 'extraCost' && record.extraCost !== undefined && record.extraCost !== '') {
+          val = parseFloat(record.extraCost).toFixed(2);
+        }
+        const sticky = col.fixed ? 'position:sticky;left:0;background:#fff;z-index:1;' : '';
+        html += `<td style="padding:10px 8px;border:1px solid #e8e8e8;color:#333;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;${sticky}" title="${val}">${val}</td>`;
+      });
+      html += '<td style="padding:10px 8px;border:1px solid #e8e8e8;text-align:center;">';
+      if (canEditMaintenance()) {
+        html += `<button onclick="openMaintenanceEditor(${idx})" style="padding:2px 8px;background:#1890ff;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;margin-right:4px;">编辑</button>`;
+        html += `<button onclick="deleteMaintenanceRecord(${idx})" style="padding:2px 8px;background:#ff4d4f;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;">删除</button>`;
+      }
+      html += '</td></tr>';
+    });
+  }
+
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+
+// 打开维保记录编辑弹窗
+function openMaintenanceEditor(idx) {
+  if (!canEditMaintenance()) {
+    alert('您没有权限编辑维保记录');
+    return;
+  }
+  const isEdit = idx !== undefined;
+  const record = isEdit ? MAINTENANCE_RECORDS[idx] : {};
+
+  // 获取所有区域（从门店数据动态提取）
+  const areas = [...new Set(STORES.map(s => s.area).filter(Boolean))];
+
+  let html = '<div style="padding:20px;">';
+  html += `<h3 style="margin:0 0 20px 0;font-size:16px;">${isEdit ? '编辑' : '添加'}维保记录</h3>`;
+  html += '<div style="display:flex;flex-direction:column;gap:14px;">';
+
+  // 区域选择（第一级）
+  html += '<div>';
+  html += '<label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">区域 <span style="color:#999;font-size:11px;">（选择区域后显示对应门店）</span></label>';
+  html += `<select id="maint-area-select" onchange="onMaintenanceAreaChange(this.value)" style="width:100%;padding:8px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;">`;
+  html += '<option value="">请选择区域</option>';
+  areas.forEach(area => {
+    const selected = (record.storeArea === area) ? 'selected' : '';
+    html += `<option value="${area}" ${selected}>${area}</option>`;
+  });
+  html += '</select></div>';
+
+  // 门店选择（第二级）
+  html += '<div>';
+  html += '<label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">报修门店 <span style="color:#999;font-size:11px;">（也可直接输入新门店）</span></label>';
+  html += `<select id="maint-store-select" onchange="onMaintenanceStoreChange(this.value)" style="width:100%;padding:8px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;margin-bottom:6px;">`;
+  html += '<option value="">请选择门店</option>';
+  html += '</select>';
+  html += `<input type="text" id="maint-store-input" placeholder="或手动输入门店名称" value="${record.storeName || ''}" style="width:100%;padding:8px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;box-sizing:border-box;">`;
+  html += '</div>';
+
+  // 开业日期
+  html += '<div>';
+  html += '<label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">开业日期</label>';
+  html += `<input type="date" id="maint-opening-date" value="${record.openingDate || ''}" style="width:100%;padding:8px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;box-sizing:border-box;">`;
+  html += '</div>';
+
+  // 维保类型
+  html += '<div>';
+  html += '<label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">维保类型</label>';
+  html += `<select id="maint-type" onchange="onMaintenanceTypeChange()" style="width:100%;padding:8px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;">`;
+  html += '<option value="">请选择</option>';
+  MAINTENANCE_TYPES.forEach(t => {
+    const selected = (record.maintenanceType === t) ? 'selected' : '';
+    html += `<option value="${t}" ${selected}>${t}</option>`;
+  });
+  html += '</select></div>';
+
+  // 所属供应商
+  html += '<div>';
+  html += '<label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">所属供应商</label>';
+  html += `<select id="maint-supplier" style="width:100%;padding:8px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;margin-bottom:6px;">`;
+  html += '<option value="">请选择供应商</option>';
+  html += '</select>';
+  html += `<input type="text" id="maint-supplier-input" placeholder="或手动输入供应商名称" value="${record.supplier || ''}" style="width:100%;padding:8px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;box-sizing:border-box;">`;
+  html += '</div>';
+
+  // 维保内容
+  html += '<div>';
+  html += '<label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">维保内容</label>';
+  html += `<textarea id="maint-content" rows="2" style="width:100%;padding:8px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;box-sizing:border-box;resize:vertical;">${record.content || ''}</textarea>`;
+  html += '</div>';
+
+  // 是否保内
+  html += '<div>';
+  html += '<label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">是否保内</label>';
+  html += `<select id="maint-warranty" style="width:100%;padding:8px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;">`;
+  html += `<option value="true" ${record.isUnderWarranty ? 'selected' : ''}>是</option>`;
+  html += `<option value="false" ${record.isUnderWarranty === false ? 'selected' : ''}>否</option>`;
+  html += '</select></div>';
+
+  // 额外费用
+  html += '<div>';
+  html += '<label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">额外费用</label>';
+  html += `<input type="number" id="maint-cost" step="0.01" placeholder="0.00" value="${record.extraCost !== undefined ? record.extraCost : ''}" style="width:100%;padding:8px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;box-sizing:border-box;">`;
+  html += '</div>';
+
+  // 报修日期
+  html += '<div>';
+  html += '<label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">报修日期</label>';
+  html += `<input type="date" id="maint-report-date" value="${record.reportDate || ''}" style="width:100%;padding:8px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;box-sizing:border-box;">`;
+  html += '</div>';
+
+  // 完成日期
+  html += '<div>';
+  html += '<label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">完成日期</label>';
+  html += `<input type="date" id="maint-complete-date" value="${record.completeDate || ''}" onchange="calcMaintenanceDuration()" style="width:100%;padding:8px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;box-sizing:border-box;">`;
+  html += '</div>';
+
+  // 维保用时（只读，自动计算）
+  html += '<div>';
+  html += '<label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">维保用时（天）<span style="color:#999;font-size:11px;">自动计算</span></label>';
+  html += `<input type="text" id="maint-duration" value="${record.durationDays !== undefined ? record.durationDays : ''}" readonly style="width:100%;padding:8px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;background:#f5f5f5;box-sizing:border-box;">`;
+  html += '</div>';
+
+  // 备注
+  html += '<div>';
+  html += '<label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">备注</label>';
+  html += `<textarea id="maint-remark" rows="2" style="width:100%;padding:8px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;box-sizing:border-box;resize:vertical;">${record.remark || ''}</textarea>`;
+  html += '</div>';
+
+  html += '</div>';
+  html += '<div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;">';
+  html += '<button onclick="closeMaintenanceEditor()" style="padding:8px 20px;border:1px solid #d9d9d9;background:#fff;border-radius:6px;cursor:pointer;font-size:13px;">取消</button>';
+  html += `<button onclick="saveMaintenanceRecord(${isEdit ? idx : 'null'})" style="padding:8px 20px;background:#1677ff;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">${isEdit ? '保存' : '添加'}</button>`;
+  html += '</div></div>';
+
+  document.getElementById('maintenanceEditorBd').innerHTML = html;
+  document.getElementById('maintenanceEditorPanel').classList.add('open');
+
+  // 如果是编辑模式，初始化门店和供应商下拉
+  if (isEdit && record.storeArea) {
+    onMaintenanceAreaChange(record.storeArea, record.storeName);
+  }
+  if (isEdit && record.maintenanceType) {
+    onMaintenanceTypeChange();
+    // 设置供应商选中
+    setTimeout(() => {
+      const supplierSelect = document.getElementById('maint-supplier');
+      if (supplierSelect && record.supplier) {
+        supplierSelect.value = record.supplier;
+      }
+    }, 0);
+  }
+}
+
+// 关闭维保记录编辑弹窗
+function closeMaintenanceEditor() {
+  document.getElementById('maintenanceEditorPanel').classList.remove('open');
+}
+
+// 区域变化时更新门店下拉
+function onMaintenanceAreaChange(area, preselectStore) {
+  const storeSelect = document.getElementById('maint-store-select');
+  if (!storeSelect) return;
+
+  storeSelect.innerHTML = '<option value="">请选择门店</option>';
+  if (!area) return;
+
+  const storesInArea = STORES.filter(s => s.area === area);
+  storesInArea.forEach(s => {
+    const selected = (preselectStore === s.name) ? 'selected' : '';
+    storeSelect.innerHTML += `<option value="${s.name}" ${selected}>${s.name}</option>`;
+  });
+
+  // 如果有预选门店，自动触发门店变化
+  if (preselectStore) {
+    onMaintenanceStoreChange(preselectStore);
+  }
+}
+
+// 门店变化时自动填充开业日期
+function onMaintenanceStoreChange(storeName) {
+  const store = STORES.find(s => s.name === storeName);
+  if (!store) return;
+
+  // 填充门店名称到输入框
+  const storeInput = document.getElementById('maint-store-input');
+  if (storeInput) storeInput.value = storeName;
+
+  // 自动获取开业日期（从"已正式开业"节点）
+  const openingDateInput = document.getElementById('maint-opening-date');
+  if (openingDateInput) {
+    const openingStep = store.steps && store.steps.find(st => st.name === '已正式开业');
+    if (openingStep && openingStep.date) {
+      openingDateInput.value = openingStep.date;
+    } else {
+      openingDateInput.value = '';
+    }
+  }
+
+  // 更新供应商下拉
+  onMaintenanceTypeChange();
+}
+
+// 维保类型变化时更新供应商下拉
+function onMaintenanceTypeChange() {
+  const type = document.getElementById('maint-type')?.value;
+  const supplierSelect = document.getElementById('maint-supplier');
+  if (!supplierSelect) return;
+
+  supplierSelect.innerHTML = '<option value="">请选择供应商</option>';
+  if (!type) return;
+
+  // 获取该维保类型对应的供应商
+  const suppliers = getSuppliersByCategory(type);
+  suppliers.forEach(name => {
+    supplierSelect.innerHTML += `<option value="${name}">${name}</option>`;
+  });
+}
+
+// 计算维保用时
+function calcMaintenanceDuration() {
+  const reportDate = document.getElementById('maint-report-date')?.value;
+  const completeDate = document.getElementById('maint-complete-date')?.value;
+  const durationInput = document.getElementById('maint-duration');
+  if (!durationInput) return;
+
+  if (reportDate && completeDate) {
+    const start = new Date(reportDate);
+    const end = new Date(completeDate);
+    const diff = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+    durationInput.value = diff >= 0 ? diff : 0;
+  } else {
+    durationInput.value = '';
+  }
+}
+
+// 保存维保记录
+async function saveMaintenanceRecord(idx) {
+  const storeName = document.getElementById('maint-store-input').value.trim();
+  const areaSelect = document.getElementById('maint-area-select');
+  const storeArea = areaSelect ? areaSelect.value : '';
+  const openingDate = document.getElementById('maint-opening-date').value;
+  const maintenanceType = document.getElementById('maint-type').value;
+  const supplierInput = document.getElementById('maint-supplier-input');
+  const supplierSelect = document.getElementById('maint-supplier');
+  const supplier = supplierInput ? (supplierInput.value.trim() || (supplierSelect ? supplierSelect.value : '')) : '';
+  const content = document.getElementById('maint-content').value.trim();
+  const isUnderWarranty = document.getElementById('maint-warranty').value === 'true';
+  const extraCost = document.getElementById('maint-cost').value;
+  const reportDate = document.getElementById('maint-report-date').value;
+  const completeDate = document.getElementById('maint-complete-date').value;
+  const durationDays = document.getElementById('maint-duration').value;
+  const remark = document.getElementById('maint-remark').value.trim();
+
+  if (!storeName) {
+    alert('请输入报修门店');
+    return;
+  }
+  if (!maintenanceType) {
+    alert('请选择维保类型');
+    return;
+  }
+
+  const record = {
+    id: idx !== null && idx !== undefined ? MAINTENANCE_RECORDS[idx].id : Date.now().toString(),
+    storeName,
+    storeArea,
+    openingDate,
+    maintenanceType,
+    supplier,
+    content,
+    isUnderWarranty,
+    extraCost: extraCost !== '' ? parseFloat(extraCost) : '',
+    reportDate,
+    completeDate,
+    durationDays: durationDays !== '' ? parseInt(durationDays) : '',
+    remark
+  };
+
+  if (idx !== null && idx !== undefined) {
+    MAINTENANCE_RECORDS[idx] = record;
+  } else {
+    MAINTENANCE_RECORDS.push(record);
+  }
+
+  // 保存到 localStorage 和服务器
+  localStorage.setItem('maintenanceRecords', JSON.stringify(MAINTENANCE_RECORDS));
+  await saveStoresToServer();
+
+  closeMaintenanceEditor();
+  renderMaintenanceList();
+}
+
+// 删除维保记录
+async function deleteMaintenanceRecord(idx) {
+  if (!canEditMaintenance()) {
+    alert('您没有权限删除维保记录');
+    return;
+  }
+  if (!confirm('确定删除这条维保记录吗？')) return;
+
+  MAINTENANCE_RECORDS.splice(idx, 1);
+  localStorage.setItem('maintenanceRecords', JSON.stringify(MAINTENANCE_RECORDS));
+  await saveStoresToServer();
+  renderMaintenanceList();
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -12075,6 +12514,17 @@ document.addEventListener('DOMContentLoaded', function() {
     <button class="panel-close" onclick="closeSupplierManager()">✕</button>
   </div>
   <div class="panel-bd" id="supplierPanelBd">
+    <!-- 动态生成内容 -->
+  </div>
+</div>
+
+<!-- 维保记录编辑面板 -->
+<div class="detail-panel" id="maintenanceEditorPanel" style="width:520px;z-index:203;">
+  <div class="panel-hd" style="background:linear-gradient(135deg,#722ed1,#531dab);">
+    <h3 id="maintenanceEditorTitle">🔧 维保记录</h3>
+    <button class="panel-close" onclick="closeMaintenanceEditor()">✕</button>
+  </div>
+  <div class="panel-bd" id="maintenanceEditorBd" style="padding:16px;max-height:80vh;overflow-y:auto;">
     <!-- 动态生成内容 -->
   </div>
 </div>
