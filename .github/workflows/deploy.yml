@@ -21,17 +21,7 @@ jobs:
           TARGET: "/var/www/store-progress-manager/"
           strip_components: 0
 
-      - name: Copy backend files to server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          HOST: 47.114.120.73
-          USERNAME: admin
-          KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SOURCE: "backend/server.js"
-          TARGET: "/var/www/store-progress-manager/backend/"
-          strip_components: 1
-
-      - name: Restart backend and set permissions
+      - name: Deploy backend and restart
         uses: appleboy/ssh-action@v1.0.3
         with:
           HOST: 47.114.120.73
@@ -39,5 +29,22 @@ jobs:
           KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             chmod 644 /var/www/store-progress-manager/进度管理系统.html
-            pm2 restart store-progress-api || pm2 start /var/www/store-progress-manager/backend/server.js --name store-progress-api
+            echo "=== Downloading latest backend from GitHub ==="
+            wget -q -O /var/www/store-progress-manager/backend/server.js.new https://raw.githubusercontent.com/fengshisan1987/store-progress-manager/main/backend/server.js
+            if [ -s /var/www/store-progress-manager/backend/server.js.new ]; then
+              mv /var/www/store-progress-manager/backend/server.js.new /var/www/store-progress-manager/backend/server.js
+              echo "Backend file updated successfully"
+            else
+              echo "ERROR: Failed to download backend file"
+              exit 1
+            fi
+            echo "=== Verifying role API exists ==="
+            grep -n 'PUT.*role' /var/www/store-progress-manager/backend/server.js || (echo "ERROR: role API not found" && exit 1)
+            echo "=== Restarting backend ==="
+            pm2 delete store-progress-api 2>/dev/null || true
+            pm2 start /var/www/store-progress-manager/backend/server.js --name store-progress-api
+            sleep 3
+            echo "=== Checking backend status ==="
+            pm2 list
+            curl -s http://localhost:3003/api/health || echo "WARNING: health check failed"
             echo "Deploy completed at $(date)"
