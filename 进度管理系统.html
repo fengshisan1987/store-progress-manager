@@ -4297,10 +4297,11 @@ function render() {
     
     // 根据角色控制编辑权限
     const role = checkRole();
-    const canEdit = role === 'superadmin' || role === 'admin';
+    const canEdit = role === 'superadmin' || role === 'admin' || role === 'engineer';
+    const canManageStore = role === 'superadmin' || role === 'admin';
     
     // 编辑/删除按钮（仅超管和管理员可见）
-    const editButtons = canEdit ? `
+    const editButtons = canManageStore ? `
       <div style="display:flex;gap:4px;">
         <button class="btn-store-edit" onclick="event.stopPropagation();openStoreEditor(${storeIdx})" title="编辑">✏️</button>
         <button class="btn-store-del" onclick="event.stopPropagation();deleteStore(${storeIdx})" title="删除">🗑️</button>
@@ -4649,8 +4650,9 @@ function selectDatePickerDate(year, month, day) {
 async function toggleNode(storeIdx, step, event) {
   event.stopPropagation(); // 防止触发行的点击
   
-  // 权限检查：访客不能编辑节点
-  if (isVisitor()) {
+  // 权限检查：超管、管理员、工程管理员可以编辑节点日期
+  const role = checkRole();
+  if (role !== 'superadmin' && role !== 'admin' && role !== 'engineer') {
     return;
   }
   
@@ -4988,9 +4990,10 @@ function closePanel() {
 let _editingPhases = null;
 
 function openNodeEditor() {
-  // 权限检查：只有超管可以编辑节点
-  if (!isSuperAdmin()) {
-    alert('只有超级管理员可以编辑节点');
+  // 权限检查：超管、管理员、工程管理员可以编辑节点
+  const role = checkRole();
+  if (role !== 'superadmin' && role !== 'admin' && role !== 'engineer') {
+    alert('您没有权限编辑节点');
     return;
   }
   
@@ -5168,9 +5171,10 @@ function exportNodeConfig() {
 
 // ── 保存门店字段 ───────────────────────────────────────────────────────────────
 function saveStoreField(storeIdx, fieldName, value) {
-  // 权限检查：访客不能保存字段
-  if (isVisitor()) {
-    alert('访客账号无编辑权限');
+  // 权限检查：超管、管理员、工程管理员可以保存字段
+  const role = checkRole();
+  if (role !== 'superadmin' && role !== 'admin' && role !== 'engineer') {
+    alert('您没有权限编辑');
     return;
   }
   
@@ -7368,7 +7372,7 @@ function canEditMaintenance() {
 
 function canViewMaintenance() {
   const role = checkRole();
-  return role === 'superadmin' || role === 'admin' || role === 'engineer';
+  return role === 'superadmin' || role === 'engineer';
 }
 
 // ── 初始化 ────────────────────────────────────────────────────────────────────
