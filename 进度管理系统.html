@@ -8252,9 +8252,9 @@ function onMaintenanceStoreChange(storeName) {
   // 自动获取开业日期（从"已正式开业"节点）
   const openingDateInput = document.getElementById('maint-opening-date');
   if (openingDateInput) {
-    const openingStep = store.steps && store.steps.find(st => st.name === '已正式开业');
-    if (openingStep && openingStep.date) {
-      openingDateInput.value = openingStep.date;
+    const openingDate = store['已正式开业'];
+    if (openingDate) {
+      openingDateInput.value = openingDate;
     } else {
       openingDateInput.value = '';
     }
