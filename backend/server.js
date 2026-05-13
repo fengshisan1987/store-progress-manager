@@ -239,7 +239,7 @@ app.get('/api/health', (req, res) => {
 // 静态文件服务
 app.use(express.static(path.join(__dirname, '..')));
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3002;
 
 // 启动服务器，如果端口被占用则尝试下一个端口
 function startServer(port) {

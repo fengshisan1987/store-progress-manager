@@ -51,5 +51,5 @@ jobs:
             sleep 3
             echo "=== Checking backend status ==="
             pm2 list
-            curl -s http://localhost:3001/api/health || echo "WARNING: health check failed"
+            curl -s http://localhost:3002/api/health || echo "WARNING: health check failed"
             echo "Deploy completed at $(date)"
