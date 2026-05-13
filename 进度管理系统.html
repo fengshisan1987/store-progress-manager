@@ -8009,9 +8009,11 @@ function renderFinanceStoreList() {
     const bodyDiv = document.getElementById('finance-list-body');
     if (headerScroll && bodyDiv) {
       bodyDiv.addEventListener('scroll', () => {
+        if (window.finScrollSyncPaused) return;
         headerScroll.scrollLeft = bodyDiv.scrollLeft;
       });
       headerScroll.addEventListener('scroll', () => {
+        if (window.finScrollSyncPaused) return;
         bodyDiv.scrollLeft = headerScroll.scrollLeft;
       });
     }
@@ -8051,13 +8053,16 @@ function closeAllFinDropdowns() {
   const menus = ['fin-area-menu','fin-type-menu','fin-amount-menu','fin-detail-menu','fin-status-menu'];
   FINANCE_COLUMNS.forEach((_, i) => menus.push('fin-supplier-menu-' + i));
   menus.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
-  // 恢复表头和内容区域 overflow
+  // 恢复表头和内容区域 overflow，保持当前 scrollLeft
   const headerScroll = document.getElementById('finance-list-header-scroll');
-  if (headerScroll) headerScroll.style.overflowX = 'auto';
   const bodyDiv = document.getElementById('finance-list-body');
-  if (bodyDiv) bodyDiv.style.overflowX = 'auto';
+  const savedScrollLeft = headerScroll ? headerScroll.scrollLeft : 0;
+  if (headerScroll) { headerScroll.style.overflowX = 'auto'; headerScroll.scrollLeft = savedScrollLeft; }
+  if (bodyDiv) { bodyDiv.style.overflowX = 'auto'; bodyDiv.scrollLeft = savedScrollLeft; }
   // 重置所有 dropdown-filter 的 z-index，避免滚动时覆盖左侧固定列
   document.querySelectorAll('#finance-list-header .dropdown-filter').forEach(el => { el.style.zIndex = ''; });
+  // 恢复同步滚动
+  window.finScrollSyncPaused = false;
 }
 
 // ── 区域多选下拉 ──
@@ -8065,17 +8070,17 @@ function toggleFinAreaDropdown() {
   const menu = document.getElementById('fin-area-menu');
   const isVisible = menu.style.display === 'block';
   const headerScroll = document.getElementById('finance-list-header-scroll');
+  const bodyDiv = document.getElementById('finance-list-body');
   const savedScrollLeft = headerScroll ? headerScroll.scrollLeft : 0;
   closeAllFinDropdowns();
   if (!isVisible) {
-    if (headerScroll) headerScroll.style.overflowX = 'visible';
-    const bodyDiv = document.getElementById('finance-list-body');
-    if (bodyDiv) bodyDiv.style.overflowX = 'visible';
+    window.finScrollSyncPaused = true;
+    if (headerScroll) { headerScroll.style.overflowX = 'visible'; headerScroll.scrollLeft = savedScrollLeft; }
+    if (bodyDiv) { bodyDiv.style.overflowX = 'visible'; bodyDiv.scrollLeft = savedScrollLeft; }
     menu.style.display = 'block';
     const dropdownFilter = menu.closest('.dropdown-filter');
     if (dropdownFilter) dropdownFilter.style.zIndex = '400';
     refreshFinAreaDropdown();
-    if (headerScroll) headerScroll.scrollLeft = savedScrollLeft;
   }
 }
 function refreshFinAreaDropdown() {
@@ -8101,17 +8106,17 @@ function toggleFinTypeDropdown() {
   const menu = document.getElementById('fin-type-menu');
   const isVisible = menu.style.display === 'block';
   const headerScroll = document.getElementById('finance-list-header-scroll');
+  const bodyDiv = document.getElementById('finance-list-body');
   const savedScrollLeft = headerScroll ? headerScroll.scrollLeft : 0;
   closeAllFinDropdowns();
   if (!isVisible) {
-    if (headerScroll) headerScroll.style.overflowX = 'visible';
-    const bodyDiv = document.getElementById('finance-list-body');
-    if (bodyDiv) bodyDiv.style.overflowX = 'visible';
+    window.finScrollSyncPaused = true;
+    if (headerScroll) { headerScroll.style.overflowX = 'visible'; headerScroll.scrollLeft = savedScrollLeft; }
+    if (bodyDiv) { bodyDiv.style.overflowX = 'visible'; bodyDiv.scrollLeft = savedScrollLeft; }
     menu.style.display = 'block';
     const dropdownFilter = menu.closest('.dropdown-filter');
     if (dropdownFilter) dropdownFilter.style.zIndex = '400';
     refreshFinTypeDropdown();
-    if (headerScroll) headerScroll.scrollLeft = savedScrollLeft;
   }
 }
 function refreshFinTypeDropdown() {
@@ -8141,17 +8146,17 @@ function toggleFinAmountDropdown() {
   const menu = document.getElementById('fin-amount-menu');
   const isVisible = menu.style.display === 'block';
   const headerScroll = document.getElementById('finance-list-header-scroll');
+  const bodyDiv = document.getElementById('finance-list-body');
   const savedScrollLeft = headerScroll ? headerScroll.scrollLeft : 0;
   closeAllFinDropdowns();
   if (!isVisible) {
-    if (headerScroll) headerScroll.style.overflowX = 'visible';
-    const bodyDiv = document.getElementById('finance-list-body');
-    if (bodyDiv) bodyDiv.style.overflowX = 'visible';
+    window.finScrollSyncPaused = true;
+    if (headerScroll) { headerScroll.style.overflowX = 'visible'; headerScroll.scrollLeft = savedScrollLeft; }
+    if (bodyDiv) { bodyDiv.style.overflowX = 'visible'; bodyDiv.scrollLeft = savedScrollLeft; }
     menu.style.display = 'block';
     const dropdownFilter = menu.closest('.dropdown-filter');
     if (dropdownFilter) dropdownFilter.style.zIndex = '400';
     refreshFinAmountDropdown();
-    if (headerScroll) headerScroll.scrollLeft = savedScrollLeft;
   }
 }
 function refreshFinAmountDropdown() {
@@ -8177,17 +8182,17 @@ function toggleFinDetailDropdown() {
   const menu = document.getElementById('fin-detail-menu');
   const isVisible = menu.style.display === 'block';
   const headerScroll = document.getElementById('finance-list-header-scroll');
+  const bodyDiv = document.getElementById('finance-list-body');
   const savedScrollLeft = headerScroll ? headerScroll.scrollLeft : 0;
   closeAllFinDropdowns();
   if (!isVisible) {
-    if (headerScroll) headerScroll.style.overflowX = 'visible';
-    const bodyDiv = document.getElementById('finance-list-body');
-    if (bodyDiv) bodyDiv.style.overflowX = 'visible';
+    window.finScrollSyncPaused = true;
+    if (headerScroll) { headerScroll.style.overflowX = 'visible'; headerScroll.scrollLeft = savedScrollLeft; }
+    if (bodyDiv) { bodyDiv.style.overflowX = 'visible'; bodyDiv.scrollLeft = savedScrollLeft; }
     menu.style.display = 'block';
     const dropdownFilter = menu.closest('.dropdown-filter');
     if (dropdownFilter) dropdownFilter.style.zIndex = '400';
     refreshFinDetailDropdown();
-    if (headerScroll) headerScroll.scrollLeft = savedScrollLeft;
   }
 }
 function refreshFinDetailDropdown() {
@@ -8213,17 +8218,17 @@ function toggleFinStatusDropdown() {
   const menu = document.getElementById('fin-status-menu');
   const isVisible = menu.style.display === 'block';
   const headerScroll = document.getElementById('finance-list-header-scroll');
+  const bodyDiv = document.getElementById('finance-list-body');
   const savedScrollLeft = headerScroll ? headerScroll.scrollLeft : 0;
   closeAllFinDropdowns();
   if (!isVisible) {
-    if (headerScroll) headerScroll.style.overflowX = 'visible';
-    const bodyDiv = document.getElementById('finance-list-body');
-    if (bodyDiv) bodyDiv.style.overflowX = 'visible';
+    window.finScrollSyncPaused = true;
+    if (headerScroll) { headerScroll.style.overflowX = 'visible'; headerScroll.scrollLeft = savedScrollLeft; }
+    if (bodyDiv) { bodyDiv.style.overflowX = 'visible'; bodyDiv.scrollLeft = savedScrollLeft; }
     menu.style.display = 'block';
     const dropdownFilter = menu.closest('.dropdown-filter');
     if (dropdownFilter) dropdownFilter.style.zIndex = '400';
     refreshFinStatusDropdown();
-    if (headerScroll) headerScroll.scrollLeft = savedScrollLeft;
   }
 }
 function refreshFinStatusDropdown() {
@@ -8250,17 +8255,17 @@ function toggleFinSupplierDropdown(colIdx) {
   const menu = document.getElementById('fin-supplier-menu-' + colIdx);
   const isVisible = menu.style.display === 'block';
   const headerScroll = document.getElementById('finance-list-header-scroll');
+  const bodyDiv = document.getElementById('finance-list-body');
   const savedScrollLeft = headerScroll ? headerScroll.scrollLeft : 0;
   closeAllFinDropdowns();
   if (!isVisible) {
-    if (headerScroll) headerScroll.style.overflowX = 'visible';
-    const bodyDiv = document.getElementById('finance-list-body');
-    if (bodyDiv) bodyDiv.style.overflowX = 'visible';
+    window.finScrollSyncPaused = true;
+    if (headerScroll) { headerScroll.style.overflowX = 'visible'; headerScroll.scrollLeft = savedScrollLeft; }
+    if (bodyDiv) { bodyDiv.style.overflowX = 'visible'; bodyDiv.scrollLeft = savedScrollLeft; }
     menu.style.display = 'block';
     const dropdownFilter = menu.closest('.dropdown-filter');
     if (dropdownFilter) dropdownFilter.style.zIndex = '400';
     refreshFinSupplierDropdown(colIdx);
-    if (headerScroll) headerScroll.scrollLeft = savedScrollLeft;
   }
 }
 function refreshFinSupplierDropdown(colIdx) {
