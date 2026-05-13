@@ -11,7 +11,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Copy files to server via SCP
+      - name: Copy frontend file to server
         uses: appleboy/scp-action@v0.1.7
         with:
           HOST: 47.114.120.73
@@ -21,7 +21,17 @@ jobs:
           TARGET: "/var/www/store-progress-manager/"
           strip_components: 0
 
-      - name: Set file permissions
+      - name: Copy backend files to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          HOST: 47.114.120.73
+          USERNAME: admin
+          KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SOURCE: "backend/server.js"
+          TARGET: "/var/www/store-progress-manager/backend/"
+          strip_components: 0
+
+      - name: Restart backend and set permissions
         uses: appleboy/ssh-action@v1.0.3
         with:
           HOST: 47.114.120.73
@@ -29,4 +39,7 @@ jobs:
           KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             chmod 644 /var/www/store-progress-manager/进度管理系统.html
+            cp /var/www/store-progress-manager/backend/server.js /var/www/store-progress-manager/backend/server.js.new
+            mv /var/www/store-progress-manager/backend/server.js.new /var/www/store-progress-manager/backend/server.js
+            pm2 restart store-progress-api || pm2 start /var/www/store-progress-manager/backend/server.js --name store-progress-api
             echo "Deploy completed at $(date)"
