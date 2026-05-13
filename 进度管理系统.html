@@ -7580,7 +7580,7 @@ function updateUserRoleDisplay() {
         roleText = '超级管理员';
         break;
       case 'admin':
-        roleText = '管理员';
+        roleText = '筹建管理员';
         break;
       case 'engineer':
         roleText = '工程管理员';
@@ -12092,7 +12092,7 @@ function renderSecuritySettings() {
         <div style="margin-bottom:16px;">
           <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">选择角色</label>
           <select id="newAuthRole" style="width:100%;padding:10px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;box-sizing:border-box;background:#fff;">
-            <option value="admin">管理员（可编辑主界面，不可编辑设置）</option>
+            <option value="admin">筹建管理员（可编辑主界面，不可编辑设置）</option>
             <option value="engineer">工程管理员（可编辑主界面和结算明细，不可编辑设置）</option>
             <option value="visitor">访客（仅可查看）</option>
           </select>
@@ -12192,13 +12192,14 @@ async function renderAuthorizedAccountsList() {
     const isCurrentUser = acc.username === currentUser.username;
     const isSuperAdmin = acc.role === 'superadmin';
     const canDelete = currentUser.role === 'superadmin' && !isSuperAdmin;
+    const canChangeRole = currentUser.role === 'superadmin' && !isSuperAdmin;
     
     // 角色显示文本
     let roleText = '';
     if (acc.role === 'superadmin') {
       roleText = '<span style="color:#1677ff;font-size:12px;">[超管]</span>';
     } else if (acc.role === 'admin') {
-      roleText = '<span style="color:#52c41a;font-size:12px;">[管理员]</span>';
+      roleText = '<span style="color:#52c41a;font-size:12px;">[筹建管理员]</span>';
     } else if (acc.role === 'engineer') {
       roleText = '<span style="color:#fa8c16;font-size:12px;">[工程管理员]</span>';
     } else if (acc.role === 'guest') {
@@ -12210,7 +12211,10 @@ async function renderAuthorizedAccountsList() {
         <div>
           <div style="font-size:14px;font-weight:500;color:#333;">${acc.username} ${roleText} ${isCurrentUser ? '<span style="color:#52c41a;font-size:12px;">[当前]</span>' : ''}</div>
         </div>
-        ${canDelete ? `<button onclick="deleteAccount('${acc.username}')" style="padding:4px 12px;background:#ff4d4f;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;">删除</button>` : ''}
+        <div style="display:flex;gap:8px;">
+          ${canChangeRole ? `<button onclick="changeAccountRole('${acc.username}', '${acc.role}')" style="padding:4px 12px;background:#1677ff;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;">修改角色</button>` : ''}
+          ${canDelete ? `<button onclick="deleteAccount('${acc.username}')" style="padding:4px 12px;background:#ff4d4f;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;">删除</button>` : ''}
+        </div>
       </div>
     `;
     }).join('');
@@ -12265,6 +12269,75 @@ async function changePassword() {
     console.error('修改密码请求失败:', error);
     alert('修改密码服务暂时不可用，请稍后重试');
   }
+}
+
+// 修改账号角色 - 调用后端API
+async function changeAccountRole(username, currentRole) {
+  const currentUser = JSON.parse(localStorage.getItem('auth_current_user') || '{}');
+  
+  if (currentUser.role !== 'superadmin') {
+    alert('只有超级管理员可以修改角色');
+    return;
+  }
+  
+  // 角色选项
+  const roleOptions = [
+    { value: 'admin', label: '筹建管理员（可编辑主界面，不可编辑设置）' },
+    { value: 'engineer', label: '工程管理员（可编辑主界面和结算明细，不可编辑设置）' },
+    { value: 'guest', label: '访客（仅可查看）' }
+  ];
+  
+  const roleHtml = roleOptions.map(opt => 
+    `<option value="${opt.value}" ${opt.value === currentRole ? 'selected' : ''}>${opt.label}</option>`
+  ).join('');
+  
+  // 创建弹窗
+  const modal = document.createElement('div');
+  modal.id = 'roleChangeModal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:12px;padding:24px;width:360px;max-width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.15);">
+      <div style="font-size:16px;font-weight:600;color:#333;margin-bottom:16px;">修改「${username}」的角色</div>
+      <select id="roleChangeSelect" style="width:100%;padding:10px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;box-sizing:border-box;background:#fff;margin-bottom:20px;">
+        ${roleHtml}
+      </select>
+      <div style="display:flex;gap:10px;">
+        <button onclick="document.getElementById('roleChangeModal').remove()" style="flex:1;padding:10px;background:#f5f5f5;color:#666;border:none;border-radius:6px;font-size:14px;cursor:pointer;">取消</button>
+        <button id="roleChangeConfirm" style="flex:1;padding:10px;background:#1677ff;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;">确认修改</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  
+  // 绑定确认按钮
+  document.getElementById('roleChangeConfirm').onclick = async () => {
+    const newRole = document.getElementById('roleChangeSelect').value;
+    
+    if (newRole === currentRole) {
+      document.getElementById('roleChangeModal').remove();
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/accounts/${encodeURIComponent(username)}/role`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        document.getElementById('roleChangeModal').remove();
+        renderAuthorizedAccountsList();
+      } else {
+        alert(result.message || '修改角色失败');
+      }
+    } catch (error) {
+      console.error('修改角色请求失败:', error);
+      alert('修改角色服务暂时不可用，请稍后重试');
+    }
+  };
 }
 
 // 删除账号 - 调用后端API

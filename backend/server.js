@@ -190,6 +190,32 @@ app.put('/api/auth/accounts/:username/password', (req, res) => {
     res.json({ success: true, message: '密码修改成功' });
 });
 
+// 修改角色
+app.put('/api/auth/accounts/:username/role', (req, res) => {
+    const { username } = req.params;
+    const { role } = req.body;
+    
+    if (!role) {
+        return res.status(400).json({ success: false, message: '角色不能为空' });
+    }
+    
+    // 不允许修改默认管理员角色
+    if (username === 'admin') {
+        return res.status(403).json({ success: false, message: '不能修改默认管理员账号的角色' });
+    }
+    
+    const authData = readAuthData();
+    const account = authData.accounts.find(a => a.username === username);
+    
+    if (!account) {
+        return res.status(404).json({ success: false, message: '账号不存在' });
+    }
+    
+    account.role = role;
+    saveAuthData(authData);
+    res.json({ success: true, message: '角色修改成功' });
+});
+
 // ========== 数据相关 API ==========
 
 // 获取数据
