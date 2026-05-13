@@ -7917,8 +7917,19 @@ function renderFinanceStoreList() {
   // 金额备注 - 无筛选
   headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;position:sticky;left:596px;background:#fff;z-index:3;"></td>`;
 
-  // 费用列（10个 + 小计 + 设备 + 总计 = 13列）- 无筛选
-  for (let i = 0; i < 13; i++) {
+  // 10个费用列（多选供应商下拉）
+  FINANCE_COLUMNS.forEach((col, i) => {
+    headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;">
+      <div class="dropdown-filter" id="fin-dropdown-supplier-${i}" style="position:relative;z-index:400;">
+        <button class="filter-btn" onclick="toggleFinSupplierDropdown(${i})" style="width:100%;padding:4px 8px;font-size:11px;">全部 ▼</button>
+        <div id="fin-supplier-menu-${i}" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:400;min-width:120px;max-height:300px;overflow-y:auto;">
+          <div id="fin-supplier-items-${i}" style="padding:4px;"></div>
+        </div>
+      </div>
+    </td>`;
+  });
+  // 小计 + 设备 + 总计（无筛选）
+  for (let i = 0; i < 3; i++) {
     headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;"></td>`;
   }
 
@@ -8033,10 +8044,12 @@ let finFilterDetails = [];
 let finFilterStatus = '';
 let finFilterAreaMin = '';
 let finFilterAreaMax = '';
+let finFilterSuppliers = {}; // { '工程硬装': ['供应商A', '供应商B'], ... }
 
 // 关闭所有结算明细下拉
 function closeAllFinDropdowns() {
   const menus = ['fin-area-menu','fin-type-menu','fin-amount-menu','fin-detail-menu','fin-status-menu'];
+  FINANCE_COLUMNS.forEach((_, i) => menus.push('fin-supplier-menu-' + i));
   menus.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
   // 恢复表头和内容区域 overflow
   const headerScroll = document.getElementById('finance-list-header-scroll');
@@ -8220,6 +8233,51 @@ function updateFinStatusBtn() {
   btn.textContent = (labels[finFilterStatus] || '全部') + ' ▼';
 }
 
+// ── 供应商多选下拉（10个费用列）──
+function toggleFinSupplierDropdown(colIdx) {
+  const menu = document.getElementById('fin-supplier-menu-' + colIdx);
+  const isVisible = menu.style.display === 'block';
+  const headerScroll = document.getElementById('finance-list-header-scroll');
+  const savedScrollLeft = headerScroll ? headerScroll.scrollLeft : 0;
+  closeAllFinDropdowns();
+  if (!isVisible) {
+    if (headerScroll) headerScroll.style.overflowX = 'visible';
+    const bodyDiv = document.getElementById('finance-list-body');
+    if (bodyDiv) bodyDiv.style.overflowX = 'visible';
+    menu.style.display = 'block';
+    refreshFinSupplierDropdown(colIdx);
+    if (headerScroll) headerScroll.scrollLeft = savedScrollLeft;
+  }
+}
+function refreshFinSupplierDropdown(colIdx) {
+  const container = document.getElementById('fin-supplier-items-' + colIdx);
+  const col = FINANCE_COLUMNS[colIdx];
+  const suppliers = getSuppliersByCategory(col.category);
+  const selected = finFilterSuppliers[col.key] || [];
+  container.innerHTML = '';
+  if (suppliers.length === 0) {
+    const div = document.createElement('div');
+    div.style.cssText = 'padding:4px 8px;font-size:12px;color:#999;';
+    div.textContent = '暂无供应商';
+    container.appendChild(div);
+    return;
+  }
+  suppliers.forEach(s => {
+    const div = document.createElement('div');
+    div.style.cssText = 'padding:4px 8px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;border-radius:4px;';
+    div.innerHTML = `<input type="checkbox" ${selected.includes(s) ? 'checked' : ''} style="margin:0;cursor:pointer;"><span>${s}</span>`;
+    div.onclick = (e) => { if (e.target.tagName !== 'INPUT') { const cb = div.querySelector('input'); cb.checked = !cb.checked; } finFilterSuppliers[col.key] = suppliers.filter(ss => document.querySelector(`#fin-supplier-items-${colIdx} div[data-supplier="${ss}"] input`)?.checked); updateFinSupplierBtn(colIdx); };
+    div.setAttribute('data-supplier', s);
+    container.appendChild(div);
+  });
+}
+function updateFinSupplierBtn(colIdx) {
+  const btn = document.querySelector('#fin-dropdown-supplier-' + colIdx + ' .filter-btn');
+  const col = FINANCE_COLUMNS[colIdx];
+  const selected = finFilterSuppliers[col.key] || [];
+  btn.textContent = (selected.length === 0 ? '全部' : selected.length > 1 ? `已选${selected.length}项` : selected[0]) + ' ▼';
+}
+
 // ── 门店面积弹窗 ──
 function openFinAreaModal() {
   const overlay = document.getElementById('finAreaOverlay');
@@ -8261,6 +8319,7 @@ function updateFinAreaRangeBtn() {
 // 点击外部关闭下拉
 document.addEventListener('click', function(e) {
   const ids = ['fin-dropdown-area','fin-dropdown-type','fin-dropdown-amount','fin-dropdown-detail','fin-dropdown-status'];
+  FINANCE_COLUMNS.forEach((_, i) => ids.push('fin-dropdown-supplier-' + i));
   const clickedInside = ids.some(id => document.getElementById(id)?.contains(e.target));
   if (!clickedInside) closeAllFinDropdowns();
 });
@@ -8307,6 +8366,19 @@ function applyFinanceFilter() {
     const storeStatus = calcStoreTotalStatus(idx);
     if (status && storeStatus !== status) storeMatch = false;
 
+    // 供应商筛选匹配
+    const fin = getStoreFinance(idx);
+    let supplierMatch = true;
+    FINANCE_COLUMNS.forEach(col => {
+      const selectedSuppliers = finFilterSuppliers[col.key];
+      if (selectedSuppliers && selectedSuppliers.length > 0) {
+        const storeSupplier = (fin._suppliers && fin._suppliers[col.key]) || '';
+        if (!selectedSuppliers.includes(storeSupplier)) {
+          supplierMatch = false;
+        }
+      }
+    });
+
     // 行级筛选匹配
     let rowMatch = false;
     if (!hasRowFilter) {
@@ -8329,7 +8401,7 @@ function applyFinanceFilter() {
     if (detailRow) detailRow.style.display = 'none';
     if (detailDiv) detailDiv.innerHTML = '';
 
-    if (storeMatch && rowMatch) {
+    if (storeMatch && supplierMatch && rowMatch) {
       visibleCount++;
       if (hasRowFilter) {
         // 行级筛选：隐藏精简行，直接插入匹配行到主表格
@@ -8377,6 +8449,7 @@ function resetFinanceFilter() {
   finFilterAmountTypes = [];
   finFilterDetails = [];
   finFilterStatus = '';
+  finFilterSuppliers = {};
 
   // 更新按钮文字
   updateFinAreaBtn();
@@ -8385,7 +8458,8 @@ function resetFinanceFilter() {
   updateFinAmountBtn();
   updateFinDetailBtn();
   updateFinStatusBtn();
-  
+  FINANCE_COLUMNS.forEach((_, i) => updateFinSupplierBtn(i));
+
   // 清除所有筛选插入的行和展开行
   document.querySelectorAll('.finance-filter-row, .finance-expand-row').forEach(r => r.remove());
 
