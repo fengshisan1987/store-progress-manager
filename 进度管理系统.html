@@ -2130,7 +2130,7 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
 <div class="tab-nav" id="tabNav">
   <div class="tab-item active" data-tab="detail" onclick="switchTab('detail')">📋 筹建门店详细进度</div>
   <div class="tab-item" data-tab="dashboard" onclick="switchTab('dashboard')">📊 筹建进度概述看板</div>
-  <div class="tab-item" data-tab="finance" onclick="switchTab('finance')" id="tabFinanceNav" style="display:none;">💰 门店财务结算明细</div>
+  <div class="tab-item" data-tab="finance" onclick="switchTab('finance')" id="tabFinanceNav" style="display:none;">💰 工程结算明细</div>
   <div class="tab-item" data-tab="settings" onclick="switchTab('settings')">⚙️ 设置</div>
 </div>
 
@@ -2457,7 +2457,7 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
 <!-- Tab 4: 门店财务结算明细 -->
 <div id="tab-finance" class="tab-content">
   <div style="padding:20px;">
-    <div style="font-size:18px;font-weight:600;color:#333;margin-bottom:20px;">💰 门店财务结算明细</div>
+    <div style="font-size:18px;font-weight:600;color:#333;margin-bottom:20px;">💰 工程结算明细</div>
     <div id="finance-store-list" style="max-width:100%;">
       <!-- 动态填充门店列表 -->
     </div>
@@ -7644,7 +7644,7 @@ function getSuppliersByCategory(category) {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// 门店财务结算明细
+// 工程结算明细
 // ═════════════════════════════════════════════════════════════════════════════
 
 // 费用列定义
