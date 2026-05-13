@@ -3000,6 +3000,24 @@ async function loadStoresFromServer() {
         }
       }
       
+      // 优先从服务器加载供应商配置
+      if (data.suppliers && Array.isArray(data.suppliers)) {
+        SUPPLIERS = data.suppliers;
+        localStorage.setItem('storeSuppliers', JSON.stringify(SUPPLIERS));
+        console.log('供应商配置已从服务器加载');
+      } else {
+        // 服务器没有供应商配置，尝试从 localStorage 回退
+        const localSuppliers = localStorage.getItem('storeSuppliers');
+        if (localSuppliers) {
+          try {
+            SUPPLIERS = JSON.parse(localSuppliers);
+            console.log('供应商配置从 localStorage 加载');
+          } catch (e) {
+            console.log('localStorage 供应商配置解析失败，使用默认值');
+          }
+        }
+      }
+      
       // 如果服务器有数据，同步到 localStorage 作为备份
       if (serverDataLoaded) {
         localStorage.setItem('storeData', JSON.stringify(STORES));
