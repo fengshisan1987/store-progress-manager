@@ -9459,8 +9459,8 @@ function renderFinanceStoreList() {
   // 筛选行（使用自定义下拉样式）
   headerHtml += `<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:1400px;table-layout:fixed;">${colGroup}<tbody><tr style="background:#fff;">`;
 
-  // 门店名称
-  headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;position:sticky;left:0;background:#fff;z-index:3;"><input type="text" id="fin-filter-store" placeholder="搜索门店" style="width:100%;padding:4px 6px;border:1px solid #d0d0d0;border-radius:20px;font-size:11px;box-sizing:border-box;outline:none;"></td>`;
+  // 门店名称（带防抖输入 + 小应用按钮）
+  headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;position:sticky;left:0;background:#fff;z-index:3;"><div style="display:flex;gap:4px;align-items:center;"><input type="text" id="fin-filter-store" placeholder="搜索门店" oninput="debounceApplyFinanceFilter()" style="flex:1;padding:4px 6px;border:1px solid #d0d0d0;border-radius:20px;font-size:11px;box-sizing:border-box;outline:none;"><button onclick="applyFinanceFilter()" style="padding:3px 8px;background:#1677ff;color:#fff;border:none;border-radius:20px;font-size:10px;cursor:pointer;white-space:nowrap;">应用</button></div></td>`;
 
   // 区域（多选自定义下拉）
   headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;position:sticky;left:168px;background:#fff;z-index:3;"><div class="dropdown-filter" id="fin-dropdown-area" style="position:relative;"><button class="filter-btn" onclick="toggleFinAreaDropdown()" style="width:100%;padding:4px 8px;font-size:11px;">全部 ▼</button><div id="fin-area-menu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:400;min-width:120px;max-height:300px;overflow-y:auto;"><div id="fin-area-items" style="padding:4px;"></div></div></div></td>`;
@@ -9468,8 +9468,8 @@ function renderFinanceStoreList() {
   // 门店类型（单选自定义下拉）
   headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;position:sticky;left:226px;background:#fff;z-index:3;"><div class="dropdown-filter" id="fin-dropdown-type" style="position:relative;"><button class="filter-btn" onclick="toggleFinTypeDropdown()" style="width:100%;padding:4px 8px;font-size:11px;">全部 ▼</button><div id="fin-type-menu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:400;min-width:120px;max-height:300px;overflow-y:auto;"><div id="fin-type-items" style="padding:4px;"></div></div></div></td>`;
 
-  // 开业日期（区间 - 美化输入框）
-  headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;position:sticky;left:296px;background:#fff;z-index:3;"><div style="display:flex;gap:2px;align-items:center;"><input type="date" id="fin-filter-date-from" style="flex:1;padding:4px 6px;border:1px solid #d0d0d0;border-radius:20px;font-size:10px;outline:none;min-width:0;"><span style="font-size:10px;color:#999;">-</span><input type="date" id="fin-filter-date-to" style="flex:1;padding:4px 6px;border:1px solid #d0d0d0;border-radius:20px;font-size:10px;outline:none;min-width:0;"></div></td>`;
+  // 开业日期（区间 - 美化输入框，带onchange自动筛选）
+  headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;position:sticky;left:296px;background:#fff;z-index:3;"><div style="display:flex;gap:2px;align-items:center;"><input type="date" id="fin-filter-date-from" onchange="applyFinanceFilter()" style="flex:1;padding:4px 6px;border:1px solid #d0d0d0;border-radius:20px;font-size:10px;outline:none;min-width:0;"><span style="font-size:10px;color:#999;">-</span><input type="date" id="fin-filter-date-to" onchange="applyFinanceFilter()" style="flex:1;padding:4px 6px;border:1px solid #d0d0d0;border-radius:20px;font-size:10px;outline:none;min-width:0;"></div></td>`;
 
   // 门店面积（弹窗填写）
   headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;position:sticky;left:386px;background:#fff;z-index:3;"><div style="display:flex;gap:2px;align-items:center;position:relative;"><input type="text" id="fin-area-range-min" placeholder="最小" readonly onclick="openFinAreaModal()" style="flex:1;padding:4px 6px;border:1px solid #d0d0d0;border-radius:20px;font-size:10px;outline:none;min-width:0;background:#fff;cursor:pointer;text-align:center;"><span style="font-size:10px;color:#999;">-</span><input type="text" id="fin-area-range-max" placeholder="最大" readonly onclick="openFinAreaModal()" style="flex:1;padding:4px 6px;border:1px solid #d0d0d0;border-radius:20px;font-size:10px;outline:none;min-width:0;background:#fff;cursor:pointer;text-align:center;"></div></td>`;
@@ -9502,8 +9502,8 @@ function renderFinanceStoreList() {
   // 结算状态（单选自定义下拉）
   headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;"><div class="dropdown-filter" id="fin-dropdown-status" style="position:relative;"><button class="filter-btn" onclick="toggleFinStatusDropdown()" style="width:100%;padding:4px 8px;font-size:11px;">全部 ▼</button><div id="fin-status-menu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:400;min-width:120px;max-height:300px;overflow-y:auto;"><div id="fin-status-items" style="padding:4px;"></div></div></div></td>`;
 
-  // 操作按钮
-  headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;text-align:center;white-space:nowrap;"><button onclick="applyFinanceFilter()" style="padding:4px 10px;background:#1677ff;color:#fff;border:none;border-radius:20px;font-size:11px;cursor:pointer;margin-right:4px;">应用</button><button onclick="resetFinanceFilter()" style="padding:4px 10px;background:#f5f5f5;color:#666;border:1px solid #d0d0d0;border-radius:20px;font-size:11px;cursor:pointer;">重置</button></td>`;
+  // 操作按钮（只保留重置）
+  headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;text-align:center;white-space:nowrap;"><button onclick="resetFinanceFilter()" style="padding:4px 10px;background:#f5f5f5;color:#666;border:1px solid #d0d0d0;border-radius:20px;font-size:11px;cursor:pointer;">重置</button></td>`;
   
   headerHtml += '</tr></tbody></table></div></div>';
   
@@ -9708,7 +9708,7 @@ function refreshFinAreaDropdown() {
     const div = document.createElement('div');
     div.style.cssText = 'padding:4px 8px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;border-radius:4px;';
     div.innerHTML = `<input type="checkbox" ${finFilterAreas.includes(a) ? 'checked' : ''} style="margin:0;cursor:pointer;"><span>${a}</span>`;
-    div.onclick = (e) => { if (e.target.tagName !== 'INPUT') { const cb = div.querySelector('input'); cb.checked = !cb.checked; } finFilterAreas = areas.filter(aa => document.querySelector(`#fin-area-items div[data-area="${aa}"] input`)?.checked); updateFinAreaBtn(); };
+    div.onclick = (e) => { if (e.target.tagName !== 'INPUT') { const cb = div.querySelector('input'); cb.checked = !cb.checked; } finFilterAreas = areas.filter(aa => document.querySelector(`#fin-area-items div[data-area="${aa}"] input`)?.checked); updateFinAreaBtn(); applyFinanceFilter(); };
     div.setAttribute('data-area', a);
     container.appendChild(div);
   });
@@ -9745,13 +9745,13 @@ function refreshFinTypeDropdown() {
   const allDiv = document.createElement('div');
   allDiv.className = 'dropdown-item' + (finFilterType === '' ? ' active' : '');
   allDiv.textContent = '全部';
-  allDiv.onclick = () => { finFilterType = ''; updateFinTypeBtn(); closeAllFinDropdowns(); };
+  allDiv.onclick = () => { finFilterType = ''; updateFinTypeBtn(); closeAllFinDropdowns(); applyFinanceFilter(); };
   container.appendChild(allDiv);
   types.forEach(t => {
     const div = document.createElement('div');
     div.className = 'dropdown-item' + (finFilterType === t ? ' active' : '');
     div.textContent = t;
-    div.onclick = () => { finFilterType = t; updateFinTypeBtn(); closeAllFinDropdowns(); };
+    div.onclick = () => { finFilterType = t; updateFinTypeBtn(); closeAllFinDropdowns(); applyFinanceFilter(); };
     container.appendChild(div);
   });
 }
@@ -9788,7 +9788,7 @@ function refreshFinAmountDropdown() {
     const div = document.createElement('div');
     div.style.cssText = 'padding:4px 8px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;border-radius:4px;';
     div.innerHTML = `<input type="checkbox" ${finFilterAmountTypes.includes(t) ? 'checked' : ''} style="margin:0;cursor:pointer;"><span>${t}</span>`;
-    div.onclick = (e) => { if (e.target.tagName !== 'INPUT') { const cb = div.querySelector('input'); cb.checked = !cb.checked; } finFilterAmountTypes = types.filter(tt => document.querySelector(`#fin-amount-items div[data-type="${tt}"] input`)?.checked); updateFinAmountBtn(); };
+    div.onclick = (e) => { if (e.target.tagName !== 'INPUT') { const cb = div.querySelector('input'); cb.checked = !cb.checked; } finFilterAmountTypes = types.filter(tt => document.querySelector(`#fin-amount-items div[data-type="${tt}"] input`)?.checked); updateFinAmountBtn(); applyFinanceFilter(); };
     div.setAttribute('data-type', t);
     container.appendChild(div);
   });
@@ -9826,7 +9826,7 @@ function refreshFinDetailDropdown() {
     const div = document.createElement('div');
     div.style.cssText = 'padding:4px 8px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;border-radius:4px;';
     div.innerHTML = `<input type="checkbox" ${finFilterDetails.includes(d) ? 'checked' : ''} style="margin:0;cursor:pointer;"><span>${d}</span>`;
-    div.onclick = (e) => { if (e.target.tagName !== 'INPUT') { const cb = div.querySelector('input'); cb.checked = !cb.checked; } finFilterDetails = details.filter(dd => document.querySelector(`#fin-detail-items div[data-detail="${dd}"] input`)?.checked); updateFinDetailBtn(); };
+    div.onclick = (e) => { if (e.target.tagName !== 'INPUT') { const cb = div.querySelector('input'); cb.checked = !cb.checked; } finFilterDetails = details.filter(dd => document.querySelector(`#fin-detail-items div[data-detail="${dd}"] input`)?.checked); updateFinDetailBtn(); applyFinanceFilter(); };
     div.setAttribute('data-detail', d);
     container.appendChild(div);
   });
@@ -9865,7 +9865,7 @@ function refreshFinStatusDropdown() {
     const div = document.createElement('div');
     div.className = 'dropdown-item' + (finFilterStatus === s ? ' active' : '');
     div.textContent = labels[i];
-    div.onclick = () => { finFilterStatus = s; updateFinStatusBtn(); closeAllFinDropdowns(); };
+    div.onclick = () => { finFilterStatus = s; updateFinStatusBtn(); closeAllFinDropdowns(); applyFinanceFilter(); };
     container.appendChild(div);
   });
 }
@@ -9912,7 +9912,7 @@ function refreshFinSupplierDropdown(colIdx) {
     const div = document.createElement('div');
     div.style.cssText = 'padding:4px 8px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;border-radius:4px;';
     div.innerHTML = `<input type="checkbox" ${selected.includes(s) ? 'checked' : ''} style="margin:0;cursor:pointer;"><span>${s}</span>`;
-    div.onclick = (e) => { if (e.target.tagName !== 'INPUT') { const cb = div.querySelector('input'); cb.checked = !cb.checked; } finFilterSuppliers[col.key] = suppliers.filter(ss => document.querySelector(`#fin-supplier-items-${colIdx} div[data-supplier="${ss}"] input`)?.checked); updateFinSupplierBtn(colIdx); };
+    div.onclick = (e) => { if (e.target.tagName !== 'INPUT') { const cb = div.querySelector('input'); cb.checked = !cb.checked; } finFilterSuppliers[col.key] = suppliers.filter(ss => document.querySelector(`#fin-supplier-items-${colIdx} div[data-supplier="${ss}"] input`)?.checked); updateFinSupplierBtn(colIdx); applyFinanceFilter(); };
     div.setAttribute('data-supplier', s);
     container.appendChild(div);
   });
@@ -9969,6 +9969,15 @@ document.addEventListener('click', function(e) {
   const clickedInside = ids.some(id => document.getElementById(id)?.contains(e.target));
   if (!clickedInside) closeAllFinDropdowns();
 });
+
+// 门店名称输入防抖（300ms）
+let _finFilterDebounceTimer = null;
+function debounceApplyFinanceFilter() {
+  if (_finFilterDebounceTimer) clearTimeout(_finFilterDebounceTimer);
+  _finFilterDebounceTimer = setTimeout(() => {
+    applyFinanceFilter();
+  }, 300);
+}
 
 // 应用结算明细筛选
 function applyFinanceFilter() {
@@ -10127,6 +10136,9 @@ function resetFinanceFilter() {
 
   // 更新综合数据看板
   updateFinanceSummaryRow();
+
+  // 自动应用重置后的筛选（显示全部）
+  applyFinanceFilter();
 }
 
 // 渲染结算明细表格（isEdit=true表示编辑模式）
