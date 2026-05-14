@@ -5572,12 +5572,21 @@ function openImportModal() {
       <div class="modal-body">
         <div style="margin-bottom: 16px;">
           <p style="color: #666; margin-bottom: 12px;">请上传 Excel 文件 (.xlsx 或 .xls)</p>
-          <p style="color: #999; font-size: 12px; margin-bottom: 16px;">
+          <div style="margin-bottom: 16px;">
+            <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">导入类型</label>
+            <select id="importType" onchange="updateImportModalUI()" style="width:100%;padding:10px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;background:#fff;">
+              <option value="stores">门店数据（基本信息 + 进度）</option>
+              <option value="finance">工程结算明细</option>
+              <option value="suppliers">供应商管理</option>
+              <option value="maintenance">维保记录</option>
+            </select>
+          </div>
+          <div id="importFormatInfo" style="color: #999; font-size: 12px; margin-bottom: 16px;">
             <strong>支持格式：</strong><br>
             1. 完整详细进度格式：门店名称、区域、门店状态、工程负责人、姓名、门店类型、装修形式、门店面积、施工队伍名称、推荐队伍名称、最新进展内容、最新进展日期、工程增减项备注、停工天数 + 所有节点日期列 + 预估验收日期、预估开业日期<br>
             2. 旧格式（兼容）：门店名称、区域、状态、工程负责人、门店类型、装修形式 + 选址日期、设计日期、合同日期、施工日期、设备日期、准备日期、整改日期、开业日期<br>
             <strong>导入规则：</strong>以"门店名称"匹配，已存在则更新，不存在则创建
-          </p>
+          </div>
         </div>
         <div class="form-group">
           <label>选择文件</label>
@@ -5610,6 +5619,40 @@ function closeImportModal() {
   if (modal) {
     modal.classList.remove('show');
     setTimeout(() => modal.remove(), 300);
+  }
+}
+
+// 根据导入类型更新弹窗提示
+function updateImportModalUI() {
+  const importType = document.getElementById('importType').value;
+  const infoBox = document.getElementById('importFormatInfo');
+  if (!infoBox) return;
+  
+  if (importType === 'finance') {
+    infoBox.innerHTML = `
+      <strong>支持格式：</strong><br>
+      表头：门店名称、区域、门店类型、开业日期、门店面积、金额类型、类型明细、金额备注、工程硬装费用、广告物料费用、安装收尾费用、家具费用、灯具费用、配电箱费用、设计费用、空调费用、消防费用、其他工程类费用、工程类费用小计、设备费用、整体筹建费用总计<br>
+      <strong>导入规则：</strong>以"门店名称"匹配，更新对应门店的工程结算明细数据
+    `;
+  } else if (importType === 'suppliers') {
+    infoBox.innerHTML = `
+      <strong>支持格式：</strong><br>
+      表头：供应商名称、供应商性质、合同性质、联系人姓名、联系人电话、覆盖区域、是否签署合同、合同开始日期、合同结束日期、保证金是否缴纳、实际缴纳保证金、剩余保证金、备注<br>
+      <strong>导入规则：</strong>以"供应商名称"匹配，已存在则更新，不存在则新增
+    `;
+  } else if (importType === 'maintenance') {
+    infoBox.innerHTML = `
+      <strong>支持格式：</strong><br>
+      表头：报修门店、区域、开业日期、维保类型、所属供应商、维保内容、是否保内、额外费用、报修日期、完成日期、维保用时(天)、备注<br>
+      <strong>导入规则：</strong>以"报修门店+报修日期"匹配，已存在则更新，不存在则新增
+    `;
+  } else {
+    infoBox.innerHTML = `
+      <strong>支持格式：</strong><br>
+      1. 完整详细进度格式：门店名称、区域、门店状态、工程负责人、姓名、门店类型、装修形式、门店面积、施工队伍名称、推荐队伍名称、最新进展内容、最新进展日期、工程增减项备注、停工天数 + 所有节点日期列 + 预估验收日期、预估开业日期<br>
+      2. 旧格式（兼容）：门店名称、区域、状态、工程负责人、门店类型、装修形式 + 选址日期、设计日期、合同日期、施工日期、设备日期、准备日期、整改日期、开业日期<br>
+      <strong>导入规则：</strong>以"门店名称"匹配，已存在则更新，不存在则创建
+    `;
   }
 }
 
@@ -5659,6 +5702,19 @@ function confirmImport() {
 
   const data = window._importData;
   const headers = data[0];
+
+  // 根据导入类型路由到不同处理函数
+  const importType = document.getElementById('importType').value;
+  if (importType === 'finance') {
+    importFinanceData(data, headers);
+    return;
+  } else if (importType === 'suppliers') {
+    importSuppliersData(data, headers);
+    return;
+  } else if (importType === 'maintenance') {
+    importMaintenanceData(data, headers);
+    return;
+  }
 
   // 辅助：规范化字符串用于模糊匹配
   function normalize(str) {
@@ -5883,6 +5939,271 @@ function confirmImport() {
   closeImportModal();
 }
 
+// 导入工程结算明细
+function importFinanceData(data, headers) {
+  const storeNameCol = headers.indexOf('门店名称');
+  if (storeNameCol < 0) {
+    alert('未找到"门店名称"列，请检查表格格式');
+    return;
+  }
+
+  // 费用列映射
+  const feeColMap = {};
+  FINANCE_COLUMNS.forEach(col => {
+    const idx = headers.indexOf(col.key + '费用');
+    if (idx >= 0) feeColMap[col.key] = idx;
+  });
+  // 也尝试不加"费用"后缀匹配
+  FINANCE_COLUMNS.forEach(col => {
+    if (!feeColMap[col.key]) {
+      const idx = headers.indexOf(col.key);
+      if (idx >= 0) feeColMap[col.key] = idx;
+    }
+  });
+
+  const subtotalCol = headers.indexOf('工程类费用小计');
+  const equipCol = headers.indexOf('设备费用');
+  const totalCol = headers.indexOf('整体筹建费用总计');
+  const typeCol = headers.indexOf('金额类型');
+  const detailCol = headers.indexOf('类型明细');
+  const remarkCol = headers.indexOf('金额备注');
+
+  let updatedCount = 0;
+  let skippedCount = 0;
+
+  // 按门店名称分组处理
+  const storeRows = {};
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    const storeName = row[storeNameCol];
+    if (!storeName || String(storeName).trim() === '') continue;
+    if (!storeRows[storeName]) storeRows[storeName] = [];
+    storeRows[storeName].push({ row, idx: i });
+  }
+
+  Object.keys(storeRows).forEach(storeName => {
+    const existingIdx = STORES.findIndex(s => (s['门店'] || '') === String(storeName).trim());
+    if (existingIdx < 0) {
+      skippedCount++;
+      return;
+    }
+
+    const store = STORES[existingIdx];
+    if (!store.finance) store.finance = {};
+    const fin = store.finance;
+
+    storeRows[storeName].forEach(({ row }) => {
+      const type = typeCol >= 0 ? (row[typeCol] || '') : '';
+      const detail = detailCol >= 0 ? (row[detailCol] || '') : '';
+
+      // 查找对应的 FINANCE_ROWS
+      const fr = FINANCE_ROWS.find(r => r.type === type && r.detail === detail);
+      if (!fr) return;
+
+      if (!fin[fr.rowId]) fin[fr.rowId] = {};
+      const rowData = fin[fr.rowId];
+
+      // 导入费用列
+      Object.keys(feeColMap).forEach(key => {
+        const colIdx = feeColMap[key];
+        const val = row[colIdx];
+        if (val !== undefined && val !== null && String(val).trim() !== '') {
+          const numVal = parseFloat(val);
+          if (!isNaN(numVal)) {
+            if (fr.isPercent) {
+              rowData[key] = numVal / 100;
+            } else {
+              rowData[key] = numVal;
+            }
+          }
+        }
+      });
+
+      // 导入设备费用
+      if (equipCol >= 0) {
+        const val = row[equipCol];
+        if (val !== undefined && val !== null && String(val).trim() !== '') {
+          const numVal = parseFloat(val);
+          if (!isNaN(numVal)) {
+            if (fr.isPercent) {
+              rowData['设备费用'] = numVal / 100;
+            } else {
+              rowData['设备费用'] = numVal;
+            }
+          }
+        }
+      }
+
+      // 导入备注
+      if (remarkCol >= 0) {
+        const val = row[remarkCol];
+        if (val !== undefined && val !== null) {
+          rowData._remark = String(val).trim();
+        }
+      }
+    });
+
+    updatedCount++;
+  });
+
+  saveStores();
+  if (typeof renderFinanceStoreList === 'function') renderFinanceStoreList();
+  alert(`工程结算明细导入完成！更新 ${updatedCount} 家门店，跳过 ${skippedCount} 家（门店不存在）`);
+  closeImportModal();
+}
+
+// 导入供应商管理
+function importSuppliersData(data, headers) {
+  const nameCol = headers.indexOf('供应商名称');
+  if (nameCol < 0) {
+    alert('未找到"供应商名称"列，请检查表格格式');
+    return;
+  }
+
+  // 列映射
+  const colMap = {
+    categories: headers.indexOf('供应商性质'),
+    contractType: headers.indexOf('合同性质'),
+    contactName: headers.indexOf('联系人姓名'),
+    contactPhone: headers.indexOf('联系人电话'),
+    coverageArea: headers.indexOf('覆盖区域'),
+    hasContract: headers.indexOf('是否签署合同'),
+    contractStart: headers.indexOf('合同开始日期'),
+    contractEnd: headers.indexOf('合同结束日期'),
+    hasDeposit: headers.indexOf('保证金是否缴纳'),
+    depositAmount: headers.indexOf('实际缴纳保证金'),
+    remainingDeposit: headers.indexOf('剩余保证金'),
+    remark: headers.indexOf('备注')
+  };
+
+  let createdCount = 0;
+  let updatedCount = 0;
+
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    const name = row[nameCol];
+    if (!name || String(name).trim() === '') continue;
+
+    const nameStr = String(name).trim();
+    let existingIdx = SUPPLIERS.findIndex(s => (s.name || '') === nameStr);
+    let supplier;
+    if (existingIdx >= 0) {
+      supplier = SUPPLIERS[existingIdx];
+      updatedCount++;
+    } else {
+      supplier = { name: nameStr };
+      SUPPLIERS.push(supplier);
+      createdCount++;
+    }
+
+    // 导入各字段
+    Object.keys(colMap).forEach(key => {
+      const colIdx = colMap[key];
+      if (colIdx >= 0) {
+        const val = row[colIdx];
+        if (val !== undefined && val !== null) {
+          if (key === 'categories') {
+            // 供应商性质可能是逗号分隔的字符串
+            const catStr = String(val).trim();
+            supplier.categories = catStr ? catStr.split(/[,，]/).map(s => s.trim()).filter(Boolean) : [];
+          } else {
+            supplier[key] = String(val).trim();
+          }
+        }
+      }
+    });
+  }
+
+  localStorage.setItem('storeSuppliers', JSON.stringify(SUPPLIERS));
+  saveStoresToServer();
+  if (typeof renderSupplierList === 'function') renderSupplierList();
+  alert(`供应商导入完成！新增 ${createdCount} 家，更新 ${updatedCount} 家`);
+  closeImportModal();
+}
+
+// 导入维保记录
+function importMaintenanceData(data, headers) {
+  const storeNameCol = headers.indexOf('报修门店');
+  if (storeNameCol < 0) {
+    alert('未找到"报修门店"列，请检查表格格式');
+    return;
+  }
+
+  // 列映射
+  const colMap = {
+    storeArea: headers.indexOf('区域'),
+    openingDate: headers.indexOf('开业日期'),
+    maintenanceType: headers.indexOf('维保类型'),
+    supplier: headers.indexOf('所属供应商'),
+    content: headers.indexOf('维保内容'),
+    isUnderWarranty: headers.indexOf('是否保内'),
+    extraCost: headers.indexOf('额外费用'),
+    reportDate: headers.indexOf('报修日期'),
+    completeDate: headers.indexOf('完成日期'),
+    durationDays: headers.indexOf('维保用时(天)') >= 0 ? headers.indexOf('维保用时(天)') : headers.indexOf('维保用时'),
+    remark: headers.indexOf('备注')
+  };
+
+  let createdCount = 0;
+  let updatedCount = 0;
+
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    const storeName = row[storeNameCol];
+    if (!storeName || String(storeName).trim() === '') continue;
+
+    const storeNameStr = String(storeName).trim();
+    const reportDateVal = colMap.reportDate >= 0 ? (row[colMap.reportDate] || '') : '';
+    const reportDateStr = reportDateVal ? String(reportDateVal).trim() : '';
+
+    // 按"报修门店+报修日期"匹配
+    let existingIdx = -1;
+    if (reportDateStr) {
+      existingIdx = MAINTENANCE_RECORDS.findIndex(r =>
+        (r.storeName || '') === storeNameStr && (r.reportDate || '') === reportDateStr
+      );
+    }
+
+    let record;
+    if (existingIdx >= 0) {
+      record = MAINTENANCE_RECORDS[existingIdx];
+      updatedCount++;
+    } else {
+      record = { storeName: storeNameStr };
+      MAINTENANCE_RECORDS.push(record);
+      createdCount++;
+    }
+
+    // 导入各字段
+    Object.keys(colMap).forEach(key => {
+      const colIdx = colMap[key];
+      if (colIdx >= 0) {
+        const val = row[colIdx];
+        if (val !== undefined && val !== null) {
+          if (key === 'isUnderWarranty') {
+            const v = String(val).trim();
+            record.isUnderWarranty = v === '是' || v === 'true' || v === '1' || v === 'yes';
+          } else if (key === 'extraCost') {
+            const numVal = parseFloat(val);
+            record.extraCost = !isNaN(numVal) ? numVal : '';
+          } else if (key === 'durationDays') {
+            const numVal = parseInt(val);
+            record.durationDays = !isNaN(numVal) ? numVal : '';
+          } else {
+            record[key] = String(val).trim();
+          }
+        }
+      }
+    });
+  }
+
+  localStorage.setItem('maintenanceRecords', JSON.stringify(MAINTENANCE_RECORDS));
+  saveStoresToServer();
+  if (typeof renderMaintenanceList === 'function') renderMaintenanceList();
+  alert(`维保记录导入完成！新增 ${createdCount} 条，更新 ${updatedCount} 条`);
+  closeImportModal();
+}
+
 function exportData() {
   // 按钮点击反馈
   const btn = event.target.closest('.sidebar-item');
@@ -5927,6 +6248,9 @@ function openExportModal() {
             <option value="full">完整数据（门店基本信息 + 各阶段进度）</option>
             <option value="detailed">门店详细进度完整数据（含全部节点+基本信息）</option>
             <option value="cycleStats">门店周期统计（各阶段周期明细）</option>
+            <option value="finance">工程结算明细</option>
+            <option value="suppliers">供应商管理</option>
+            <option value="maintenance">维保记录</option>
           </select>
         </div>
         <div id="exportFilters" style="display:none;margin-bottom:16px;">
@@ -6017,6 +6341,49 @@ function updateExportModalUI() {
       </div>
     `;
     fileNameInput.value = '门店详细进度_' + new Date().toISOString().slice(0, 10);
+    if (filtersBox) filtersBox.style.display = 'none';
+  } else if (exportType === 'finance') {
+    const financeStoreCount = STORES.filter(s => s.finance && Object.keys(s.finance).length > 0).length;
+    infoBox.innerHTML = `
+      <p style="color: #666; margin-bottom: 16px;">即将导出 <strong>${financeStoreCount}</strong> 家门店的工程结算明细</p>
+      <div style="background: #f5f5f5; padding: 12px; border-radius: 8px; font-size: 13px; color: #666;">
+        <div style="margin-bottom: 8px;"><strong>包含内容：</strong></div>
+        <div>• 门店基本信息（名称、区域、类型、开业日期、面积）</div>
+        <div>• 15行结算数据（初始报价、增减项、最终结算、实际支付、单价、毛利率）</div>
+        <div>• 10个费用列（工程硬装、广告物料、安装收尾、家具、灯具、配电箱、设计、空调、消防、其他）</div>
+        <div>• 工程类费用小计、设备费用、整体筹建费用总计</div>
+        <div style="margin-top:8px;color:#999;font-size:12px;">即使无数据，也会导出空白模板供填写后重新上传</div>
+      </div>
+    `;
+    fileNameInput.value = '工程结算明细_' + new Date().toISOString().slice(0, 10);
+    if (filtersBox) filtersBox.style.display = 'none';
+  } else if (exportType === 'suppliers') {
+    infoBox.innerHTML = `
+      <p style="color: #666; margin-bottom: 16px;">即将导出 <strong>${SUPPLIERS.length}</strong> 家供应商数据</p>
+      <div style="background: #f5f5f5; padding: 12px; border-radius: 8px; font-size: 13px; color: #666;">
+        <div style="margin-bottom: 8px;"><strong>包含内容：</strong></div>
+        <div>• 供应商名称、供应商性质（分类）</div>
+        <div>• 合同性质、联系人姓名、联系人电话、覆盖区域</div>
+        <div>• 合同开始/结束日期、保证金缴纳情况</div>
+        <div>• 实际缴纳保证金、剩余保证金、备注</div>
+        <div style="margin-top:8px;color:#999;font-size:12px;">即使无数据，也会导出空白模板供填写后重新上传</div>
+      </div>
+    `;
+    fileNameInput.value = '供应商管理_' + new Date().toISOString().slice(0, 10);
+    if (filtersBox) filtersBox.style.display = 'none';
+  } else if (exportType === 'maintenance') {
+    infoBox.innerHTML = `
+      <p style="color: #666; margin-bottom: 16px;">即将导出 <strong>${MAINTENANCE_RECORDS.length}</strong> 条维保记录</p>
+      <div style="background: #f5f5f5; padding: 12px; border-radius: 8px; font-size: 13px; color: #666;">
+        <div style="margin-bottom: 8px;"><strong>包含内容：</strong></div>
+        <div>• 报修门店、区域、开业日期</div>
+        <div>• 维保类型、所属供应商、维保内容</div>
+        <div>• 是否保内、额外费用、报修日期、完成日期</div>
+        <div>• 维保用时（天）、备注</div>
+        <div style="margin-top:8px;color:#999;font-size:12px;">即使无数据，也会导出空白模板供填写后重新上传</div>
+      </div>
+    `;
+    fileNameInput.value = '维保记录_' + new Date().toISOString().slice(0, 10);
     if (filtersBox) filtersBox.style.display = 'none';
   } else {
     infoBox.innerHTML = `
@@ -6119,6 +6486,18 @@ async function confirmExport() {
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, '门店详细进度');
       XLSX.writeFile(wb, fileName);
+    } else if (exportType === 'finance') {
+      // 工程结算明细导出
+      exportFinanceData(fileName);
+      return;
+    } else if (exportType === 'suppliers') {
+      // 供应商管理导出
+      exportSuppliersData(fileName);
+      return;
+    } else if (exportType === 'maintenance') {
+      // 维保记录导出
+      exportMaintenanceData(fileName);
+      return;
     } else {
       // 完整数据导出（原有逻辑）
       // 准备表头
@@ -6179,6 +6558,126 @@ async function confirmExport() {
       btn.textContent = '导出到 Excel';
     }
   }
+}
+
+// 导出工程结算明细
+function exportFinanceData(fileName) {
+  // 表头
+  const headers = ['门店名称', '区域', '门店类型', '开业日期', '门店面积', '金额类型', '类型明细', '金额备注',
+    '工程硬装费用', '广告物料费用', '安装收尾费用', '家具费用', '灯具费用', '配电箱费用', '设计费用', '空调费用', '消防费用', '其他工程类费用',
+    '工程类费用小计', '设备费用', '整体筹建费用总计'];
+  
+  const data = [];
+  STORES.forEach((store, storeIdx) => {
+    const fin = store.finance || {};
+    const openingDate = getStoreOpeningDate(store);
+    const area = store['门店面积'] || '';
+    
+    FINANCE_ROWS.forEach(row => {
+      const rowData = fin[row.rowId] || {};
+      const remark = rowData._remark || '';
+      const dataRow = [
+        store['门店'] || '',
+        store['区域'] || '',
+        store['门店类型'] || '',
+        openingDate,
+        area,
+        row.type,
+        row.detail,
+        remark
+      ];
+      
+      // 10个费用列
+      FINANCE_COLUMNS.forEach(col => {
+        const val = calcFinanceValue(storeIdx, row.rowId, col.key);
+        if (row.isUnitPrice) {
+          dataRow.push(col.key === '工程硬装' ? val.toFixed(2) : '');
+        } else if (row.isPercent) {
+          dataRow.push((val * 100).toFixed(2) + '%');
+        } else {
+          dataRow.push(val.toFixed(2));
+        }
+      });
+      
+      // 小计
+      const subtotal = calcRowSubtotal(storeIdx, row.rowId);
+      dataRow.push(row.isPercent ? (subtotal * 100).toFixed(2) + '%' : subtotal.toFixed(2));
+      
+      // 设备费用
+      const equipVal = calcFinanceValue(storeIdx, row.rowId, '设备费用');
+      dataRow.push(row.isPercent ? (equipVal * 100).toFixed(2) + '%' : equipVal.toFixed(2));
+      
+      // 总计
+      const total = calcRowTotal(storeIdx, row.rowId);
+      dataRow.push(row.isPercent ? (total * 100).toFixed(2) + '%' : total.toFixed(2));
+      
+      data.push(dataRow);
+    });
+  });
+  
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '工程结算明细');
+  XLSX.writeFile(wb, fileName);
+  showToast('工程结算明细导出成功');
+  closeExportModal();
+}
+
+// 导出供应商管理
+function exportSuppliersData(fileName) {
+  const headers = ['供应商名称', '供应商性质', '合同性质', '联系人姓名', '联系人电话', '覆盖区域',
+    '是否签署合同', '合同开始日期', '合同结束日期', '保证金是否缴纳', '实际缴纳保证金', '剩余保证金', '备注'];
+  
+  const data = SUPPLIERS.map(s => [
+    s.name || '',
+    Array.isArray(s.categories) ? s.categories.join(', ') : (s.categories || ''),
+    s.contractType || '',
+    s.contactName || '',
+    s.contactPhone || '',
+    s.coverageArea || '',
+    s.hasContract || '',
+    s.contractStart || '',
+    s.contractEnd || '',
+    s.hasDeposit || '',
+    s.depositAmount || '',
+    s.remainingDeposit || '',
+    s.remark || ''
+  ]);
+  
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '供应商管理');
+  XLSX.writeFile(wb, fileName);
+  showToast('供应商管理导出成功');
+  closeExportModal();
+}
+
+// 导出维保记录
+function exportMaintenanceData(fileName) {
+  const headers = ['报修门店', '区域', '开业日期', '维保类型', '所属供应商', '维保内容', '是否保内',
+    '额外费用', '报修日期', '完成日期', '维保用时(天)', '备注'];
+  
+  const data = MAINTENANCE_RECORDS.map(r => [
+    r.storeName || '',
+    r.storeArea || '',
+    r.openingDate || '',
+    r.maintenanceType || '',
+    r.supplier || '',
+    r.content || '',
+    r.isUnderWarranty ? '是' : '否',
+    r.extraCost !== undefined && r.extraCost !== '' ? parseFloat(r.extraCost).toFixed(2) : '',
+    r.reportDate || '',
+    r.completeDate || '',
+    r.durationDays || '',
+    r.remark || ''
+  ]);
+  
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '维保记录');
+  XLSX.writeFile(wb, fileName);
+  showToast('维保记录导出成功');
+  closeExportModal();
 }
 
 // 导出门店周期统计数据
