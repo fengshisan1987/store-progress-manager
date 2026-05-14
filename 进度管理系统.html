@@ -10583,12 +10583,21 @@ function updateFinanceSupplier(storeIdx, colKey, supplierName) {
   // 重新渲染编辑表单以更新禁用状态和公式列
   bd.innerHTML = renderFinanceEditForm(storeIdx);
   
-  // 使用 requestAnimationFrame 在浏览器完成所有自动滚动行为后恢复位置
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      if (bd) bd.scrollLeft = scrollLeft;
-    });
-  });
+  // 先移除任何元素的焦点，防止浏览器自动滚动到焦点元素
+  if (document.activeElement && document.activeElement.blur) {
+    document.activeElement.blur();
+  }
+  
+  // 立即恢复一次
+  if (bd) bd.scrollLeft = scrollLeft;
+  
+  // 多层保险：浏览器可能在多个时机自动滚动
+  requestAnimationFrame(() => { if (bd) bd.scrollLeft = scrollLeft; });
+  requestAnimationFrame(() => { requestAnimationFrame(() => { if (bd) bd.scrollLeft = scrollLeft; }); });
+  setTimeout(() => { if (bd) bd.scrollLeft = scrollLeft; }, 0);
+  setTimeout(() => { if (bd) bd.scrollLeft = scrollLeft; }, 50);
+  setTimeout(() => { if (bd) bd.scrollLeft = scrollLeft; }, 150);
+  setTimeout(() => { if (bd) bd.scrollLeft = scrollLeft; }, 300);
 }
 
 // 刷新编辑表单中受影响的单元格（不重新渲染整个表单）
