@@ -9872,6 +9872,27 @@ function renderFinanceTableRows(storeIdx, rowFilter, rowClass) {
     const displayRemark = remark.length > 10 ? remark.substring(0, 10) + '...' : remark;
     html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:596px;background:${bgColor};z-index:1;" title="${remark}">${displayRemark}</td>`;
 
+    // 供应商（只在第一行显示，rowspan 覆盖所有匹配行）
+    if (rowIdx === 0) {
+      html += `<td style="padding:4px 6px;border:1px solid #e8e8e8;background:#fafafa;" rowspan="${rowCount}">`;
+      FINANCE_COLUMNS.forEach(col => {
+        const supplier = (fin._suppliers && fin._suppliers[col.key]) || '';
+        html += `<div style="font-size:11px;color:#666;padding:2px 0;text-align:center;border-bottom:1px solid #f0f0f0;">${supplier || '-'}</div>`;
+      });
+      html += '</td>';
+    }
+
+    // 单列结算状态（只在第一行显示，rowspan 覆盖所有匹配行）
+    if (rowIdx === 0) {
+      html += `<td style="padding:4px 6px;border:1px solid #e8e8e8;background:#fafafa;" rowspan="${rowCount}">`;
+      FINANCE_COLUMNS.forEach(col => {
+        const colStatus = calcColumnStatus(storeIdx, col.key);
+        const colStatusColor = colStatus === '已结算完成' ? '#52c41a' : (colStatus === '已付首款' ? '#fa8c16' : (colStatus === '报价阶段' ? '#1677ff' : '#999'));
+        html += `<div style="font-size:11px;padding:2px 0;text-align:center;border-bottom:1px solid #f0f0f0;color:${colStatusColor};">${colStatus || '-'}</div>`;
+      });
+      html += '</td>';
+    }
+
     // 10个费用列
     FINANCE_COLUMNS.forEach(col => {
       const val = calcFinanceValue(storeIdx, row.rowId, col.key);
