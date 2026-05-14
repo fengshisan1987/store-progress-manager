@@ -6386,7 +6386,7 @@ function updateExportModalUI() {
       <div style="background: #f5f5f5; padding: 12px; border-radius: 8px; font-size: 13px; color: #666;">
         <div style="margin-bottom: 8px;"><strong>包含内容：</strong></div>
         <div>• 门店基本信息（名称、区域、类型、开业日期、面积）</div>
-        <div>• 15行结算数据（初始报价、增减项、最终结算、实际支付、单价、毛利率）</div>
+        <div>• 16行结算数据（初始报价、增减项、佣金、最终结算、实际支付、单价、毛利率）</div>
         <div>• 10个费用列（工程硬装、广告物料、安装收尾、家具、灯具、配电箱、设计、空调、消防、其他）</div>
         <div>• 工程类费用小计、设备费用、整体筹建费用总计</div>
         <div style="margin-top:8px;color:#999;font-size:12px;">即使无数据，也会导出空白模板供填写后重新上传</div>
@@ -9230,6 +9230,7 @@ const FINANCE_ROWS = [
   { type: '增减项数据', detail: '增减项报价金额', editable: true, rowId: 'changeQuote' },
   { type: '增减项数据', detail: '增减项成本金额', editable: true, rowId: 'changeCost' },
   { type: '增减项数据', detail: '增减项利润', editable: false, rowId: 'changeProfit', formula: 'quote-cost' },
+  { type: '佣金数据', detail: '佣金金额', editable: true, rowId: 'commissionAmount' },
   { type: '最终结算数据', detail: '最终对外报价金额', editable: false, rowId: 'finalQuote', formula: 'init+change' },
   { type: '最终结算数据', detail: '最终应支付结算金额', editable: false, rowId: 'finalPay', formula: 'init+change-cost' },
   { type: '最终结算数据', detail: '最终利润', editable: false, rowId: 'finalProfit', formula: 'final-quote-pay' },
@@ -9282,7 +9283,7 @@ function calcFinanceValue(storeIdx, rowId, colKey) {
     case 'finalQuote':
       return v('initQuote', colKey) + v('changeQuote', colKey);
     case 'finalPay':
-      return v('initCost', colKey) + v('changeCost', colKey);
+      return v('initCost', colKey) + v('changeCost', colKey) - v('commissionAmount', colKey);
     case 'finalProfit':
       return calcFinanceValue(storeIdx, 'finalQuote', colKey) - calcFinanceValue(storeIdx, 'finalPay', colKey);
     case 'unpaid':
@@ -9708,7 +9709,7 @@ function toggleFinanceDetail(storeIdx) {
   if (!summaryRow) return;
 
   if (!isExpanded) {
-    // 展开：隐藏精简行，直接插入15行明细到主表格
+    // 展开：隐藏精简行，直接插入16行明细到主表格
     summaryRow.style.display = 'none';
     const rowsHtml = renderFinanceTableRows(storeIdx, null, 'finance-expand-row');
     summaryRow.insertAdjacentHTML('afterend', rowsHtml);
