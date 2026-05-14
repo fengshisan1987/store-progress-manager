@@ -10172,7 +10172,7 @@ function renderFinanceTable(storeIdx, isEdit, rowFilter) {
     FINANCE_COLUMNS.forEach(col => {
       const suppliers = getSuppliersByCategory(col.category);
       const selected = (fin._suppliers && fin._suppliers[col.key]) || '';
-      let selectHtml = `<select onchange="updateFinanceSupplier(${storeIdx},'${col.key}',this.value)" style="width:100%;padding:3px 4px;border:1px solid #d9d9d9;border-radius:4px;font-size:11px;box-sizing:border-box;background:#fff;">`;
+      let selectHtml = `<select onfocus="lockFinanceScroll(this)" onchange="updateFinanceSupplier(${storeIdx},'${col.key}',this.value)" style="width:100%;padding:3px 4px;border:1px solid #d9d9d9;border-radius:4px;font-size:11px;box-sizing:border-box;background:#fff;">`;
       selectHtml += `<option value="">-- 选择 --</option>`;
       suppliers.forEach(s => {
         selectHtml += `<option value="${s}" ${s === selected ? 'selected' : ''}>${s}</option>`;
@@ -10555,6 +10555,20 @@ function renderFinanceEditForm(storeIdx) {
   
   html += '</div>';
   return html;
+}
+
+// 锁定编辑面板滚动位置（防止点击下拉框时浏览器自动滚动）
+function lockFinanceScroll(selectEl) {
+  const bd = document.getElementById('financeEditBd');
+  if (!bd) return;
+  const savedScrollLeft = bd.scrollLeft;
+  // 立即恢复
+  bd.scrollLeft = savedScrollLeft;
+  // 多次保险（浏览器异步滚动可能在之后发生）
+  requestAnimationFrame(() => { bd.scrollLeft = savedScrollLeft; });
+  requestAnimationFrame(() => { requestAnimationFrame(() => { bd.scrollLeft = savedScrollLeft; }); });
+  // 200ms 后再检查一次
+  setTimeout(() => { bd.scrollLeft = savedScrollLeft; }, 200);
 }
 
 // 更新某列的供应商
