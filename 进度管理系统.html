@@ -2128,6 +2128,7 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
 
 <!-- Tab 导航栏 -->
 <div class="tab-nav" id="tabNav">
+  <div class="tab-item" data-tab="contract" onclick="switchTab('contract')" id="tabContractNav" style="display:none;">📝 签约信息相关</div>
   <div class="tab-item active" data-tab="detail" onclick="switchTab('detail')">📋 筹建门店进度相关</div>
   <div class="tab-item" data-tab="maintenance" onclick="switchTab('maintenance')" id="tabMaintenanceNav" style="display:none;">🔧 维保相关</div>
   <div class="tab-item" data-tab="finance" onclick="switchTab('finance')" id="tabFinanceNav" style="display:none;">💰 工程结算相关</div>
@@ -2502,7 +2503,38 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
   </div>
 </div>
 
-<!-- Tab 5: 工程结算相关 -->
+<!-- Tab 5: 签约信息相关 -->
+<div id="tab-contract" class="tab-content">
+  <div style="padding:20px;">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+      <div style="font-size:18px;font-weight:600;color:#333;">📝 签约信息相关</div>
+      <div style="display:flex;gap:2px;background:#e8e8e8;border-radius:6px;padding:3px;">
+        <button id="contract-subtab-detail" onclick="switchContractSubTab('detail')" style="padding:6px 16px;border:none;border-radius:4px;font-size:13px;cursor:pointer;background:#fff;color:#1677ff;font-weight:500;">签约信息明细</button>
+        <button id="contract-subtab-dashboard" onclick="switchContractSubTab('dashboard')" style="padding:6px 16px;border:none;border-radius:4px;font-size:13px;cursor:pointer;background:transparent;color:#666;">签约信息看板</button>
+      </div>
+    </div>
+
+    <!-- 签约信息明细子tab -->
+    <div id="contract-subtab-detail-panel" style="display:block;">
+      <div style="text-align:center;padding:80px 20px;color:#999;">
+        <div style="font-size:48px;margin-bottom:16px;">📄</div>
+        <div style="font-size:16px;margin-bottom:8px;">签约信息明细</div>
+        <div style="font-size:14px;color:#bbb;">功能开发中，敬请期待...</div>
+      </div>
+    </div>
+
+    <!-- 签约信息看板子tab -->
+    <div id="contract-subtab-dashboard-panel" style="display:none;">
+      <div style="text-align:center;padding:80px 20px;color:#999;">
+        <div style="font-size:48px;margin-bottom:16px;">📊</div>
+        <div style="font-size:16px;margin-bottom:8px;">签约信息看板</div>
+        <div style="font-size:14px;color:#bbb;">功能开发中，敬请期待...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tab 6: 工程结算相关 -->
 <div id="tab-finance" class="tab-content">
   <div style="padding:20px;">
     <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
@@ -5287,6 +5319,11 @@ function switchTab(tabName) {
   // 如果切换到维保相关 tab，渲染列表
   if (tabName === 'maintenance') {
     renderMaintenanceList();
+  }
+
+  // 如果切换到签约信息 tab，重置子tab
+  if (tabName === 'contract') {
+    switchContractSubTab('detail');
   }
 
   // 如果切换到财务结算 tab，渲染列表并重置子tab
@@ -8118,6 +8155,16 @@ function canViewMaintenance() {
   return role === 'superadmin' || role === 'engineer';
 }
 
+function canEditContract() {
+  const role = checkRole();
+  return role === 'superadmin' || role === 'admin';
+}
+
+function canViewContract() {
+  const role = checkRole();
+  return role === 'superadmin' || role === 'admin';
+}
+
 // ── 初始化 ────────────────────────────────────────────────────────────────────
 async function init() {
   // 先初始化账号系统
@@ -8346,6 +8393,12 @@ function updateUserRoleDisplay() {
   const maintenanceTab = document.getElementById('tabMaintenanceNav');
   if (maintenanceTab) {
     maintenanceTab.style.display = canViewMaintenance() ? 'block' : 'none';
+  }
+
+  // 根据权限显示/隐藏签约信息Tab
+  const contractTab = document.getElementById('tabContractNav');
+  if (contractTab) {
+    contractTab.style.display = canViewContract() ? 'block' : 'none';
   }
 }
 
@@ -9381,6 +9434,25 @@ function switchFinanceSubTab(tab) {
     financeList.style.display = 'none';
     supplierList.style.display = 'block';
     renderSupplierList();
+  }
+}
+
+// 切换签约信息相关子tab
+function switchContractSubTab(tab) {
+  const detailBtn = document.getElementById('contract-subtab-detail');
+  const dashboardBtn = document.getElementById('contract-subtab-dashboard');
+  const detailPanel = document.getElementById('contract-subtab-detail-panel');
+  const dashboardPanel = document.getElementById('contract-subtab-dashboard-panel');
+  if (tab === 'detail') {
+    detailBtn.style.cssText = 'padding:6px 16px;border:none;border-radius:4px;font-size:13px;cursor:pointer;background:#fff;color:#1677ff;font-weight:500;';
+    dashboardBtn.style.cssText = 'padding:6px 16px;border:none;border-radius:4px;font-size:13px;cursor:pointer;background:transparent;color:#666;';
+    detailPanel.style.display = 'block';
+    dashboardPanel.style.display = 'none';
+  } else {
+    detailBtn.style.cssText = 'padding:6px 16px;border:none;border-radius:4px;font-size:13px;cursor:pointer;background:transparent;color:#666;';
+    dashboardBtn.style.cssText = 'padding:6px 16px;border:none;border-radius:4px;font-size:13px;cursor:pointer;background:#fff;color:#1677ff;font-weight:500;';
+    detailPanel.style.display = 'none';
+    dashboardPanel.style.display = 'block';
   }
 }
 
