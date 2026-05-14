@@ -9579,6 +9579,32 @@ function renderFinanceStoreList() {
   html += '</tbody></table></div>';
   container.innerHTML = html;
 
+  // 恢复筛选控件状态（编辑保存后重新渲染时保持筛选）
+  const filterStoreInput = document.getElementById('fin-filter-store');
+  if (filterStoreInput) filterStoreInput.value = finFilterStoreName || '';
+  const filterDateFrom = document.getElementById('fin-filter-date-from');
+  if (filterDateFrom) filterDateFrom.value = finFilterDateFrom || '';
+  const filterDateTo = document.getElementById('fin-filter-date-to');
+  if (filterDateTo) filterDateTo.value = finFilterDateTo || '';
+  updateFinAreaBtn();
+  updateFinAreaRangeBtn();
+  updateFinTypeBtn();
+  updateFinAmountBtn();
+  updateFinDetailBtn();
+  updateFinStatusBtn();
+  FINANCE_COLUMNS.forEach((col, i) => updateFinSupplierBtn(i));
+  
+  // 重新应用筛选（使数据行保持筛选后的状态）
+  applyFinanceFilter();
+
+  // 恢复横向滚动位置
+  setTimeout(() => {
+    const headerScroll = document.getElementById('finance-list-header-scroll');
+    const bodyDiv = document.getElementById('finance-list-body');
+    if (headerScroll) headerScroll.scrollLeft = _finScrollLeft;
+    if (bodyDiv) bodyDiv.scrollLeft = _finScrollLeft;
+  }, 0);
+
   // 初始化综合数据看板
   setTimeout(() => { updateFinanceSummaryRow(); }, 0);
   
@@ -9660,6 +9686,10 @@ let finFilterStatus = '';
 let finFilterAreaMin = '';
 let finFilterAreaMax = '';
 let finFilterSuppliers = {}; // { '工程硬装': ['供应商A', '供应商B'], ... }
+let finFilterStoreName = '';
+let finFilterDateFrom = '';
+let finFilterDateTo = '';
+let _finScrollLeft = 0; // 保存横向滚动位置
 
 // 关闭所有结算明细下拉
 function closeAllFinDropdowns() {
@@ -9992,6 +10022,11 @@ function applyFinanceFilter() {
   const details = finFilterDetails;
   const status = finFilterStatus;
   
+  // 保存筛选状态到内存变量
+  finFilterStoreName = storeName;
+  finFilterDateFrom = dateFrom;
+  finFilterDateTo = dateTo;
+  
   const hasAmountFilter = amountTypes.length > 0;
   const hasDetailFilter = details.length > 0;
   const hasRowFilter = hasAmountFilter || hasDetailFilter;
@@ -10098,6 +10133,19 @@ function resetFinanceFilter() {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
+  
+  // 清空内存筛选状态变量
+  finFilterStoreName = '';
+  finFilterDateFrom = '';
+  finFilterDateTo = '';
+  finFilterAreas = [];
+  finFilterType = '';
+  finFilterAmountTypes = [];
+  finFilterDetails = [];
+  finFilterStatus = '';
+  finFilterAreaMin = '';
+  finFilterAreaMax = '';
+  finFilterSuppliers = {};
 
   // 重置自定义下拉状态
   finFilterAreas = [];
@@ -10793,6 +10841,10 @@ function updateFinanceRemark(storeIdx, rowId) {
 
 // 保存结算数据
 async function saveFinanceData(storeIdx) {
+  // 保存当前列表页的横向滚动位置
+  const bodyDiv = document.getElementById('finance-list-body');
+  if (bodyDiv) _finScrollLeft = bodyDiv.scrollLeft;
+  
   await saveStores();
   closeFinanceEdit();
   renderFinanceStoreList();
