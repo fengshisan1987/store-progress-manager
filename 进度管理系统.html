@@ -9644,18 +9644,28 @@ function toggleFinanceDetail(storeIdx) {
   updateFinanceSummaryRow();
 }
 
-// 更新综合数据看板（只统计当前可见的精简行，避免重复计算展开明细）
+// 更新综合数据看板（统计当前可见的精简行或筛选行，避免重复计算展开明细）
 function updateFinanceSummaryRow() {
   const board = document.getElementById('finance-summary-board');
   if (!board) return;
 
   const tbody = board.closest('tbody');
-  // 只取精简行（finance-summary-row），且可见的行
+  // 优先取筛选行（finance-filter-row），如果没有则取精简行（finance-summary-row）
+  const filterRows = tbody.querySelectorAll('tr.finance-filter-row');
   const summaryRows = tbody.querySelectorAll('tr.finance-summary-row');
   const visibleRows = [];
-  summaryRows.forEach(row => {
-    if (row.style.display !== 'none') visibleRows.push(row);
-  });
+
+  if (filterRows.length > 0) {
+    // 有行级筛选时，统计可见的筛选行
+    filterRows.forEach(row => {
+      if (row.style.display !== 'none') visibleRows.push(row);
+    });
+  } else {
+    // 无行级筛选时，统计可见的精简行
+    summaryRows.forEach(row => {
+      if (row.style.display !== 'none') visibleRows.push(row);
+    });
+  }
 
   // 对第9-21列（索引8-20，费用相关列）计算平均值
   for (let colIdx = 8; colIdx <= 20; colIdx++) {
