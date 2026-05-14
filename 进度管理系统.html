@@ -9237,8 +9237,8 @@ const FINANCE_ROWS = [
   { type: '实际支付数据', detail: '首次结算支付金额', editable: true, rowId: 'firstPay' },
   { type: '实际支付数据', detail: '后续结算支付金额', editable: true, rowId: 'secondPay' },
   { type: '实际支付数据', detail: '未支付金额', editable: false, rowId: 'unpaid', formula: 'pay-first-second' },
-  { type: '平米单价数据', detail: '硬装报价单价', editable: false, rowId: 'unitQuotePrice', formula: 'unit-quote', isUnitPrice: true },
-  { type: '平米单价数据', detail: '硬装成本单价', editable: false, rowId: 'unitCostPrice', formula: 'unit-cost', isUnitPrice: true },
+  { type: '平米单价数据', detail: '报价平米单价', editable: false, rowId: 'unitQuotePrice', formula: 'unit-quote', isUnitPrice: true },
+  { type: '平米单价数据', detail: '成本平米单价', editable: false, rowId: 'unitCostPrice', formula: 'unit-cost', isUnitPrice: true },
   { type: '毛利率数据', detail: '毛利率', editable: false, rowId: 'grossMargin', formula: 'margin', isPercent: true }
 ];
 
@@ -9289,11 +9289,11 @@ function calcFinanceValue(storeIdx, rowId, colKey) {
     case 'unpaid':
       return calcFinanceValue(storeIdx, 'finalPay', colKey) - v('firstPay', colKey) - v('secondPay', colKey);
     case 'unitQuotePrice':
-      // 硬装报价单价 = 工程硬装最终对外报价金额 / 门店面积
+      // 报价平米单价 = 工程硬装最终对外报价金额 / 门店面积
       if (!hasArea || colKey !== '工程硬装') return 0;
       return calcFinanceValue(storeIdx, 'finalQuote', '工程硬装') / area;
     case 'unitCostPrice':
-      // 硬装成本单价 = 工程硬装最终应支付结算金额 / 门店面积
+      // 成本平米单价 = 工程硬装最终应支付结算金额 / 门店面积
       if (!hasArea || colKey !== '工程硬装') return 0;
       return calcFinanceValue(storeIdx, 'finalPay', '工程硬装') / area;
     case 'grossMargin':
@@ -10469,7 +10469,7 @@ function renderFinanceTable(storeIdx, isEdit, rowFilter) {
       
       // 单价行和毛利率行的特殊显示逻辑
       if (isUnitPriceRow) {
-        // 硬装报价单价/硬装成本单价：只在工程硬装列显示
+        // 报价平米单价/成本平米单价：只在工程硬装列显示
         if (col.key === '工程硬装') {
           displayVal = val.toFixed(2);
         }
