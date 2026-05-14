@@ -10331,7 +10331,7 @@ function renderFinanceTable(storeIdx, isEdit, rowFilter) {
   const area = store['门店面积'] || '';
   
   let html = '<div style="overflow-x:auto;">';
-  html += '<table class="finance-table" style="width:100%;border-collapse:collapse;font-size:13px;min-width:1200px;table-layout:fixed;">';
+  html += '<table class="finance-table" style="width:100%;border-collapse:collapse;font-size:13px;min-width:2200px;table-layout:fixed;">';
   
   // 表头
   html += '<thead>';
@@ -10352,12 +10352,12 @@ function renderFinanceTable(storeIdx, isEdit, rowFilter) {
   FINANCE_COLUMNS.forEach(col => {
     const supplierName = (fin._suppliers && fin._suppliers[col.key]) || '';
     const colTitle = (!isEdit && supplierName) ? `${col.key}费用<br><span style="font-size:11px;color:#666;font-weight:400;">(${supplierName})</span>` : `${col.key}费用`;
-    html += `<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:90px;">${colTitle}</th>`;
+    html += `<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:90px;">${colTitle}</th>`;
   });
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:90px;">工程类费用小计</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:80px;">设备费用</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:100px;">整体筹建费用总计</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;min-width:90px;">结算状态</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:90px;">工程类费用小计</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:80px;">设备费用</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:100px;">整体筹建费用总计</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;width:90px;">结算状态</th>';
   html += '</tr>';
   
   // 编辑模式下增加供应商选择行
