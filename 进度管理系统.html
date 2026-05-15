@@ -13633,7 +13633,10 @@ function dashToggleAll(el, containerId) {
 function dashToggleItem(el, item, containerId) {
   const container = document.getElementById(containerId);
   const checkbox = el.querySelector('input');
-  checkbox.checked = !checkbox.checked;
+  // 如果点击的是checkbox本身，不要手动切换（默认行为已经切换了）
+  if (event && event.target !== checkbox) {
+    checkbox.checked = !checkbox.checked;
+  }
   const divs = container.querySelectorAll('div');
   const selected = [];
   divs.forEach((div, idx) => {
@@ -13694,7 +13697,10 @@ function dashToggleCostColAll(el) {
 
 function dashToggleCostColItem(el, col) {
   const checkbox = el.querySelector('input');
-  checkbox.checked = !checkbox.checked;
+  // 如果点击的是checkbox本身，不要手动切换（默认行为已经切换了）
+  if (event && event.target !== checkbox) {
+    checkbox.checked = !checkbox.checked;
+  }
   const container = document.getElementById('dash-costcol-items');
   const divs = container.querySelectorAll('div');
   dashFilterCostCols = [];
