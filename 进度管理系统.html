@@ -9970,6 +9970,8 @@ function toggleFinRenovationDropdown() {
   closeAllFinDropdowns();
   if (!isVisible) {
     menu.style.display = 'block';
+    const dropdownFilter = menu.closest('.dropdown-filter');
+    if (dropdownFilter) dropdownFilter.style.zIndex = '400';
     const btn = document.querySelector('#fin-dropdown-renovation .filter-btn');
     if (btn) {
       const rect = btn.getBoundingClientRect();
