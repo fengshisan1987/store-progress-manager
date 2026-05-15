@@ -10672,7 +10672,8 @@ function renderFinanceTableRows(storeIdx, rowFilter, rowClass) {
     html += `<td style="padding:4px 6px;border:1px solid #e8e8e8;color:#666;font-size:11px;text-align:center;font-weight:600;position:sticky;left:0;background:#fafafa;z-index:1;" colspan="9">供应商</td>`;
     FINANCE_COLUMNS.forEach(col => {
       const supplier = (fin._suppliers && fin._suppliers[col.key]) || '';
-      html += `<td style="padding:4px 6px;border:1px solid #e8e8e8;color:#666;font-size:11px;text-align:center;">${supplier || '-'}</td>`;
+      const displaySupplier = supplier || '-';
+      html += `<td style="padding:4px 6px;border:1px solid #e8e8e8;color:#666;font-size:11px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:90px;" title="${displaySupplier}">${displaySupplier}</td>`;
     });
     html += `<td style="padding:4px 6px;border:1px solid #e8e8e8;background:#fafafa;"></td>`;
     html += `<td style="padding:4px 6px;border:1px solid #e8e8e8;background:#fafafa;"></td>`;
