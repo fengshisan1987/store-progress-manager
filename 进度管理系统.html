@@ -13744,6 +13744,15 @@ function toggleDropdown(menuId) {
   menu.style.display = isHidden ? 'block' : 'none';
 }
 
+// 点击看板下拉框外部时自动关闭所有看板下拉菜单
+document.addEventListener('click', function(e) {
+  const dashIds = ['dash-dropdown-area','dash-dropdown-storetype','dash-dropdown-renovation','dash-dropdown-costcol'];
+  const clickedInside = dashIds.some(id => document.getElementById(id)?.contains(e.target));
+  if (!clickedInside) {
+    document.querySelectorAll('#dash-area-menu,#dash-storetype-menu,#dash-renovation-menu,#dash-costcol-menu').forEach(m => m.style.display = 'none');
+  }
+});
+
 // 金额类型变化时更新类型明细
 function onDashAmountTypeChange() {
   const amountTypeSelect = document.getElementById('dash-amount-type');
