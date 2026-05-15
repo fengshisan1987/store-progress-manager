@@ -10491,12 +10491,12 @@ function renderFinanceTable(storeIdx, isEdit, rowFilter) {
   FINANCE_COLUMNS.forEach(col => {
     const supplierName = (fin._suppliers && fin._suppliers[col.key]) || '';
     const colTitle = (!isEdit && supplierName) ? `${col.key}费用<br><span style="font-size:11px;color:#666;font-weight:400;">(${supplierName})</span>` : `${col.key}费用`;
-    html += `<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;">${colTitle}</th>`;
+    html += `<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:relative;z-index:3;">${colTitle}</th>`;
   });
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;">工程类费用小计</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;">设备费用</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;">整体筹建费用总计</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;">结算状态</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:relative;z-index:3;">工程类费用小计</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:relative;z-index:3;">设备费用</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:relative;z-index:3;">整体筹建费用总计</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:relative;z-index:3;">结算状态</th>';
   html += '</tr>';
   
   // 编辑模式下增加供应商选择行
@@ -10520,9 +10520,9 @@ function renderFinanceTable(storeIdx, isEdit, rowFilter) {
         selectHtml += `<option value="${s}" ${s === selected ? 'selected' : ''} title="${s}">${s}</option>`;
       });
       selectHtml += '</select>';
-      html += `<th style="padding:4px;border:1px solid #e8e8e8;text-align:center;">${selectHtml}</th>`;
+      html += `<th style="padding:4px;border:1px solid #e8e8e8;text-align:center;position:relative;z-index:3;">${selectHtml}</th>`;
     });
-    html += '<th colspan="4" style="border:1px solid #e8e8e8;"></th>';
+    html += '<th colspan="4" style="border:1px solid #e8e8e8;position:relative;z-index:3;"></th>';
     html += '</tr>';
   }
 
@@ -10540,9 +10540,9 @@ function renderFinanceTable(storeIdx, isEdit, rowFilter) {
   FINANCE_COLUMNS.forEach(col => {
     const status = calcColumnStatus(storeIdx, col.key);
     const statusColor = status === '已结算完成' ? '#52c41a' : (status === '已付首款' ? '#fa8c16' : (status === '报价阶段' ? '#1677ff' : '#999'));
-    html += `<th style="padding:6px 4px;border:1px solid #e8e8e8;text-align:center;font-size:11px;font-weight:500;color:${statusColor};" data-fin-col-status="${col.key}">${status || ''}</th>`;
+    html += `<th style="padding:6px 4px;border:1px solid #e8e8e8;text-align:center;font-size:11px;font-weight:500;color:${statusColor};position:relative;z-index:3;" data-fin-col-status="${col.key}">${status || ''}</th>`;
   });
-  html += '<th colspan="4" style="border:1px solid #e8e8e8;"></th>';
+  html += '<th colspan="4" style="border:1px solid #e8e8e8;position:relative;z-index:3;"></th>';
   html += '</tr>';
   
   html += '</thead>';
