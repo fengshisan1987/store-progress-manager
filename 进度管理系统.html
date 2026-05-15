@@ -10502,7 +10502,15 @@ function renderFinanceTable(storeIdx, isEdit, rowFilter) {
   // 编辑模式下增加供应商选择行
   if (isEdit) {
     html += '<tr style="background:#fafafa;">';
-    html += '<th colspan="9" style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:0;background:#fafafa;z-index:2;">供应商选择 ↓</th>';
+    html += '<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:0;background:#fafafa;z-index:2;"></th>';
+    html += '<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:170px;background:#fafafa;z-index:2;"></th>';
+    html += '<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:230px;background:#fafafa;z-index:2;"></th>';
+    html += '<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:300px;background:#fafafa;z-index:2;"></th>';
+    html += '<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:370px;background:#fafafa;z-index:2;"></th>';
+    html += '<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:460px;background:#fafafa;z-index:2;"></th>';
+    html += '<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:520px;background:#fafafa;z-index:2;"></th>';
+    html += '<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:620px;background:#fafafa;z-index:2;"></th>';
+    html += '<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:740px;background:#fafafa;z-index:2;">供应商选择 ↓</th>';
     FINANCE_COLUMNS.forEach(col => {
       const suppliers = getSuppliersByCategory(col.category);
       const selected = (fin._suppliers && fin._suppliers[col.key]) || '';
@@ -10520,7 +10528,15 @@ function renderFinanceTable(storeIdx, isEdit, rowFilter) {
 
   // 单列结算状态行（编辑模式和展示模式都显示）
   html += '<tr style="background:#fafafa;">';
-  html += `<th colspan="9" style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:0;background:#fafafa;z-index:2;">${isEdit ? '结算状态' : ''}</th>`;
+  html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:0;background:#fafafa;z-index:2;"></th>`;
+  html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:170px;background:#fafafa;z-index:2;"></th>`;
+  html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:230px;background:#fafafa;z-index:2;"></th>`;
+  html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:300px;background:#fafafa;z-index:2;"></th>`;
+  html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:370px;background:#fafafa;z-index:2;"></th>`;
+  html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:460px;background:#fafafa;z-index:2;"></th>`;
+  html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:520px;background:#fafafa;z-index:2;"></th>`;
+  html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:620px;background:#fafafa;z-index:2;"></th>`;
+  html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:740px;background:#fafafa;z-index:2;">${isEdit ? '结算状态' : ''}</th>`;
   FINANCE_COLUMNS.forEach(col => {
     const status = calcColumnStatus(storeIdx, col.key);
     const statusColor = status === '已结算完成' ? '#52c41a' : (status === '已付首款' ? '#fa8c16' : (status === '报价阶段' ? '#1677ff' : '#999'));
