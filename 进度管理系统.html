@@ -10462,10 +10462,10 @@ function renderFinanceTable(storeIdx, isEdit, rowFilter) {
     FINANCE_COLUMNS.forEach(col => {
       const suppliers = getSuppliersByCategory(col.category);
       const selected = (fin._suppliers && fin._suppliers[col.key]) || '';
-      let selectHtml = `<select onfocus="lockFinanceScroll(this)" onchange="updateFinanceSupplier(${storeIdx},'${col.key}',this.value)" style="width:100%;padding:3px 4px;border:1px solid #d9d9d9;border-radius:4px;font-size:11px;box-sizing:border-box;background:#fff;">`;
+      let selectHtml = `<select onfocus="lockFinanceScroll(this)" onchange="updateFinanceSupplier(${storeIdx},'${col.key}',this.value)" title="${selected || '选择供应商'}" style="width:100%;padding:3px 4px;border:1px solid #d9d9d9;border-radius:4px;font-size:11px;box-sizing:border-box;background:#fff;">`;
       selectHtml += `<option value="">-- 选择 --</option>`;
       suppliers.forEach(s => {
-        selectHtml += `<option value="${s}" ${s === selected ? 'selected' : ''}>${s}</option>`;
+        selectHtml += `<option value="${s}" ${s === selected ? 'selected' : ''} title="${s}">${s}</option>`;
       });
       selectHtml += '</select>';
       html += `<th style="padding:4px;border:1px solid #e8e8e8;text-align:center;">${selectHtml}</th>`;
