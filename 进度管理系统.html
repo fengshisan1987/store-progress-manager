@@ -10210,7 +10210,7 @@ function updateFinAreaRangeBtn() {
 
 // 点击外部关闭下拉
 document.addEventListener('click', function(e) {
-  const ids = ['fin-dropdown-area','fin-dropdown-type','fin-dropdown-amount','fin-dropdown-detail','fin-dropdown-status'];
+  const ids = ['fin-dropdown-area','fin-dropdown-type','fin-dropdown-renovation','fin-dropdown-amount','fin-dropdown-detail','fin-dropdown-status'];
   FINANCE_COLUMNS.forEach((_, i) => ids.push('fin-dropdown-supplier-' + i));
   const clickedInside = ids.some(id => document.getElementById(id)?.contains(e.target));
   if (!clickedInside) closeAllFinDropdowns();
