@@ -10588,31 +10588,31 @@ function renderFinanceTable(storeIdx, isEdit, rowFilter) {
     // 基础信息列（只在第一行显示，其他行留空，但保留sticky定位）
     if (rowIdx === 0) {
       html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:600;position:sticky;left:0;background:${bgColor};z-index:1;" rowspan="${rowCount}">${store['门店'] || '未命名门店'}</td>`;
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:169px;background:${bgColor};" rowspan="${rowCount}">${store['区域'] || ''}</td>`;
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:229px;background:${bgColor};" rowspan="${rowCount}">${store['门店类型'] || ''}</td>`;
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:299px;background:${bgColor};" rowspan="${rowCount}">${store['装修形式'] || ''}</td>`;
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:369px;background:${bgColor};" rowspan="${rowCount}">${openingDate}</td>`;
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:459px;background:${bgColor};" rowspan="${rowCount}">${area}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:169px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${store['区域'] || ''}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:229px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${store['门店类型'] || ''}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:299px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${store['装修形式'] || ''}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:369px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${openingDate}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:459px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${area}</td>`;
     }
 
     // 金额类型（合并单元格）
     if (row.type !== lastType) {
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:600;position:sticky;left:519px;background:${bgColor};text-align:center;vertical-align:middle;" rowspan="${typeRowSpans[row.type]}">${row.type}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:600;position:sticky;left:519px;background:${bgColor};z-index:1;text-align:center;vertical-align:middle;" rowspan="${typeRowSpans[row.type]}">${row.type}</td>`;
       lastType = row.type;
     }
 
     // 类型明细
-    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:${fontWeight};position:sticky;left:619px;background:${bgColor};">${row.detail}</td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:${fontWeight};position:sticky;left:619px;background:${bgColor};z-index:1;">${row.detail}</td>`;
 
     // 金额备注
     const remark = (fin[row.rowId] && fin[row.rowId]._remark) || '';
     let remarkHtml = '';
     if (isEdit && canEditFinance()) {
       const displayRemark = remark.length > 10 ? remark.substring(0, 10) + '...' : remark;
-      remarkHtml = `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;cursor:pointer;background:#fafafa;position:sticky;left:739px;" onclick="openFinanceRemarkEditor(${storeIdx}, '${row.rowId}')" title="${remark || '点击编辑备注'}">${displayRemark || '<span style="color:#999;font-size:11px;">点击编辑</span>'}</td>`;
+      remarkHtml = `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;cursor:pointer;background:#fafafa;position:sticky;left:739px;z-index:1;" onclick="openFinanceRemarkEditor(${storeIdx}, '${row.rowId}')" title="${remark || '点击编辑备注'}">${displayRemark || '<span style="color:#999;font-size:11px;">点击编辑</span>'}</td>`;
     } else {
       const displayRemark = remark.length > 10 ? remark.substring(0, 10) + '...' : remark;
-      remarkHtml = `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:739px;background:${bgColor};" title="${remark}">${displayRemark}</td>`;
+      remarkHtml = `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:739px;background:${bgColor};z-index:1;" title="${remark}">${displayRemark}</td>`;
     }
     html += remarkHtml;
     
