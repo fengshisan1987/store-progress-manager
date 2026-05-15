@@ -2112,6 +2112,7 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
 }
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
 </head>
 <body>
 
@@ -2549,11 +2550,68 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
       <!-- 动态填充门店列表 -->
     </div>
     <div id="finance-dashboard-panel" style="display:none;max-width:100%;">
-      <div style="text-align:center;padding:80px 20px;color:#999;">
-        <div style="font-size:48px;margin-bottom:16px;">📊</div>
-        <div style="font-size:16px;font-weight:600;color:#666;margin-bottom:8px;">工程结算看板</div>
-        <div style="font-size:13px;">功能开发中，敬请期待...</div>
+      <div style="font-size:16px;font-weight:600;color:#333;margin-bottom:16px;">📊 月度数据变化看板</div>
+      <!-- 筛选栏 -->
+      <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px;padding:16px;background:#f8f9fa;border-radius:8px;border:1px solid #e8e8e8;">
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <label style="font-size:12px;color:#666;">区域</label>
+          <div class="dropdown-filter" id="dash-dropdown-area" style="position:relative;">
+            <button class="filter-btn" onclick="toggleDashAreaDropdown()" style="padding:6px 12px;font-size:12px;min-width:100px;">全部 ▼</button>
+            <div id="dash-area-menu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:400;min-width:120px;max-height:300px;overflow-y:auto;">
+              <div id="dash-area-items" style="padding:4px;"></div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <label style="font-size:12px;color:#666;">门店类型</label>
+          <div class="dropdown-filter" id="dash-dropdown-storetype" style="position:relative;">
+            <button class="filter-btn" onclick="toggleDashStoreTypeDropdown()" style="padding:6px 12px;font-size:12px;min-width:100px;">全部 ▼</button>
+            <div id="dash-storetype-menu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:400;min-width:120px;max-height:300px;overflow-y:auto;">
+              <div id="dash-storetype-items" style="padding:4px;"></div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <label style="font-size:12px;color:#666;">装修形式</label>
+          <div class="dropdown-filter" id="dash-dropdown-renovation" style="position:relative;">
+            <button class="filter-btn" onclick="toggleDashRenovationDropdown()" style="padding:6px 12px;font-size:12px;min-width:100px;">全部 ▼</button>
+            <div id="dash-renovation-menu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:400;min-width:120px;max-height:300px;overflow-y:auto;">
+              <div id="dash-renovation-items" style="padding:4px;"></div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <label style="font-size:12px;color:#666;">门店面积</label>
+          <div style="display:flex;gap:2px;align-items:center;position:relative;">
+            <input type="text" id="dash-area-range-min" placeholder="最小" readonly onclick="openDashAreaModal()" style="padding:6px 8px;border:1px solid #d0d0d0;border-radius:20px;font-size:11px;outline:none;width:50px;background:#fff;cursor:pointer;text-align:center;">
+            <span style="font-size:11px;color:#999;">-</span>
+            <input type="text" id="dash-area-range-max" placeholder="最大" readonly onclick="openDashAreaModal()" style="padding:6px 8px;border:1px solid #d0d0d0;border-radius:20px;font-size:11px;outline:none;width:50px;background:#fff;cursor:pointer;text-align:center;">
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <label style="font-size:12px;color:#666;">金额类型</label>
+          <select id="dash-amount-type" onchange="onDashAmountTypeChange()" style="padding:6px 8px;border:1px solid #d0d0d0;border-radius:4px;font-size:12px;outline:none;min-width:120px;background:#fff;">
+            <option value="">请选择</option>
+          </select>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <label style="font-size:12px;color:#666;">类型明细</label>
+          <select id="dash-detail-type" onchange="renderMonthlyChart()" style="padding:6px 8px;border:1px solid #d0d0d0;border-radius:4px;font-size:12px;outline:none;min-width:120px;background:#fff;">
+            <option value="">请选择</option>
+          </select>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <label style="font-size:12px;color:#666;">费用列</label>
+          <div class="dropdown-filter" id="dash-dropdown-costcol" style="position:relative;">
+            <button class="filter-btn" onclick="toggleDashCostColDropdown()" style="padding:6px 12px;font-size:12px;min-width:120px;">整体筹建费用总计 ▼</button>
+            <div id="dash-costcol-menu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:400;min-width:160px;max-height:300px;overflow-y:auto;">
+              <div id="dash-costcol-items" style="padding:4px;"></div>
+            </div>
+          </div>
+        </div>
       </div>
+      <!-- 图表容器 -->
+      <div id="monthly-chart-container" style="width:100%;height:500px;background:#fff;border:1px solid #e8e8e8;border-radius:8px;"></div>
     </div>
     <div id="supplier-list" style="display:none;">
       <!-- 动态填充门店列表 -->
@@ -9459,6 +9517,7 @@ function switchFinanceSubTab(tab) {
     financeList.style.display = 'none';
     supplierList.style.display = 'none';
     dashboardPanel.style.display = 'block';
+    initDashboard();
   }
 }
 
@@ -13451,6 +13510,475 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
+
+// ═════════════════════════════════════════════════════════════════════════════
+// 工程结算看板 - 月度数据变化看板
+// ═════════════════════════════════════════════════════════════════════════════
+
+// 看板筛选状态
+let dashFilterAreas = [];
+let dashFilterStoreTypes = [];
+let dashFilterRenovations = [];
+let dashFilterAreaMin = '';
+let dashFilterAreaMax = '';
+let dashFilterAmountType = '';
+let dashFilterDetailType = '';
+let dashFilterCostCols = ['整体筹建费用总计'];
+
+// 费用列定义（用于多选）
+const DASH_COST_COLUMNS = [
+  '工程硬装费用', '广告物料费用', '安装收尾费用', '家具费用', '灯具费用',
+  '配电箱费用', '设计费用', '空调费用', '消防费用', '其他工程类费用',
+  '工程类费用小计', '设备费用', '整体筹建费用总计'
+];
+
+// 金额类型→类型明细映射（从FINANCE_ROWS提取）
+function getAmountTypeDetailMap() {
+  const map = {};
+  FINANCE_ROWS.forEach(row => {
+    if (!map[row.type]) map[row.type] = [];
+    map[row.type].push(row.detail);
+  });
+  return map;
+}
+
+// 金额类型→rowId映射
+function getDetailRowIdMap() {
+  const map = {};
+  FINANCE_ROWS.forEach(row => {
+    map[row.detail] = row.rowId;
+  });
+  return map;
+}
+
+// 初始化看板筛选栏
+function initDashboardFilters() {
+  // 区域下拉
+  const areas = [...new Set(STORES.map(s => s['区域']).filter(Boolean))].sort();
+  renderDashMultiDropdown('dash-area-items', areas, dashFilterAreas, (vals) => {
+    dashFilterAreas = vals;
+    updateDashDropdownBtn('dash-dropdown-area', vals);
+    renderMonthlyChart();
+  });
+
+  // 门店类型下拉
+  const storeTypes = [...new Set(STORES.map(s => s['门店类型']).filter(Boolean))].sort();
+  renderDashMultiDropdown('dash-storetype-items', storeTypes, dashFilterStoreTypes, (vals) => {
+    dashFilterStoreTypes = vals;
+    updateDashDropdownBtn('dash-dropdown-storetype', vals);
+    renderMonthlyChart();
+  });
+
+  // 装修形式下拉
+  const renovations = [...new Set(STORES.map(s => s['装修形式']).filter(Boolean))].sort();
+  renderDashMultiDropdown('dash-renovation-items', renovations, dashFilterRenovations, (vals) => {
+    dashFilterRenovations = vals;
+    updateDashDropdownBtn('dash-dropdown-renovation', vals);
+    renderMonthlyChart();
+  });
+
+  // 金额类型下拉
+  const amountTypeSelect = document.getElementById('dash-amount-type');
+  const amountTypeMap = getAmountTypeDetailMap();
+  const amountTypes = Object.keys(amountTypeMap);
+  amountTypeSelect.innerHTML = '<option value="">请选择</option>' + amountTypes.map(t => `<option value="${t}">${t}</option>`).join('');
+
+  // 费用列多选下拉
+  renderDashCostColDropdown();
+
+  // 设置默认值
+  dashFilterAmountType = '最终结算数据';
+  amountTypeSelect.value = '最终结算数据';
+  onDashAmountTypeChange();
+}
+
+// 渲染多选下拉框
+function renderDashMultiDropdown(containerId, items, selectedValues, onChange) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  let html = `<div style="padding:4px 8px;cursor:pointer;font-size:12px;" onclick="dashToggleAll(this, '${containerId}')">
+    <input type="checkbox" style="margin-right:4px;" ${selectedValues.length === items.length ? 'checked' : ''}> 全选
+  </div>`;
+  items.forEach(item => {
+    const checked = selectedValues.includes(item) ? 'checked' : '';
+    html += `<div style="padding:4px 8px;cursor:pointer;font-size:12px;" onclick="dashToggleItem(this, '${item}', '${containerId}')">
+      <input type="checkbox" style="margin-right:4px;" ${checked}> ${item}
+    </div>`;
+  });
+  container.innerHTML = html;
+  // 绑定onChange到window以便回调
+  container._onChange = onChange;
+  container._items = items;
+}
+
+function dashToggleAll(el, containerId) {
+  const container = document.getElementById(containerId);
+  const checkbox = el.querySelector('input');
+  const items = container._items || [];
+  const allChecked = checkbox.checked;
+  const divs = container.querySelectorAll('div');
+  divs.forEach((div, idx) => {
+    if (idx === 0) return;
+    const cb = div.querySelector('input');
+    cb.checked = allChecked;
+  });
+  const selected = allChecked ? [...items] : [];
+  if (container._onChange) container._onChange(selected);
+}
+
+function dashToggleItem(el, item, containerId) {
+  const container = document.getElementById(containerId);
+  const checkbox = el.querySelector('input');
+  checkbox.checked = !checkbox.checked;
+  const divs = container.querySelectorAll('div');
+  const selected = [];
+  divs.forEach((div, idx) => {
+    if (idx === 0) return;
+    const cb = div.querySelector('input');
+    if (cb.checked) selected.push(container._items[idx - 1]);
+  });
+  // 更新全选状态
+  const allCb = divs[0].querySelector('input');
+  allCb.checked = selected.length === container._items.length;
+  if (container._onChange) container._onChange(selected);
+}
+
+function updateDashDropdownBtn(dropdownId, selectedValues) {
+  const btn = document.querySelector(`#${dropdownId} .filter-btn`);
+  if (!btn) return;
+  const items = document.getElementById(dropdownId.replace('dropdown', 'items'));
+  const allItems = items ? (items._items || []) : [];
+  if (selectedValues.length === 0 || selectedValues.length === allItems.length) {
+    btn.textContent = '全部 ▼';
+  } else if (selectedValues.length === 1) {
+    btn.textContent = selectedValues[0] + ' ▼';
+  } else {
+    btn.textContent = `已选${selectedValues.length}项 ▼`;
+  }
+}
+
+// 费用列多选下拉
+function renderDashCostColDropdown() {
+  const container = document.getElementById('dash-costcol-items');
+  if (!container) return;
+  let html = `<div style="padding:4px 8px;cursor:pointer;font-size:12px;" onclick="dashToggleCostColAll(this)">
+    <input type="checkbox" style="margin-right:4px;" ${dashFilterCostCols.length === DASH_COST_COLUMNS.length ? 'checked' : ''}> 全选
+  </div>`;
+  DASH_COST_COLUMNS.forEach(col => {
+    const checked = dashFilterCostCols.includes(col) ? 'checked' : '';
+    html += `<div style="padding:4px 8px;cursor:pointer;font-size:12px;" onclick="dashToggleCostColItem(this, '${col}')">
+      <input type="checkbox" style="margin-right:4px;" ${checked}> ${col}
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function dashToggleCostColAll(el) {
+  const checkbox = el.querySelector('input');
+  const allChecked = checkbox.checked;
+  const container = document.getElementById('dash-costcol-items');
+  const divs = container.querySelectorAll('div');
+  divs.forEach((div, idx) => {
+    if (idx === 0) return;
+    const cb = div.querySelector('input');
+    cb.checked = allChecked;
+  });
+  dashFilterCostCols = allChecked ? [...DASH_COST_COLUMNS] : [];
+  updateDashCostColBtn();
+  renderMonthlyChart();
+}
+
+function dashToggleCostColItem(el, col) {
+  const checkbox = el.querySelector('input');
+  checkbox.checked = !checkbox.checked;
+  const container = document.getElementById('dash-costcol-items');
+  const divs = container.querySelectorAll('div');
+  dashFilterCostCols = [];
+  divs.forEach((div, idx) => {
+    if (idx === 0) return;
+    const cb = div.querySelector('input');
+    if (cb.checked) dashFilterCostCols.push(DASH_COST_COLUMNS[idx - 1]);
+  });
+  const allCb = divs[0].querySelector('input');
+  allCb.checked = dashFilterCostCols.length === DASH_COST_COLUMNS.length;
+  updateDashCostColBtn();
+  renderMonthlyChart();
+}
+
+function updateDashCostColBtn() {
+  const btn = document.querySelector('#dash-dropdown-costcol .filter-btn');
+  if (!btn) return;
+  if (dashFilterCostCols.length === 0) {
+    btn.textContent = '请选择 ▼';
+  } else if (dashFilterCostCols.length === 1) {
+    btn.textContent = dashFilterCostCols[0] + ' ▼';
+  } else if (dashFilterCostCols.length === DASH_COST_COLUMNS.length) {
+    btn.textContent = '全部 ▼';
+  } else {
+    btn.textContent = `已选${dashFilterCostCols.length}项 ▼`;
+  }
+}
+
+// 下拉框开关
+function toggleDashAreaDropdown() { toggleDropdown('dash-area-menu'); }
+function toggleDashStoreTypeDropdown() { toggleDropdown('dash-storetype-menu'); }
+function toggleDashRenovationDropdown() { toggleDropdown('dash-renovation-menu'); }
+function toggleDashCostColDropdown() { toggleDropdown('dash-costcol-menu'); }
+
+function toggleDropdown(menuId) {
+  const menu = document.getElementById(menuId);
+  if (!menu) return;
+  const isHidden = menu.style.display === 'none';
+  // 关闭所有下拉
+  document.querySelectorAll('.dropdown-filter [id$="-menu"]').forEach(m => m.style.display = 'none');
+  menu.style.display = isHidden ? 'block' : 'none';
+}
+
+// 金额类型变化时更新类型明细
+function onDashAmountTypeChange() {
+  const amountTypeSelect = document.getElementById('dash-amount-type');
+  const detailSelect = document.getElementById('dash-detail-type');
+  const amountType = amountTypeSelect.value;
+  dashFilterAmountType = amountType;
+
+  const amountTypeMap = getAmountTypeDetailMap();
+  const details = amountTypeMap[amountType] || [];
+
+  detailSelect.innerHTML = '<option value="">请选择</option>' + details.map(d => `<option value="${d}">${d}</option>`).join('');
+
+  // 设置默认值
+  if (amountType === '最终结算数据' && details.includes('最终对外报价金额')) {
+    detailSelect.value = '最终对外报价金额';
+    dashFilterDetailType = '最终对外报价金额';
+  } else if (details.length > 0) {
+    detailSelect.value = details[0];
+    dashFilterDetailType = details[0];
+  } else {
+    dashFilterDetailType = '';
+  }
+
+  renderMonthlyChart();
+}
+
+// 类型明细变化
+function onDashDetailTypeChange() {
+  const detailSelect = document.getElementById('dash-detail-type');
+  dashFilterDetailType = detailSelect.value;
+  renderMonthlyChart();
+}
+
+// 门店面积弹窗
+function openDashAreaModal() {
+  const modal = document.createElement('div');
+  modal.id = 'dashAreaModal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;';
+  modal.innerHTML = `
+    <div style="background:#fff;padding:24px;border-radius:12px;width:320px;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+      <div style="font-size:16px;font-weight:600;margin-bottom:16px;">门店面积范围</div>
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:20px;">
+        <input type="number" id="dash-area-min-input" placeholder="最小面积" value="${dashFilterAreaMin}" style="flex:1;padding:10px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;">
+        <span style="color:#999;">-</span>
+        <input type="number" id="dash-area-max-input" placeholder="最大面积" value="${dashFilterAreaMax}" style="flex:1;padding:10px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;">
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button onclick="closeDashAreaModal()" style="padding:8px 16px;border:1px solid #d9d9d9;border-radius:6px;background:#fff;cursor:pointer;font-size:13px;">取消</button>
+        <button onclick="applyDashAreaFilter()" style="padding:8px 16px;border:none;border-radius:6px;background:#1677ff;color:#fff;cursor:pointer;font-size:13px;">确定</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+function closeDashAreaModal() {
+  const modal = document.getElementById('dashAreaModal');
+  if (modal) modal.remove();
+}
+
+function applyDashAreaFilter() {
+  const minInput = document.getElementById('dash-area-min-input');
+  const maxInput = document.getElementById('dash-area-max-input');
+  dashFilterAreaMin = minInput ? minInput.value : '';
+  dashFilterAreaMax = maxInput ? maxInput.value : '';
+
+  const minDisplay = document.getElementById('dash-area-range-min');
+  const maxDisplay = document.getElementById('dash-area-range-max');
+  if (minDisplay) minDisplay.value = dashFilterAreaMin;
+  if (maxDisplay) maxDisplay.value = dashFilterAreaMax;
+
+  closeDashAreaModal();
+  renderMonthlyChart();
+}
+
+// 计算指定门店、指定行、指定费用列的值
+function calcDashboardValue(storeIdx, rowId, costCol) {
+  if (costCol === '工程类费用小计') {
+    let sum = 0;
+    FINANCE_COLUMNS.forEach(col => {
+      sum += calcFinanceValue(storeIdx, rowId, col.key);
+    });
+    return sum;
+  }
+  if (costCol === '设备费用') {
+    return calcFinanceValue(storeIdx, rowId, '设备费用');
+  }
+  if (costCol === '整体筹建费用总计') {
+    let sum = 0;
+    FINANCE_COLUMNS.forEach(col => {
+      sum += calcFinanceValue(storeIdx, rowId, col.key);
+    });
+    sum += calcFinanceValue(storeIdx, rowId, '设备费用');
+    return sum;
+  }
+  // 前10个费用列
+  const colDef = FINANCE_COLUMNS.find(c => c.key + '费用' === costCol);
+  if (colDef) {
+    return calcFinanceValue(storeIdx, rowId, colDef.key);
+  }
+  return 0;
+}
+
+// 渲染月度折线图
+function renderMonthlyChart() {
+  const container = document.getElementById('monthly-chart-container');
+  if (!container) return;
+
+  // 获取rowId
+  const detailRowIdMap = getDetailRowIdMap();
+  const rowId = detailRowIdMap[dashFilterDetailType];
+  if (!rowId) {
+    container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;">请选择金额类型和类型明细</div>';
+    return;
+  }
+
+  // 筛选门店
+  const filteredStores = STORES.filter((store, idx) => {
+    // 区域筛选
+    if (dashFilterAreas.length > 0 && !dashFilterAreas.includes(store['区域'])) return false;
+    // 门店类型筛选
+    if (dashFilterStoreTypes.length > 0 && !dashFilterStoreTypes.includes(store['门店类型'])) return false;
+    // 装修形式筛选
+    if (dashFilterRenovations.length > 0 && !dashFilterRenovations.includes(store['装修形式'])) return false;
+    // 门店面积筛选
+    const area = parseFloat(store['门店面积']);
+    if (dashFilterAreaMin && area < parseFloat(dashFilterAreaMin)) return false;
+    if (dashFilterAreaMax && area > parseFloat(dashFilterAreaMax)) return false;
+    // 必须有开业日期
+    const openingDate = store['已正式开业'];
+    if (!openingDate || !/^\d{4}-\d{2}-\d{2}$/.test(openingDate)) return false;
+    return true;
+  });
+
+  // 按月份分组
+  const monthData = {};
+  let minMonth = '2026-01';
+  let maxMonth = '2026-01';
+
+  filteredStores.forEach((store, idx) => {
+    const originalIdx = STORES.indexOf(store);
+    const openingDate = store['已正式开业'];
+    const month = openingDate.substring(0, 7); // YYYY-MM
+
+    if (month < minMonth) minMonth = month;
+    if (month > maxMonth) maxMonth = month;
+
+    if (!monthData[month]) monthData[month] = 0;
+
+    // 累加选中的费用列
+    dashFilterCostCols.forEach(costCol => {
+      monthData[month] += calcDashboardValue(originalIdx, rowId, costCol);
+    });
+  });
+
+  // 生成月份序列
+  const months = [];
+  const values = [];
+  const [minYear, minMon] = minMonth.split('-').map(Number);
+  const [maxYear, maxMon] = maxMonth.split('-').map(Number);
+
+  let y = minYear, m = minMon;
+  while (y < maxYear || (y === maxYear && m <= maxMon)) {
+    const monthStr = `${y}-${String(m).padStart(2, '0')}`;
+    months.push(monthStr);
+    values.push(monthData[monthStr] || 0);
+    m++;
+    if (m > 12) { m = 1; y++; }
+  }
+
+  // 如果没有数据
+  if (months.length === 0) {
+    container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;">暂无数据</div>';
+    return;
+  }
+
+  // 渲染ECharts
+  let chart = echarts.getInstanceByDom(container);
+  if (!chart) {
+    chart = echarts.init(container);
+  }
+
+  const option = {
+    title: {
+      text: `${dashFilterAmountType} - ${dashFilterDetailType}`,
+      left: 'center',
+      textStyle: { fontSize: 16, fontWeight: 600, color: '#333' }
+    },
+    tooltip: {
+      trigger: 'axis',
+      formatter: function(params) {
+        const val = params[0].value;
+        return `${params[0].axisValue}<br/>合计: ¥${val.toFixed(2)}`;
+      }
+    },
+    grid: {
+      left: '3%', right: '4%', bottom: '3%', containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: months,
+      axisLabel: { color: '#666' },
+      axisLine: { lineStyle: { color: '#e8e8e8' } }
+    },
+    yAxis: {
+      type: 'value',
+      axisLabel: {
+        color: '#666',
+        formatter: function(value) {
+          if (value >= 10000) return (value / 10000).toFixed(1) + '万';
+          return value;
+        }
+      },
+      axisLine: { lineStyle: { color: '#e8e8e8' } },
+      splitLine: { lineStyle: { color: '#f0f0f0' } }
+    },
+    series: [{
+      name: '月度合计',
+      type: 'line',
+      data: values,
+      smooth: true,
+      symbol: 'circle',
+      symbolSize: 8,
+      lineStyle: { color: '#1677ff', width: 3 },
+      itemStyle: { color: '#1677ff', borderColor: '#fff', borderWidth: 2 },
+      areaStyle: {
+        color: {
+          type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+          colorStops: [
+            { offset: 0, color: 'rgba(22,119,255,0.2)' },
+            { offset: 1, color: 'rgba(22,119,255,0.01)' }
+          ]
+        }
+      }
+    }]
+  };
+
+  chart.setOption(option);
+}
+
+// 当切换到工程结算看板时初始化
+function initDashboard() {
+  initDashboardFilters();
+  renderMonthlyChart();
+}
 
 // 页面加载完成后执行初始化
 document.addEventListener('DOMContentLoaded', function() {
