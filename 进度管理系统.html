@@ -9355,8 +9355,10 @@ function calcFinanceValue(storeIdx, rowId, colKey) {
       return v('initCost', colKey) + v('changeCost', colKey) - v('commissionAmount', colKey);
     case 'finalProfit':
       return calcFinanceValue(storeIdx, 'finalQuote', colKey) - calcFinanceValue(storeIdx, 'finalPay', colKey);
-    case 'unpaid':
-      return calcFinanceValue(storeIdx, 'finalPay', colKey) - v('firstPay', colKey) - v('secondPay', colKey);
+    case 'unpaid': {
+      const unpaid = calcFinanceValue(storeIdx, 'finalPay', colKey) - v('firstPay', colKey) - v('secondPay', colKey);
+      return Math.abs(unpaid) < 0.005 ? 0 : unpaid;
+    }
     case 'unitQuotePrice':
       // 报价平米单价 = 对应列的最终对外报价金额 / 门店面积
       if (!hasArea) return 0;
