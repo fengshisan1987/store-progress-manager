@@ -13868,8 +13868,9 @@ function renderMonthlyChart() {
     return true;
   });
 
-  // 按月份分组
-  const monthData = {};
+  // 按月份分组（计算平均值，与综合数据看板逻辑一致）
+  const monthSums = {};   // 每月总和
+  const monthCounts = {}; // 每月门店计数
   let minMonth = '2026-01';
   let maxMonth = '2026-01';
 
@@ -13881,12 +13882,28 @@ function renderMonthlyChart() {
     if (month < minMonth) minMonth = month;
     if (month > maxMonth) maxMonth = month;
 
-    if (!monthData[month]) monthData[month] = 0;
+    if (!monthSums[month]) monthSums[month] = 0;
+    if (!monthCounts[month]) monthCounts[month] = 0;
 
     // 累加选中的费用列
+    let storeVal = 0;
     dashFilterCostCols.forEach(costCol => {
-      monthData[month] += calcDashboardValue(originalIdx, rowId, costCol);
+      storeVal += calcDashboardValue(originalIdx, rowId, costCol);
     });
+    
+    // 只统计有值的门店（与综合数据看板一致）
+    if (storeVal > 0) {
+      monthSums[month] += storeVal;
+      monthCounts[month]++;
+    }
+  });
+
+  // 计算每月平均值
+  const monthData = {};
+  Object.keys(monthSums).forEach(month => {
+    if (monthCounts[month] > 0) {
+      monthData[month] = monthSums[month] / monthCounts[month];
+    }
   });
 
   // 生成月份序列
@@ -13926,7 +13943,7 @@ function renderMonthlyChart() {
       trigger: 'axis',
       formatter: function(params) {
         const val = params[0].value;
-        return `${params[0].axisValue}<br/>合计: ¥${val.toFixed(2)}`;
+        return `${params[0].axisValue}<br/>平均值: ¥${val.toFixed(2)}`;
       }
     },
     grid: {
