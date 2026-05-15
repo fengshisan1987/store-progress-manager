@@ -13995,12 +13995,22 @@ function renderMonthlyChart() {
       symbolSize: 8,
       lineStyle: { color: '#1677ff', width: 3 },
       itemStyle: { color: '#1677ff', borderColor: '#fff', borderWidth: 2 },
+      label: {
+        show: true,
+        position: 'top',
+        formatter: function(params) {
+          if (params.value === 0) return '';
+          return '¥' + params.value.toFixed(2);
+        },
+        fontSize: 12,
+        color: '#666'
+      },
       areaStyle: {
         color: {
           type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
           colorStops: [
             { offset: 0, color: 'rgba(22,119,255,0.2)' },
-            { offset: 1, color: 'rgba(22,119,255,0.01)' }
+            { offset: 1, color: 'rgba(22,119,255,.01)' }
           ]
         }
       }
