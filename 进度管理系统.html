@@ -9484,8 +9484,8 @@ function calcColumnStatus(storeIdx, colKey) {
   const unpaid = calcFinanceValue(storeIdx, 'unpaid', colKey);
   
   if (finalPay > 0 && firstPay === 0 && secondPay === 0) return '报价阶段';
-  if (firstPay > 0 && unpaid !== 0) return '已付首款';
-  if (finalPay > 0 && unpaid === 0) return '已结算完成';
+  if (firstPay > 0 && !(Math.abs(unpaid) < 0.01)) return '已付首款';
+  if (finalPay > 0 && Math.abs(unpaid) < 0.01) return '已结算完成';
   return '';
 }
 
@@ -9514,7 +9514,7 @@ function calcStoreTotalStatus(storeIdx) {
   // 检查是否所有未支付金额都为0
   let allUnpaidZero = true;
   FINANCE_COLUMNS.forEach(col => {
-    if (calcFinanceValue(storeIdx, 'unpaid', col.key) !== 0) allUnpaidZero = false;
+    if (!(Math.abs(calcFinanceValue(storeIdx, 'unpaid', col.key)) < 0.01)) allUnpaidZero = false;
   });
   
   // 检查是否有最终应支付
