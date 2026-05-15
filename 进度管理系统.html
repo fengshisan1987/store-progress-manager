@@ -9966,13 +9966,14 @@ function updateFinTypeBtn() {
 // ── 装修形式单选下拉 ──
 function toggleFinRenovationDropdown() {
   const menu = document.getElementById('fin-renovation-menu');
+  if (!menu) return;
   const isVisible = menu.style.display === 'block';
   closeAllFinDropdowns();
   if (!isVisible) {
     menu.style.display = 'block';
     const dropdownFilter = menu.closest('.dropdown-filter');
     if (dropdownFilter) dropdownFilter.style.zIndex = '400';
-    const btn = document.querySelector('#fin-dropdown-renovation .filter-btn');
+    const btn = menu.previousElementSibling;
     if (btn) {
       const rect = btn.getBoundingClientRect();
       menu.style.position = 'fixed';
