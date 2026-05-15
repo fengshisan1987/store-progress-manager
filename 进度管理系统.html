@@ -9358,13 +9358,27 @@ function calcFinanceValue(storeIdx, rowId, colKey) {
     case 'unpaid':
       return calcFinanceValue(storeIdx, 'finalPay', colKey) - v('firstPay', colKey) - v('secondPay', colKey);
     case 'unitQuotePrice':
-      // 报价平米单价 = 工程硬装最终对外报价金额 / 门店面积
-      if (!hasArea || colKey !== '工程硬装') return 0;
-      return calcFinanceValue(storeIdx, 'finalQuote', '工程硬装') / area;
+      // 报价平米单价 = 对应列的最终对外报价金额 / 门店面积
+      if (!hasArea) return 0;
+      if (colKey === '工程硬装') {
+        return calcFinanceValue(storeIdx, 'finalQuote', '工程硬装') / area;
+      } else if (colKey === '工程类费用小计') {
+        return calcRowSubtotal(storeIdx, 'finalQuote') / area;
+      } else if (colKey === '整体筹建费用总计') {
+        return calcRowTotal(storeIdx, 'finalQuote') / area;
+      }
+      return 0;
     case 'unitCostPrice':
-      // 成本平米单价 = 工程硬装最终应支付结算金额 / 门店面积
-      if (!hasArea || colKey !== '工程硬装') return 0;
-      return calcFinanceValue(storeIdx, 'finalPay', '工程硬装') / area;
+      // 成本平米单价 = 对应列的最终应支付结算金额 / 门店面积
+      if (!hasArea) return 0;
+      if (colKey === '工程硬装') {
+        return calcFinanceValue(storeIdx, 'finalPay', '工程硬装') / area;
+      } else if (colKey === '工程类费用小计') {
+        return calcRowSubtotal(storeIdx, 'finalPay') / area;
+      } else if (colKey === '整体筹建费用总计') {
+        return calcRowTotal(storeIdx, 'finalPay') / area;
+      }
+      return 0;
     case 'grossMargin':
       // 毛利率 = 最终利润 / 最终对外报价金额
       // 工程类费用小计列：用本列（小计）的最终利润 ÷ 本列（小计）的最终对外报价金额
@@ -9407,6 +9421,20 @@ function calcRowSubtotal(storeIdx, rowId) {
     if (!sq || sq <= 0) return 0;
     return sp / sq;
   }
+  // 报价平米单价：工程类费用小计的最终对外报价金额 ÷ 门店面积
+  if (rowId === 'unitQuotePrice') {
+    const store = STORES[storeIdx];
+    const area = parseFloat(store['门店面积']) || 0;
+    if (!area) return 0;
+    return calcRowSubtotal(storeIdx, 'finalQuote') / area;
+  }
+  // 成本平米单价：工程类费用小计的最终应支付结算金额 ÷ 门店面积
+  if (rowId === 'unitCostPrice') {
+    const store = STORES[storeIdx];
+    const area = parseFloat(store['门店面积']) || 0;
+    if (!area) return 0;
+    return calcRowSubtotal(storeIdx, 'finalPay') / area;
+  }
   let sum = 0;
   FINANCE_COLUMNS.forEach(col => {
     sum += calcFinanceValue(storeIdx, rowId, col.key);
@@ -9422,6 +9450,20 @@ function calcRowTotal(storeIdx, rowId) {
     const tp = calcRowTotal(storeIdx, 'finalProfit');
     if (!tq || tq <= 0) return 0;
     return tp / tq;
+  }
+  // 报价平米单价：整体筹建费用总计的最终对外报价金额 ÷ 门店面积
+  if (rowId === 'unitQuotePrice') {
+    const store = STORES[storeIdx];
+    const area = parseFloat(store['门店面积']) || 0;
+    if (!area) return 0;
+    return calcRowTotal(storeIdx, 'finalQuote') / area;
+  }
+  // 成本平米单价：整体筹建费用总计的最终应支付结算金额 ÷ 门店面积
+  if (rowId === 'unitCostPrice') {
+    const store = STORES[storeIdx];
+    const area = parseFloat(store['门店面积']) || 0;
+    if (!area) return 0;
+    return calcRowTotal(storeIdx, 'finalPay') / area;
   }
   return calcRowSubtotal(storeIdx, rowId) + calcFinanceValue(storeIdx, rowId, '设备费用');
 }
