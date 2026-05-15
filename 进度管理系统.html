@@ -9718,11 +9718,19 @@ function renderFinanceStoreList() {
 
   // 综合数据看板行（筛选栏下方，门店数据上方，只统计精简行）
   html += '<tr id="finance-summary-board" style="background:#e6f7ff;font-weight:600;">';
-  html += '<td colspan="9" style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;color:#1677ff;position:sticky;left:0;background:#e6f7ff;">综合数据看板</td>';
+  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;color:#1677ff;position:sticky;left:0;background:#e6f7ff;z-index:1;">综合数据看板</td>';
+  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:170px;background:#e6f7ff;z-index:1;"></td>';
+  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:230px;background:#e6f7ff;z-index:1;"></td>';
+  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:300px;background:#e6f7ff;z-index:1;"></td>';
+  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:370px;background:#e6f7ff;z-index:1;"></td>';
+  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:460px;background:#e6f7ff;z-index:1;"></td>';
+  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:520px;background:#e6f7ff;z-index:1;"></td>';
+  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:620px;background:#e6f7ff;z-index:1;"></td>';
+  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:740px;background:#e6f7ff;z-index:1;"></td>';
   for (let i = 0; i < 13; i++) {
-    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;position:relative;" data-sum-col="${i}">-</td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;" data-sum-col="${i}">-</td>`;
   }
-  html += '<td colspan="2" style="padding:8px 10px;border:1px solid #e8e8e8;position:relative;"></td>';
+  html += '<td colspan="2" style="padding:8px 10px;border:1px solid #e8e8e8;"></td>';
   html += '</tr>';
 
   STORES.forEach((store, idx) => {
