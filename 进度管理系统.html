@@ -2485,7 +2485,8 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
     
     <!-- 维保记录子tab -->
     <div id="maintenance-subtab-records" style="display:block;">
-      <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px;">
+        <button id="toggle-completed-btn" onclick="toggleHideCompletedMaintenance()" style="padding:8px 16px;background:#fff;color:#666;border:1px solid #d9d9d9;border-radius:6px;cursor:pointer;font-size:14px;">隐藏已完成</button>
         <button onclick="openMaintenanceEditor()" style="padding:8px 16px;background:#1890ff;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px;">+ 添加维保记录</button>
       </div>
       <div id="maintenance-list" style="max-width:100%;">
@@ -8964,6 +8965,9 @@ function getSuppliersByCategory(category) {
 // 维保记录数据（从服务器加载，localStorage备份）
 let MAINTENANCE_RECORDS = JSON.parse(localStorage.getItem('maintenanceRecords') || '[]');
 
+// 隐藏已完成维保记录的状态（true=隐藏已完成，false=显示全部）
+let _hideCompletedMaintenance = true;
+
 // 维保类型列表（与工程结算费用列一一对应）
 const MAINTENANCE_TYPES = ['工程硬装','广告物料','安装收尾','家具','灯具','配电箱','设计','空调','消防','其他工程类'];
 
@@ -9000,7 +9004,15 @@ function renderMaintenanceList() {
   });
   colGroup += '<col style="width:120px;"></colgroup>';
 
-  let html = '<div style="font-size:14px;color:#666;margin-bottom:12px;">共 ' + MAINTENANCE_RECORDS.length + ' 条维保记录</div>';
+  // 根据状态过滤记录（隐藏已完成的：有完成日期的记录），保留原始索引
+  const visibleRecords = [];
+  MAINTENANCE_RECORDS.forEach((r, i) => {
+    if (!_hideCompletedMaintenance || !r.completeDate) {
+      visibleRecords.push({ record: r, originalIdx: i });
+    }
+  });
+
+  let html = '<div style="font-size:14px;color:#666;margin-bottom:12px;">共 ' + visibleRecords.length + ' 条维保记录' + (_hideCompletedMaintenance ? '（隐藏已完成）' : '（显示全部）') + '</div>';
 
   html += '<div style="overflow-x:auto;border:1px solid #e8e8e8;border-radius:8px;">';
   html += `<table style="width:100%;border-collapse:collapse;font-size:13px;min-width:1300px;table-layout:fixed;">${colGroup}`;
@@ -9012,10 +9024,12 @@ function renderMaintenanceList() {
   html += '<th style="padding:10px 8px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;font-size:12px;white-space:nowrap;">操作</th>';
   html += '</tr></thead><tbody>';
 
-  if (MAINTENANCE_RECORDS.length === 0) {
+  if (visibleRecords.length === 0) {
     html += `<tr><td colspan="${MAINTENANCE_TABLE_COLS.length + 1}" style="padding:40px;text-align:center;color:#999;border:1px solid #e8e8e8;">暂无维保记录</td></tr>`;
   } else {
-    MAINTENANCE_RECORDS.forEach((record, idx) => {
+    visibleRecords.forEach((item) => {
+      const record = item.record;
+      const originalIdx = item.originalIdx;
       // 渲染时自动计算维保用时（如果报修日期和完成日期都有值但维保用时为空）
       if ((!record.durationDays && record.durationDays !== 0) && record.reportDate && record.completeDate) {
         const start = new Date(record.reportDate);
@@ -9035,8 +9049,8 @@ function renderMaintenanceList() {
       });
       html += '<td style="padding:10px 8px;border:1px solid #e8e8e8;text-align:center;">';
       if (canEditMaintenance()) {
-        html += `<button onclick="openMaintenanceEditor(${idx})" style="padding:2px 8px;background:#1890ff;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;margin-right:4px;">编辑</button>`;
-        html += `<button onclick="deleteMaintenanceRecord(${idx})" style="padding:2px 8px;background:#ff4d4f;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;">删除</button>`;
+        html += `<button onclick="openMaintenanceEditor(${originalIdx})" style="padding:2px 8px;background:#1890ff;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;margin-right:4px;">编辑</button>`;
+        html += `<button onclick="deleteMaintenanceRecord(${originalIdx})" style="padding:2px 8px;background:#ff4d4f;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;">删除</button>`;
       }
       html += '</td></tr>';
     });
@@ -9044,6 +9058,19 @@ function renderMaintenanceList() {
 
   html += '</tbody></table></div>';
   container.innerHTML = html;
+}
+
+// 切换隐藏/显示已完成维保记录
+function toggleHideCompletedMaintenance() {
+  _hideCompletedMaintenance = !_hideCompletedMaintenance;
+  const btn = document.getElementById('toggle-completed-btn');
+  if (btn) {
+    btn.textContent = _hideCompletedMaintenance ? '隐藏已完成' : '显示已完成';
+    btn.style.background = _hideCompletedMaintenance ? '#fff' : '#52c41a';
+    btn.style.color = _hideCompletedMaintenance ? '#666' : '#fff';
+    btn.style.borderColor = _hideCompletedMaintenance ? '#d9d9d9' : '#52c41a';
+  }
+  renderMaintenanceList();
 }
 
 // 打开维保记录编辑弹窗
