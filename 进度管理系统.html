@@ -9016,6 +9016,13 @@ function renderMaintenanceList() {
     html += `<tr><td colspan="${MAINTENANCE_TABLE_COLS.length + 1}" style="padding:40px;text-align:center;color:#999;border:1px solid #e8e8e8;">暂无维保记录</td></tr>`;
   } else {
     MAINTENANCE_RECORDS.forEach((record, idx) => {
+      // 渲染时自动计算维保用时（如果报修日期和完成日期都有值但维保用时为空）
+      if ((!record.durationDays && record.durationDays !== 0) && record.reportDate && record.completeDate) {
+        const start = new Date(record.reportDate);
+        const end = new Date(record.completeDate);
+        const diff = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+        record.durationDays = diff >= 0 ? diff : 0;
+      }
       html += '<tr style="border-bottom:1px solid #f0f0f0;">';
       MAINTENANCE_TABLE_COLS.forEach((col, ci) => {
         let val = record[col.key] || '-';
