@@ -4419,12 +4419,14 @@ function render() {
     const role = checkRole();
     const canEdit = role === 'superadmin' || role === 'admin' || role === 'engineer';
     const canManageStore = role === 'superadmin' || role === 'admin';
+    const canEditStore = role === 'superadmin' || role === 'admin' || role === 'engineer';
     
-    // 编辑/删除按钮（仅超管和管理员可见）
-    const editButtons = canManageStore ? `
+    // 编辑按钮：超管、管理员、工程管理员可见
+    // 删除按钮：仅超管和管理员可见
+    const editButtons = (canEditStore || canManageStore) ? `
       <div style="display:flex;gap:4px;">
-        <button class="btn-store-edit" onclick="event.stopPropagation();openStoreEditor(${storeIdx})" title="编辑">✏️</button>
-        <button class="btn-store-del" onclick="event.stopPropagation();deleteStore(${storeIdx})" title="删除">🗑️</button>
+        ${canEditStore ? `<button class="btn-store-edit" onclick="event.stopPropagation();openStoreEditor(${storeIdx})" title="编辑">✏️</button>` : ''}
+        ${canManageStore ? `<button class="btn-store-del" onclick="event.stopPropagation();deleteStore(${storeIdx})" title="删除">🗑️</button>` : ''}
       </div>
     ` : '';
     
