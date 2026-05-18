@@ -9716,9 +9716,26 @@ function renderFinanceStoreList() {
   html += '<div id="finance-list-body" style="overflow-x:auto;max-height:calc(100vh - 220px);">';
   html += `<table class="finance-table" style="width:100%;border-collapse:collapse;font-size:13px;min-width:1400px;table-layout:fixed;">${colGroup}<tbody>`;
 
-  // 综合数据看板行（筛选栏下方，门店数据上方，只统计精简行）
+  // 综合数据看板（合计）行
+  html += '<tr id="finance-summary-board-total" style="background:#f6ffed;font-weight:600;">';
+  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;color:#389e0d;position:sticky;left:0;background:#f6ffed;z-index:1;">综合数据看板（合计）</td>';
+  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:169px;background:#f6ffed;z-index:1;"></td>';
+  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:229px;background:#f6ffed;z-index:1;"></td>';
+  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:299px;background:#f6ffed;z-index:1;"></td>';
+  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:369px;background:#f6ffed;z-index:1;"></td>';
+  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:459px;background:#f6ffed;z-index:1;"></td>';
+  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:519px;background:#f6ffed;z-index:1;"></td>';
+  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:619px;background:#f6ffed;z-index:1;"></td>';
+  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:739px;background:#f6ffed;z-index:1;"></td>';
+  for (let i = 0; i < 13; i++) {
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;" data-total-col="${i}">-</td>`;
+  }
+  html += '<td colspan="2" style="padding:8px 10px;border:1px solid #e8e8e8;"></td>';
+  html += '</tr>';
+
+  // 综合数据看板（平均）行
   html += '<tr id="finance-summary-board" style="background:#e6f7ff;font-weight:600;">';
-  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;color:#1677ff;position:sticky;left:0;background:#e6f7ff;z-index:1;">综合数据看板</td>';
+  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;color:#1677ff;position:sticky;left:0;background:#e6f7ff;z-index:1;">综合数据看板（平均）</td>';
   html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:169px;background:#e6f7ff;z-index:1;"></td>';
   html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:229px;background:#e6f7ff;z-index:1;"></td>';
   html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:299px;background:#e6f7ff;z-index:1;"></td>';
@@ -9860,10 +9877,11 @@ function toggleFinanceDetail(storeIdx) {
 
 // 更新综合数据看板（统计当前可见的精简行或筛选行，避免重复计算展开明细）
 function updateFinanceSummaryRow() {
-  const board = document.getElementById('finance-summary-board');
-  if (!board) return;
+  const boardAvg = document.getElementById('finance-summary-board');
+  const boardTotal = document.getElementById('finance-summary-board-total');
+  if (!boardAvg && !boardTotal) return;
 
-  const tbody = board.closest('tbody');
+  const tbody = (boardAvg || boardTotal).closest('tbody');
   // 优先取筛选行（finance-filter-row），如果没有则取精简行（finance-summary-row）
   const filterRows = tbody.querySelectorAll('tr.finance-filter-row');
   const summaryRows = tbody.querySelectorAll('tr.finance-summary-row');
@@ -9881,7 +9899,7 @@ function updateFinanceSummaryRow() {
     });
   }
 
-  // 对第10-22列（索引9-21，费用相关列）计算平均值
+  // 对第10-22列（索引9-21，费用相关列）同时计算总和和平均值
   for (let colIdx = 9; colIdx <= 21; colIdx++) {
     let sum = 0;
     let count = 0;
@@ -9895,9 +9913,16 @@ function updateFinanceSummaryRow() {
         count++;
       }
     });
+
+    // 更新平均行
     const avg = count > 0 ? (sum / count).toFixed(2) : '-';
-    const sumCell = board.querySelector(`[data-sum-col="${colIdx - 9}"]`);
-    if (sumCell) sumCell.textContent = avg;
+    const avgCell = boardAvg.querySelector(`[data-sum-col="${colIdx - 9}"]`);
+    if (avgCell) avgCell.textContent = avg;
+
+    // 更新合计行
+    const total = count > 0 ? sum.toFixed(2) : '-';
+    const totalCell = boardTotal.querySelector(`[data-total-col="${colIdx - 9}"]`);
+    if (totalCell) totalCell.textContent = total;
   }
 }
 
