@@ -5774,7 +5774,7 @@ function handleFileSelect(input) {
   reader.onload = function(e) {
     try {
       const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
+      const workbook = XLSX.read(data, { type: 'array', cellDates: true });
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
       const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
       
@@ -5788,9 +5788,14 @@ function handleFileSelect(input) {
       // 显示预览
       const headers = jsonData[0];
       const previewRow = jsonData[1];
-      // Excel日期序列号转 yyyy-MM-dd 字符串
+      // Excel日期值（Date对象或序列号）转 yyyy-MM-dd 字符串
       function formatExcelDatePreview(val) {
         if (!val && val !== 0) return '-';
+        // 如果是 Date 对象（cellDates: true 时返回）
+        if (val instanceof Date) {
+          return val.toISOString().split('T')[0];
+        }
+        // 如果是数字序列号（兼容旧情况）
         if (typeof val === 'number' && val > 1 && val < 50000) {
           const date = new Date((val - 25569) * 86400 * 1000);
           return date.toISOString().split('T')[0];
@@ -6253,6 +6258,10 @@ function importMaintenanceData(data, headers) {
   // Excel日期序列号转 yyyy-MM-dd 字符串
   function formatExcelDate(val) {
     if (!val && val !== 0) return '';
+    // 如果是 Date 对象（cellDates: true 时返回）
+    if (val instanceof Date) {
+      return val.toISOString().split('T')[0];
+    }
     // 如果是数字且在 Excel 日期序列号范围内（1-50000对应1900-2037年）
     if (typeof val === 'number' && val > 1 && val < 50000) {
       const date = new Date((val - 25569) * 86400 * 1000);
