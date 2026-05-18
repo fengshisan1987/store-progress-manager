@@ -9890,7 +9890,7 @@ function updateFinanceSummaryRow() {
       if (!cell) return;
       const text = cell.textContent.trim().replace(/,/g, '');
       const val = parseFloat(text);
-      if (!isNaN(val)) {
+      if (!isNaN(val) && val !== 0) {
         sum += val;
         count++;
       }
