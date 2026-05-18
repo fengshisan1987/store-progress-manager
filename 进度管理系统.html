@@ -6347,6 +6347,16 @@ function importMaintenanceData(data, headers) {
   localStorage.setItem('maintenanceRecords', JSON.stringify(MAINTENANCE_RECORDS));
   saveStoresToServer();
   if (typeof renderMaintenanceList === 'function') renderMaintenanceList();
+  // 导入完成后，自动计算维保用时（报修日期和完成日期都有值但维保用时为空的记录）
+  MAINTENANCE_RECORDS.forEach(record => {
+    if ((!record.durationDays || record.durationDays === '') && record.reportDate && record.completeDate) {
+      const start = new Date(record.reportDate);
+      const end = new Date(record.completeDate);
+      const diff = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+      record.durationDays = diff >= 0 ? diff : 0;
+    }
+  });
+
   alert(`维保记录导入完成！新增 ${createdCount} 条，更新 ${updatedCount} 条`);
   closeImportModal();
 }
