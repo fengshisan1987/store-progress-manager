@@ -5788,10 +5788,23 @@ function handleFileSelect(input) {
       // 显示预览
       const headers = jsonData[0];
       const previewRow = jsonData[1];
+      // Excel日期序列号转 yyyy-MM-dd 字符串
+      function formatExcelDatePreview(val) {
+        if (!val && val !== 0) return '-';
+        if (typeof val === 'number' && val > 1 && val < 50000) {
+          const date = new Date((val - 25569) * 86400 * 1000);
+          return date.toISOString().split('T')[0];
+        }
+        const str = String(val).trim();
+        return str || '-';
+      }
       let previewHtml = `<div style="margin-bottom: 8px;"><strong>共 ${jsonData.length - 1} 条数据</strong></div>`;
       previewHtml += `<div style="display: grid; grid-template-columns: 120px 1fr; gap: 4px;">`;
       headers.slice(0, 6).forEach((h, i) => {
-        previewHtml += `<div style="color: #999;">${h}:</div><div>${previewRow[i] || '-'}</div>`;
+        const val = previewRow[i];
+        // 日期列预览时转换序列号
+        const displayVal = (h === '开业日期' || h === '报修日期' || h === '完成日期') ? formatExcelDatePreview(val) : (val || '-');
+        previewHtml += `<div style="color: #999;">${h}:</div><div>${displayVal}</div>`;
       });
       previewHtml += `</div>`;
       
@@ -6237,6 +6250,20 @@ function importMaintenanceData(data, headers) {
     return;
   }
 
+  // Excel日期序列号转 yyyy-MM-dd 字符串
+  function formatExcelDate(val) {
+    if (!val && val !== 0) return '';
+    // 如果是数字且在 Excel 日期序列号范围内（1-50000对应1900-2037年）
+    if (typeof val === 'number' && val > 1 && val < 50000) {
+      const date = new Date((val - 25569) * 86400 * 1000);
+      return date.toISOString().split('T')[0];
+    }
+    // 如果已经是日期字符串，直接返回
+    const str = String(val).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+    return str;
+  }
+
   // 列映射
   const colMap = {
     storeArea: headers.indexOf('区域'),
@@ -6297,6 +6324,9 @@ function importMaintenanceData(data, headers) {
           } else if (key === 'durationDays') {
             const numVal = parseInt(val);
             record.durationDays = !isNaN(numVal) ? numVal : '';
+          } else if (key === 'openingDate' || key === 'reportDate' || key === 'completeDate') {
+            // 日期列：处理Excel日期序列号
+            record[key] = formatExcelDate(val);
           } else {
             record[key] = String(val).trim();
           }
