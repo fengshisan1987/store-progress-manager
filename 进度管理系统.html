@@ -11944,10 +11944,10 @@ function calculatePhaseCycle(store, phaseName) {
     return diffDays >= 1 ? diffDays : 1;
   }
   
-  // 施工前准备阶段：固定取"工程报价已出具"和"工程进场报备已结束"
+  // 施工前准备阶段：固定取"施工图已确认"和"工程已进场"
   if (actualPhaseName === '施工前准备阶段') {
-    const startValue = store['工程报价已出具'];
-    const endValue = store['工程进场报备已结束'];
+    const startValue = store['施工图已确认'];
+    const endValue = store['工程已进场'];
     
     if (!startValue || !/^\d{4}-\d{2}-\d{2}$/.test(startValue)) return null;
     if (!endValue || !/^\d{4}-\d{2}-\d{2}$/.test(endValue)) return null;
