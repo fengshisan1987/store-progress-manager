@@ -8263,7 +8263,7 @@ function canEditFinance() {
 
 function canViewFinance() {
   const role = checkRole();
-  return role === 'superadmin' || role === 'admin' || role === 'engineer';
+  return role === 'superadmin' || role === 'admin' || role === 'engineer' || role === 'finance_guest';
 }
 
 function canEditMaintenance() {
@@ -8273,7 +8273,7 @@ function canEditMaintenance() {
 
 function canViewMaintenance() {
   const role = checkRole();
-  return role === 'superadmin' || role === 'engineer';
+  return role === 'superadmin' || role === 'engineer' || role === 'finance_guest';
 }
 
 function canEditContract() {
@@ -8496,6 +8496,9 @@ function updateUserRoleDisplay() {
       case 'engineer':
         roleText = '工程管理员';
         break;
+      case 'finance_guest':
+        roleText = '工程访客';
+        break;
       default:
         roleText = '访客';
     }
@@ -8514,6 +8517,12 @@ function updateUserRoleDisplay() {
   const maintenanceTab = document.getElementById('tabMaintenanceNav');
   if (maintenanceTab) {
     maintenanceTab.style.display = canViewMaintenance() ? 'block' : 'none';
+  }
+
+  // 根据权限显示/隐藏工程结算看板Tab
+  const financeBoardTab = document.getElementById('tabFinanceBoardNav');
+  if (financeBoardTab) {
+    financeBoardTab.style.display = canViewFinance() ? 'block' : 'none';
   }
 
   // 根据权限显示/隐藏签约信息Tab
@@ -13413,6 +13422,7 @@ function renderSecuritySettings() {
           <select id="newAuthRole" style="width:100%;padding:10px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;box-sizing:border-box;background:#fff;">
             <option value="admin">筹建管理员（可编辑主界面，不可编辑设置）</option>
             <option value="engineer">工程管理员（可编辑主界面和结算明细，不可编辑设置）</option>
+            <option value="finance_guest">工程访客（可查看结算明细和维保记录，不可编辑）</option>
             <option value="visitor">访客（仅可查看）</option>
           </select>
         </div>
@@ -13521,6 +13531,8 @@ async function renderAuthorizedAccountsList() {
       roleText = '<span style="color:#52c41a;font-size:12px;">[筹建管理员]</span>';
     } else if (acc.role === 'engineer') {
       roleText = '<span style="color:#fa8c16;font-size:12px;">[工程管理员]</span>';
+    } else if (acc.role === 'finance_guest') {
+      roleText = '<span style="color:#722ed1;font-size:12px;">[工程访客]</span>';
     } else if (acc.role === 'guest') {
       roleText = '<span style="color:#999;font-size:12px;">[访客]</span>';
     }
@@ -13603,6 +13615,7 @@ async function changeAccountRole(username, currentRole) {
   const roleOptions = [
     { value: 'admin', label: '筹建管理员（可编辑主界面，不可编辑设置）' },
     { value: 'engineer', label: '工程管理员（可编辑主界面和结算明细，不可编辑设置）' },
+    { value: 'finance_guest', label: '工程访客（可查看结算明细和维保记录，不可编辑）' },
     { value: 'guest', label: '访客（仅可查看）' }
   ];
   
