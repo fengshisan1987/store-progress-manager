@@ -6721,14 +6721,14 @@ async function confirmExport() {
 // 导出工程结算明细
 function exportFinanceData(fileName) {
   // 表头
-  const headers = ['门店名称', '区域', '门店类型', '开业日期', '门店面积', '金额类型', '类型明细', '金额备注',
+  const headers = ['门店名称', '区域', '门店类型', '验收日期', '门店面积', '金额类型', '类型明细', '金额备注',
     '工程硬装费用', '广告物料费用', '安装收尾费用', '家具费用', '灯具费用', '配电箱费用', '设计费用', '空调费用', '消防费用', '其他工程类费用',
     '工程类费用小计', '设备费用', '整体筹建费用总计'];
   
   const data = [];
   STORES.forEach((store, storeIdx) => {
     const fin = store.finance || {};
-    const openingDate = getStoreOpeningDate(store);
+    const acceptanceDate = store['门店已验收'] || '';
     const area = store['门店面积'] || '';
     
     FINANCE_ROWS.forEach(row => {
@@ -6738,7 +6738,7 @@ function exportFinanceData(fileName) {
         store['门店'] || '',
         store['区域'] || '',
         store['门店类型'] || '',
-        openingDate,
+        acceptanceDate,
         area,
         row.type,
         row.detail,
@@ -9736,7 +9736,7 @@ function renderFinanceStoreList() {
   headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:169px;background:#f5f5f5;z-index:1;">区域</th>';
   headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:229px;background:#f5f5f5;z-index:1;">门店类型</th>';
   headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:299px;background:#f5f5f5;z-index:1;">装修形式</th>';
-  headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:369px;background:#f5f5f5;z-index:1;">开业日期</th>';
+  headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:369px;background:#f5f5f5;z-index:1;">验收日期</th>';
   headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:459px;background:#f5f5f5;z-index:1;">门店面积</th>';
   headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:519px;background:#f5f5f5;z-index:1;">金额类型</th>';
   headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:619px;background:#f5f5f5;z-index:1;">类型明细</th>';
@@ -9766,7 +9766,7 @@ function renderFinanceStoreList() {
   // 装修形式（单选自定义下拉）
   headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;position:sticky;left:299px;background:#fff;z-index:1;"><div class="dropdown-filter" id="fin-dropdown-renovation" style="position:relative;"><button class="filter-btn" onclick="toggleFinRenovationDropdown()" style="width:100%;padding:4px 8px;font-size:11px;">全部 ▼</button><div id="fin-renovation-menu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:400;min-width:120px;max-height:300px;overflow-y:auto;"><div id="fin-renovation-items" style="padding:4px;"></div></div></div></td>`;
 
-  // 开业日期（区间 - 美化输入框，带onchange自动筛选）
+  // 验收日期（区间 - 美化输入框，带onchange自动筛选）
   headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;position:sticky;left:369px;background:#fff;z-index:1;"><div style="display:flex;gap:2px;align-items:center;"><input type="date" id="fin-filter-date-from" onchange="applyFinanceFilter()" style="flex:1;padding:4px 6px;border:1px solid #d0d0d0;border-radius:20px;font-size:10px;outline:none;min-width:0;"><span style="font-size:10px;color:#999;">-</span><input type="date" id="fin-filter-date-to" onchange="applyFinanceFilter()" style="flex:1;padding:4px 6px;border:1px solid #d0d0d0;border-radius:20px;font-size:10px;outline:none;min-width:0;"></div></td>`;
 
   // 门店面积（弹窗填写）
@@ -9847,7 +9847,7 @@ function renderFinanceStoreList() {
   STORES.forEach((store, idx) => {
     const status = calcStoreTotalStatus(idx);
     const statusColor = status === '已结算完成' ? '#52c41a' : (status === '已支付部分款项' ? '#fa8c16' : (status === '报价阶段' ? '#1677ff' : '#999'));
-    const openingDate = getStoreOpeningDate(store);
+    const acceptanceDate = store['门店已验收'] || '';
     const area = store['门店面积'] || '';
     
     // 精简行（默认显示：最终对外报价金额）
@@ -9856,7 +9856,7 @@ function renderFinanceStoreList() {
     html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:169px;background:#fff;z-index:1;">${store['区域'] || ''}</td>`;
     html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:229px;background:#fff;z-index:1;">${store['门店类型'] || ''}</td>`;
     html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:299px;background:#fff;z-index:1;">${store['装修形式'] || ''}</td>`;
-    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:369px;background:#fff;z-index:1;">${openingDate}</td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:369px;background:#fff;z-index:1;">${acceptanceDate}</td>`;
     html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:459px;background:#fff;z-index:1;">${area}</td>`;
     html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:519px;background:#fff;z-index:1;">最终结算数据</td>`;
     html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;font-weight:600;position:sticky;left:619px;background:#fff;z-index:1;">最终对外报价金额</td>`;
@@ -10434,9 +10434,9 @@ function applyFinanceFilter() {
     if (storeType && store['门店类型'] !== storeType) storeMatch = false;
     if (renovationType && store['装修形式'] !== renovationType) storeMatch = false;
 
-    const openingDate = getStoreOpeningDate(store);
-    if (dateFrom && openingDate < dateFrom) storeMatch = false;
-    if (dateTo && openingDate > dateTo) storeMatch = false;
+    const acceptanceDate = store['门店已验收'] || '';
+    if (dateFrom && acceptanceDate < dateFrom) storeMatch = false;
+    if (dateTo && acceptanceDate > dateTo) storeMatch = false;
 
     const area = parseFloat(store['门店面积']) || 0;
     if (areaMin && area < areaMin) storeMatch = false;
@@ -10585,7 +10585,7 @@ function resetFinanceFilter() {
 function renderFinanceTable(storeIdx, isEdit, rowFilter) {
   const store = STORES[storeIdx];
   const fin = getStoreFinance(storeIdx);
-  const openingDate = getStoreOpeningDate(store);
+  const acceptanceDate = store['门店已验收'] || '';
   const area = store['门店面积'] || '';
   
   // 构建 colgroup（与列表页一致，精确控制列宽）
@@ -10609,7 +10609,7 @@ function renderFinanceTable(storeIdx, isEdit, rowFilter) {
   html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:169px;background:#f5f5f5;z-index:1;">区域</th>';
   html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:229px;background:#f5f5f5;z-index:1;">门店类型</th>';
   html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:299px;background:#f5f5f5;z-index:1;">装修形式</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:369px;background:#f5f5f5;z-index:1;">开业日期</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:369px;background:#f5f5f5;z-index:1;">验收日期</th>';
   html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:459px;background:#f5f5f5;z-index:1;">门店面积</th>';
   // 金额列
   html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:left;font-weight:600;color:#333;position:sticky;left:519px;background:#f5f5f5;z-index:1;">金额类型</th>';
@@ -10710,7 +10710,7 @@ function renderFinanceTable(storeIdx, isEdit, rowFilter) {
       html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:169px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${store['区域'] || ''}</td>`;
       html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:229px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${store['门店类型'] || ''}</td>`;
       html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:299px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${store['装修形式'] || ''}</td>`;
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:369px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${openingDate}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:369px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${acceptanceDate}</td>`;
       html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:459px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${area}</td>`;
     }
 
@@ -10829,7 +10829,7 @@ function renderFinanceTable(storeIdx, isEdit, rowFilter) {
 function renderFinanceTableRows(storeIdx, rowFilter, rowClass) {
   const store = STORES[storeIdx];
   const fin = getStoreFinance(storeIdx);
-  const openingDate = getStoreOpeningDate(store);
+  const acceptanceDate = store['门店已验收'] || '';
   const area = store['门店面积'] || '';
 
   const cls = rowClass || 'finance-filter-row';
@@ -10904,7 +10904,7 @@ function renderFinanceTableRows(storeIdx, rowFilter, rowClass) {
       html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:169px;background:${bgColor};" rowspan="${rowCount}">${store['区域'] || ''}</td>`;
       html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:229px;background:${bgColor};" rowspan="${rowCount}">${store['门店类型'] || ''}</td>`;
       html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:299px;background:${bgColor};" rowspan="${rowCount}">${store['装修形式'] || ''}</td>`;
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:369px;background:${bgColor};" rowspan="${rowCount}">${openingDate}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:369px;background:${bgColor};" rowspan="${rowCount}">${acceptanceDate}</td>`;
       html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:459px;background:${bgColor};" rowspan="${rowCount}">${area}</td>`;
     }
 
@@ -11018,7 +11018,7 @@ function renderFinanceEditForm(storeIdx) {
       <span><strong>门店：</strong>${store['门店'] || ''}</span>
       <span><strong>区域：</strong>${store['区域'] || ''}</span>
       <span><strong>类型：</strong>${store['门店类型'] || ''}</span>
-      <span><strong>开业日期：</strong>${getStoreOpeningDate(store) || '未设置'}</span>
+      <span><strong>验收日期：</strong>${store['门店已验收'] || '未设置'}</span>
     </div>
   `;
   
