@@ -10027,32 +10027,59 @@ function toggleFinanceDetail(storeIdx) {
   updateFinanceSummaryRow();
 }
 
-// 更新综合数据看板（只统计精简行，避免筛选行列索引错乱）
+// 更新综合数据看板（统计当前可见的精简行或筛选行）
 function updateFinanceSummaryRow() {
   const boardAvg = document.getElementById('finance-summary-board');
   const boardTotal = document.getElementById('finance-summary-board-total');
   if (!boardAvg && !boardTotal) return;
 
   const tbody = (boardAvg || boardTotal).closest('tbody');
-  // 只统计精简行（finance-summary-row），结构固定，每行25个cells
-  const summaryRows = tbody.querySelectorAll('tr.finance-summary-row');
-  const visibleRows = [];
-  summaryRows.forEach(row => {
-    if (row.style.display !== 'none') visibleRows.push(row);
+  // 同时获取精简行和筛选行中的可见数据行
+  const allRows = tbody.querySelectorAll('tr.finance-summary-row, tr.finance-filter-row');
+  const dataRows = [];
+
+  allRows.forEach(row => {
+    if (row.style.display === 'none') return;
+    // 排除供应商行和结算状态行（第一个cell有colspan）
+    const firstCell = row.cells[0];
+    if (firstCell && firstCell.colSpan > 1) return;
+    dataRows.push(row);
   });
 
   // 对第11-23列（索引10-22，费用相关列，跳过金额备注，包含整体筹建费用总计）
   for (let colIdx = 10; colIdx <= 22; colIdx++) {
     let sum = 0;
-    let count = 0;
-    visibleRows.forEach(row => {
-      const cell = row.cells[colIdx];
+    let count = 0;      // 非0值计数（用于平均）
+    let zeroCount = 0;  // 0值计数
+
+    dataRows.forEach(row => {
+      // 根据行的cells数量确定费用列的正确索引
+      // 完整行（25cells）：基础信息7列 + 金额类型1列 + 类型明细1列 + 金额备注1列 + 费用列从索引10开始
+      // 缩略行B（16cells，不同类型第0行）：金额类型1列 + 类型明细1列 + 金额备注1列 + 费用列从索引3开始
+      // 缩略行A（15cells，同类型后续行）：类型明细1列 + 金额备注1列 + 费用列从索引2开始
+      const len = row.cells.length;
+      let actualColIdx;
+      if (len >= 20) {
+        actualColIdx = colIdx;        // 完整行：费用列从索引10开始
+      } else if (len === 16) {
+        actualColIdx = colIdx - 7;    // 缩略行B：费用列从索引3开始（10-7=3）
+      } else if (len === 15) {
+        actualColIdx = colIdx - 8;    // 缩略行A：费用列从索引2开始（10-8=2）
+      } else {
+        actualColIdx = colIdx;        // 默认
+      }
+
+      const cell = row.cells[actualColIdx];
       if (!cell) return;
       const text = cell.textContent.trim().replace(/,/g, '');
       const val = parseFloat(text);
       if (!isNaN(val)) {
         sum += val;
-        if (val !== 0) count++;
+        if (val !== 0) {
+          count++;
+        } else {
+          zeroCount++;
+        }
       }
     });
 
@@ -10062,7 +10089,7 @@ function updateFinanceSummaryRow() {
     if (avgCell) avgCell.textContent = avg;
 
     // 更新合计行（所有可见门店，包括0值）
-    const total = visibleRows.length > 0 ? sum.toFixed(2) : '-';
+    const total = (count + zeroCount) > 0 ? sum.toFixed(2) : '-';
     const totalCell = boardTotal.querySelector(`[data-total-col="${colIdx - 10}"]`);
     if (totalCell) totalCell.textContent = total;
   }
