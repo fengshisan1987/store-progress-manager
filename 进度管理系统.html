@@ -9872,7 +9872,7 @@ function renderFinanceStoreList() {
   html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:609px;background:#f6ffed;z-index:1;"></td>';
   html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:709px;background:#f6ffed;z-index:1;"></td>';
   html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:829px;background:#f6ffed;z-index:1;"></td>';
-  for (let i = 0; i < 13; i++) {
+  for (let i = 0; i < 14; i++) {
     html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;" data-total-col="${i}">-</td>`;
   }
   html += '<td colspan="2" style="padding:8px 10px;border:1px solid #e8e8e8;"></td>';
@@ -9890,7 +9890,7 @@ function renderFinanceStoreList() {
   html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:609px;background:#e6f7ff;z-index:1;"></td>';
   html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:709px;background:#e6f7ff;z-index:1;"></td>';
   html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:829px;background:#e6f7ff;z-index:1;"></td>';
-  for (let i = 0; i < 13; i++) {
+  for (let i = 0; i < 14; i++) {
     html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;" data-sum-col="${i}">-</td>`;
   }
   html += '<td colspan="2" style="padding:8px 10px;border:1px solid #e8e8e8;"></td>';
@@ -10027,32 +10027,22 @@ function toggleFinanceDetail(storeIdx) {
   updateFinanceSummaryRow();
 }
 
-// 更新综合数据看板（统计当前可见的精简行或筛选行，避免重复计算展开明细）
+// 更新综合数据看板（只统计精简行，避免筛选行列索引错乱）
 function updateFinanceSummaryRow() {
   const boardAvg = document.getElementById('finance-summary-board');
   const boardTotal = document.getElementById('finance-summary-board-total');
   if (!boardAvg && !boardTotal) return;
 
   const tbody = (boardAvg || boardTotal).closest('tbody');
-  // 优先取筛选行（finance-filter-row），如果没有则取精简行（finance-summary-row）
-  const filterRows = tbody.querySelectorAll('tr.finance-filter-row');
+  // 只统计精简行（finance-summary-row），结构固定，每行25个cells
   const summaryRows = tbody.querySelectorAll('tr.finance-summary-row');
   const visibleRows = [];
+  summaryRows.forEach(row => {
+    if (row.style.display !== 'none') visibleRows.push(row);
+  });
 
-  if (filterRows.length > 0) {
-    // 有行级筛选时，统计可见的筛选行
-    filterRows.forEach(row => {
-      if (row.style.display !== 'none') visibleRows.push(row);
-    });
-  } else {
-    // 无行级筛选时，统计可见的精简行
-    summaryRows.forEach(row => {
-      if (row.style.display !== 'none') visibleRows.push(row);
-    });
-  }
-
-  // 对第10-22列（索引9-21，费用相关列）同时计算总和和平均值
-  for (let colIdx = 9; colIdx <= 21; colIdx++) {
+  // 对第11-23列（索引10-22，费用相关列，跳过金额备注，包含整体筹建费用总计）
+  for (let colIdx = 10; colIdx <= 22; colIdx++) {
     let sum = 0;
     let count = 0;
     visibleRows.forEach(row => {
@@ -10060,20 +10050,20 @@ function updateFinanceSummaryRow() {
       if (!cell) return;
       const text = cell.textContent.trim().replace(/,/g, '');
       const val = parseFloat(text);
-      if (!isNaN(val) && val !== 0) {
+      if (!isNaN(val)) {
         sum += val;
-        count++;
+        if (val !== 0) count++;
       }
     });
 
-    // 更新平均行
+    // 更新平均行（只统计有非0值的门店）
     const avg = count > 0 ? (sum / count).toFixed(2) : '-';
-    const avgCell = boardAvg.querySelector(`[data-sum-col="${colIdx - 9}"]`);
+    const avgCell = boardAvg.querySelector(`[data-sum-col="${colIdx - 10}"]`);
     if (avgCell) avgCell.textContent = avg;
 
-    // 更新合计行
-    const total = count > 0 ? sum.toFixed(2) : '-';
-    const totalCell = boardTotal.querySelector(`[data-total-col="${colIdx - 9}"]`);
+    // 更新合计行（所有可见门店，包括0值）
+    const total = visibleRows.length > 0 ? sum.toFixed(2) : '-';
+    const totalCell = boardTotal.querySelector(`[data-total-col="${colIdx - 10}"]`);
     if (totalCell) totalCell.textContent = total;
   }
 }
