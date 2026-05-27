@@ -10675,8 +10675,12 @@ function renderFinanceTable(storeIdx, isEdit, rowFilter) {
   const acceptanceDate = store['门店已验收'] || '';
   const area = store['门店面积'] || '';
   
-  // 构建 colgroup（与列表页一致，精确控制列宽）
-  const colWidths = [
+  // 构建 colgroup（编辑模式删除区域、门店类型、装修形式、预估验收日期、验收日期5列）
+  const colWidths = isEdit ? [
+    '170px', '60px', '100px', '120px', '120px',
+    ...FINANCE_COLUMNS.map(() => '90px'),
+    '90px', '80px', '100px', '90px'
+  ] : [
     '170px', '60px', '70px', '70px', '90px', '90px', '60px', '100px', '120px', '120px',
     ...FINANCE_COLUMNS.map(() => '90px'),
     '90px', '80px', '100px', '90px'
@@ -10693,16 +10697,20 @@ function renderFinanceTable(storeIdx, isEdit, rowFilter) {
   html += '<tr style="background:#f5f5f5;">';
   // 基础信息固定列
   html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:0;background:#f5f5f5;z-index:1;">门店名称</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:169px;background:#f5f5f5;z-index:1;">区域</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:229px;background:#f5f5f5;z-index:1;">门店类型</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:299px;background:#f5f5f5;z-index:1;">装修形式</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:369px;background:#f5f5f5;z-index:1;">预估验收日期</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:459px;background:#f5f5f5;z-index:1;">验收日期</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:549px;background:#f5f5f5;z-index:1;">门店面积</th>';
+  if (!isEdit) {
+    html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:169px;background:#f5f5f5;z-index:1;">区域</th>';
+    html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:229px;background:#f5f5f5;z-index:1;">门店类型</th>';
+    html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:299px;background:#f5f5f5;z-index:1;">装修形式</th>';
+    html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:369px;background:#f5f5f5;z-index:1;">预估验收日期</th>';
+    html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:459px;background:#f5f5f5;z-index:1;">验收日期</th>';
+    html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:549px;background:#f5f5f5;z-index:1;">门店面积</th>';
+  } else {
+    html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:169px;background:#f5f5f5;z-index:1;">门店面积</th>';
+  }
   // 金额列
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:left;font-weight:600;color:#333;position:sticky;left:609px;background:#f5f5f5;z-index:1;">金额类型</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:left;font-weight:600;color:#333;position:sticky;left:709px;background:#f5f5f5;z-index:1;">类型明细</th>';
-  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:left;font-weight:600;color:#333;position:sticky;left:829px;background:#f5f5f5;z-index:1;">金额备注</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:left;font-weight:600;color:#333;position:sticky;left:' + (isEdit ? '229' : '609') + 'px;background:#f5f5f5;z-index:1;">金额类型</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:left;font-weight:600;color:#333;position:sticky;left:' + (isEdit ? '329' : '709') + 'px;background:#f5f5f5;z-index:1;">类型明细</th>';
+  html += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:left;font-weight:600;color:#333;position:sticky;left:' + (isEdit ? '449' : '829') + 'px;background:#f5f5f5;z-index:1;">金额备注</th>';
   FINANCE_COLUMNS.forEach(col => {
     const supplierName = (fin._suppliers && fin._suppliers[col.key]) || '';
     const colTitle = (!isEdit && supplierName) ? `${col.key}费用<br><span style="font-size:11px;color:#666;font-weight:400;">(${supplierName})</span>` : `${col.key}费用`;
@@ -10720,13 +10728,8 @@ function renderFinanceTable(storeIdx, isEdit, rowFilter) {
     html += '<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:0;background:#fafafa;z-index:1;"></th>';
     html += '<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:169px;background:#fafafa;z-index:1;"></th>';
     html += '<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:229px;background:#fafafa;z-index:1;"></th>';
-    html += '<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:299px;background:#fafafa;z-index:1;"></th>';
-    html += '<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:369px;background:#fafafa;z-index:1;"></th>';
-    html += '<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:459px;background:#fafafa;z-index:1;"></th>';
-    html += '<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:549px;background:#fafafa;z-index:1;"></th>';
-    html += '<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:609px;background:#fafafa;z-index:1;"></th>';
-    html += '<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:709px;background:#fafafa;z-index:1;"></th>';
-    html += '<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:829px;background:#fafafa;z-index:1;">供应商选择 ↓</th>';
+    html += '<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:329px;background:#fafafa;z-index:1;"></th>';
+    html += '<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:449px;background:#fafafa;z-index:1;">供应商选择 ↓</th>';
     FINANCE_COLUMNS.forEach(col => {
       const suppliers = getSuppliersByCategory(col.category);
       const selected = (fin._suppliers && fin._suppliers[col.key]) || '';
@@ -10745,14 +10748,22 @@ function renderFinanceTable(storeIdx, isEdit, rowFilter) {
   // 单列结算状态行（编辑模式和展示模式都显示）
   html += '<tr style="background:#fafafa;">';
   html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:0;background:#fafafa;z-index:1;"></th>`;
-  html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:169px;background:#fafafa;z-index:1;"></th>`;
-  html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:229px;background:#fafafa;z-index:1;"></th>`;
-  html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:299px;background:#fafafa;z-index:1;"></th>`;
-  html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:369px;background:#fafafa;z-index:1;"></th>`;
-  html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:459px;background:#fafafa;z-index:1;"></th>`;
-  html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:519px;background:#fafafa;z-index:1;"></th>`;
-  html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:619px;background:#fafafa;z-index:1;"></th>`;
-  html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:739px;background:#fafafa;z-index:1;">${isEdit ? '结算状态' : ''}</th>`;
+  if (!isEdit) {
+    html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:169px;background:#fafafa;z-index:1;"></th>`;
+    html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:229px;background:#fafafa;z-index:1;"></th>`;
+    html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:299px;background:#fafafa;z-index:1;"></th>`;
+    html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:369px;background:#fafafa;z-index:1;"></th>`;
+    html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:459px;background:#fafafa;z-index:1;"></th>`;
+    html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:549px;background:#fafafa;z-index:1;"></th>`;
+    html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:609px;background:#fafafa;z-index:1;"></th>`;
+    html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:709px;background:#fafafa;z-index:1;"></th>`;
+    html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:829px;background:#fafafa;z-index:1;">${isEdit ? '结算状态' : ''}</th>`;
+  } else {
+    html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:169px;background:#fafafa;z-index:1;"></th>`;
+    html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:229px;background:#fafafa;z-index:1;"></th>`;
+    html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:329px;background:#fafafa;z-index:1;"></th>`;
+    html += `<th style="padding:6px 10px;border:1px solid #e8e8e8;text-align:right;font-size:12px;color:#666;font-weight:400;position:sticky;left:449px;background:#fafafa;z-index:1;">${isEdit ? '结算状态' : ''}</th>`;
+  }
   FINANCE_COLUMNS.forEach(col => {
     const status = calcColumnStatus(storeIdx, col.key);
     const statusColor = status === '已结算完成' ? '#52c41a' : (status === '已付首款' ? '#fa8c16' : (status === '报价阶段' ? '#1677ff' : '#999'));
@@ -10796,31 +10807,35 @@ function renderFinanceTable(storeIdx, isEdit, rowFilter) {
     // 基础信息列（只在第一行显示，其他行留空，但保留sticky定位）
     if (rowIdx === 0) {
       html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:600;position:sticky;left:0;background:${bgColor};z-index:1;" rowspan="${rowCount}">${store['门店'] || '未命名门店'}</td>`;
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:169px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${store['区域'] || ''}</td>`;
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:229px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${store['门店类型'] || ''}</td>`;
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:299px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${store['装修形式'] || ''}</td>`;
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:369px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${acceptanceDate}</td>`;
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:459px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${area}</td>`;
+      if (!isEdit) {
+        html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:169px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${store['区域'] || ''}</td>`;
+        html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:229px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${store['门店类型'] || ''}</td>`;
+        html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:299px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${store['装修形式'] || ''}</td>`;
+        html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:369px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${acceptanceDate}</td>`;
+        html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:459px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${area}</td>`;
+      } else {
+        html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:169px;background:${bgColor};z-index:1;" rowspan="${rowCount}">${area}</td>`;
+      }
     }
 
     // 金额类型（合并单元格）
     if (row.type !== lastType) {
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:600;position:sticky;left:519px;background:${bgColor};z-index:1;text-align:center;vertical-align:middle;" rowspan="${typeRowSpans[row.type]}">${row.type}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:600;position:sticky;left:${isEdit ? '229' : '519'}px;background:${bgColor};z-index:1;text-align:center;vertical-align:middle;" rowspan="${typeRowSpans[row.type]}">${row.type}</td>`;
       lastType = row.type;
     }
 
     // 类型明细
-    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:${fontWeight};position:sticky;left:619px;background:${bgColor};z-index:1;">${row.detail}</td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:${fontWeight};position:sticky;left:${isEdit ? '329' : '619'}px;background:${bgColor};z-index:1;">${row.detail}</td>`;
 
     // 金额备注
     const remark = (fin[row.rowId] && fin[row.rowId]._remark) || '';
     let remarkHtml = '';
     if (isEdit && canEditFinance()) {
       const displayRemark = remark.length > 10 ? remark.substring(0, 10) + '...' : remark;
-      remarkHtml = `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;cursor:pointer;background:#fafafa;position:sticky;left:739px;z-index:1;" onclick="openFinanceRemarkEditor(${storeIdx}, '${row.rowId}')" title="${remark || '点击编辑备注'}">${displayRemark || '<span style="color:#999;font-size:11px;">点击编辑</span>'}</td>`;
+      remarkHtml = `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;cursor:pointer;background:#fafafa;position:sticky;left:${isEdit ? '449' : '739'}px;z-index:1;" onclick="openFinanceRemarkEditor(${storeIdx}, '${row.rowId}')" title="${remark || '点击编辑备注'}">${displayRemark || '<span style="color:#999;font-size:11px;">点击编辑</span>'}</td>`;
     } else {
       const displayRemark = remark.length > 10 ? remark.substring(0, 10) + '...' : remark;
-      remarkHtml = `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:739px;background:${bgColor};z-index:1;" title="${remark}">${displayRemark}</td>`;
+      remarkHtml = `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:${isEdit ? '449' : '739'}px;background:${bgColor};z-index:1;" title="${remark}">${displayRemark}</td>`;
     }
     html += remarkHtml;
     
