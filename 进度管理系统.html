@@ -6775,7 +6775,25 @@ function exportFinanceData(fileName) {
     const estAcceptanceDate = store['预估验收日期'] || '';
     const acceptanceDate = store['门店已验收'] || '';
     const area = store['门店面积'] || '';
-    
+
+    // 每个门店数据前插入供应商行
+    const supplierRow = [
+      store['门店'] || '',
+      store['区域'] || '',
+      store['门店类型'] || '',
+      estAcceptanceDate,
+      acceptanceDate,
+      area,
+      '供应商',
+      '',
+      ''
+    ];
+    FINANCE_COLUMNS.forEach(col => {
+      supplierRow.push((fin._suppliers && fin._suppliers[col.key]) || '');
+    });
+    supplierRow.push('', '', ''); // 小计、设备费用、总计留空
+    data.push(supplierRow);
+
     FINANCE_ROWS.forEach(row => {
       const rowData = fin[row.rowId] || {};
       const remark = rowData._remark || '';
