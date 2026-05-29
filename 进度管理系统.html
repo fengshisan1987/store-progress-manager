@@ -6434,6 +6434,10 @@ function openExportModal() {
   });
   const statusItems = allStatuses.map(s => ({ value: s, label: s }));
 
+  // 根据角色确定可导出的类型
+  const role = checkRole();
+  const isEngineer = role === 'engineer';
+
   const modal = document.createElement('div');
   modal.id = 'exportModal';
   modal.className = 'modal-overlay';
@@ -6447,9 +6451,9 @@ function openExportModal() {
         <div style="margin-bottom: 16px;">
           <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">导出类型</label>
           <select id="exportType" onchange="updateExportModalUI()" style="width:100%;padding:10px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;background:#fff;">
-            <option value="full">完整数据（门店基本信息 + 各阶段进度）</option>
-            <option value="detailed">门店详细进度完整数据（含全部节点+基本信息）</option>
-            <option value="cycleStats">门店周期统计（各阶段周期明细）</option>
+            ${isEngineer ? '' : '<option value="full">完整数据（门店基本信息 + 各阶段进度）</option>'}
+            ${isEngineer ? '' : '<option value="detailed">门店详细进度完整数据（含全部节点+基本信息）</option>'}
+            ${isEngineer ? '' : '<option value="cycleStats">门店周期统计（各阶段周期明细）</option>'}
             <option value="finance">工程结算明细</option>
             <option value="suppliers">供应商管理</option>
             <option value="maintenance">维保记录</option>
@@ -8521,8 +8525,8 @@ function renderSettingsCards() {
     `;
   }
 
-  // 超管和管理员共有
-  if (role === 'superadmin' || role === 'admin') {
+  // 超管、管理员、工程管理员共有导出权限（但导出内容不同）
+  if (role === 'superadmin' || role === 'admin' || role === 'engineer') {
     html += `
       <div class="settings-card" onclick="exportData()">
         <div class="settings-card-icon">📤</div>
