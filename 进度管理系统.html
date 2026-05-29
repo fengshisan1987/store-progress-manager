@@ -6775,7 +6775,7 @@ function exportFinanceData(fileName) {
   
   const data = [];
   STORES.forEach((store, storeIdx) => {
-    const fin = store.finance || {};
+    const fin = store._finance || {};
     const estAcceptanceDate = store['预估验收日期'] || '';
     const acceptanceDate = store['门店已验收'] || '';
     const area = store['门店面积'] || '';
