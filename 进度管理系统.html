@@ -6455,6 +6455,7 @@ function openExportModal() {
             ${isEngineer ? '' : '<option value="detailed">门店详细进度完整数据（含全部节点+基本信息）</option>'}
             ${isEngineer ? '' : '<option value="cycleStats">门店周期统计（各阶段周期明细）</option>'}
             <option value="finance">工程结算明细</option>
+            <option value="supplierDimension">供应商维度明细</option>
             <option value="suppliers">供应商管理</option>
             <option value="maintenance">维保记录</option>
           </select>
@@ -6562,6 +6563,34 @@ function updateExportModalUI() {
       </div>
     `;
     fileNameInput.value = '工程结算明细_' + new Date().toISOString().slice(0, 10);
+    if (filtersBox) filtersBox.style.display = 'none';
+  } else if (exportType === 'supplierDimension') {
+    // 统计有供应商的数据条数
+    let supplierRowCount = 0;
+    STORES.forEach((store, storeIdx) => {
+      const fin = store._finance || {};
+      FINANCE_COLUMNS.forEach(col => {
+        const supplierName = fin._suppliers && fin._suppliers[col.key];
+        if (supplierName) {
+          FINANCE_ROWS.forEach(row => {
+            if (row.isUnitPrice && col.key !== '工程硬装') return;
+            supplierRowCount++;
+          });
+        }
+      });
+    });
+    infoBox.innerHTML = `
+      <p style="color: #666; margin-bottom: 16px;">即将导出 <strong>${supplierRowCount}</strong> 条供应商维度明细数据</p>
+      <div style="background: #f5f5f5; padding: 12px; border-radius: 8px; font-size: 13px; color: #666;">
+        <div style="margin-bottom: 8px;"><strong>包含内容：</strong></div>
+        <div>• 以供应商为第一维度，可筛选查看单个供应商</div>
+        <div>• 每个供应商涉及的门店、区域、门店类型</div>
+        <div>• 费用类型（工程硬装/广告物料等）、类型明细（初始报价/最终结算等）</div>
+        <div>• 具体金额、金额备注</div>
+        <div style="margin-top:8px;color:#999;font-size:12px;">仅导出已设置供应商的费用列数据，未设置供应商的费用列不导出</div>
+      </div>
+    `;
+    fileNameInput.value = '供应商维度明细_' + new Date().toISOString().slice(0, 10);
     if (filtersBox) filtersBox.style.display = 'none';
   } else if (exportType === 'suppliers') {
     infoBox.innerHTML = `
@@ -6695,6 +6724,10 @@ async function confirmExport() {
     } else if (exportType === 'finance') {
       // 工程结算明细导出
       exportFinanceData(fileName);
+      return;
+    } else if (exportType === 'supplierDimension') {
+      // 供应商维度明细导出
+      exportSupplierDimensionData(fileName);
       return;
     } else if (exportType === 'suppliers') {
       // 供应商管理导出
@@ -6903,6 +6936,62 @@ function exportMaintenanceData(fileName) {
   XLSX.utils.book_append_sheet(wb, ws, '维保记录');
   XLSX.writeFile(wb, fileName);
   showToast('维保记录导出成功');
+  closeExportModal();
+}
+
+// 按供应商维度导出工程结算明细
+function exportSupplierDimensionData(fileName) {
+  const headers = ['供应商名称', '门店名称', '区域', '门店类型', '费用类型', '类型明细', '金额', '金额备注'];
+
+  const data = [];
+  STORES.forEach((store, storeIdx) => {
+    const fin = store._finance || {};
+
+    // 遍历10个费用列
+    FINANCE_COLUMNS.forEach(col => {
+      const supplierName = fin._suppliers && fin._suppliers[col.key];
+      if (!supplierName) return; // 没有设置供应商，跳过
+
+      // 遍历15行明细
+      FINANCE_ROWS.forEach(row => {
+        // 对于平米单价行，只有工程硬装有值，其他费用列跳过
+        if (row.isUnitPrice && col.key !== '工程硬装') return;
+
+        const rowData = fin[row.rowId] || {};
+        const remark = rowData._remark || '';
+
+        // 计算该费用列的值
+        const val = calcFinanceValue(storeIdx, row.rowId, col.key);
+
+        // 格式化金额
+        let amount = '';
+        if (row.isUnitPrice) {
+          amount = val.toFixed(2);
+        } else if (row.isPercent) {
+          amount = (val * 100).toFixed(2) + '%';
+        } else {
+          amount = val.toFixed(2);
+        }
+
+        data.push([
+          supplierName,
+          store['门店'] || '',
+          store['区域'] || '',
+          store['门店类型'] || '',
+          col.key, // 费用类型（如"工程硬装"）
+          row.detail, // 类型明细（如"初始报价金额"）
+          amount,
+          remark
+        ]);
+      });
+    });
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '供应商维度明细');
+  XLSX.writeFile(wb, fileName);
+  showToast('供应商维度明细导出成功');
   closeExportModal();
 }
 
