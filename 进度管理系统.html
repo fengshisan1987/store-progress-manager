@@ -6941,11 +6941,13 @@ function exportMaintenanceData(fileName) {
 
 // 按供应商维度导出工程结算明细
 function exportSupplierDimensionData(fileName) {
-  const headers = ['供应商名称', '门店名称', '区域', '门店类型', '费用类型', '类型明细', '金额', '金额备注'];
+  const headers = ['供应商名称', '门店名称', '区域', '门店类型', '预估验收日期', '验收日期', '费用类型', '类型明细', '金额', '金额备注'];
 
   const data = [];
   STORES.forEach((store, storeIdx) => {
     const fin = store._finance || {};
+    const estAcceptanceDate = store['预估验收日期'] || '';
+    const acceptanceDate = store['门店已验收'] || '';
 
     // 遍历10个费用列
     FINANCE_COLUMNS.forEach(col => {
@@ -6978,6 +6980,8 @@ function exportSupplierDimensionData(fileName) {
           store['门店'] || '',
           store['区域'] || '',
           store['门店类型'] || '',
+          estAcceptanceDate,
+          acceptanceDate,
           col.key, // 费用类型（如"工程硬装"）
           row.detail, // 类型明细（如"初始报价金额"）
           amount,
