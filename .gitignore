@@ -1,0 +1,11 @@
+# Node.js 依赖（项目本地安装的 xlsx）
+node_modules/
+
+# 日志文件
+*.log
+
+# macOS 系统文件
+.DS_Store
+
+# 备份目录（只在本地生成，不提交到Git）
+/backup/

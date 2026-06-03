@@ -8,8 +8,14 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-// xlsx 库路径（从 workspace node_modules 加载）
-const XLSX = require('/Users/fengshisan/.workbuddy/binaries/node/workspace/node_modules/xlsx');
+// xlsx 库路径（优先使用项目本地，回退到 WorkBuddy 环境）
+const XLSX = (() => {
+  try {
+    return require('./node_modules/xlsx');
+  } catch (e) {
+    return require('/Users/fengshisan/.workbuddy/binaries/node/workspace/node_modules/xlsx');
+  }
+})();
 
 const API_URL = 'http://47.114.120.73/api/data';
 const BACKUP_BASE = '/Users/fengshisan/Desktop/筹建系统代码备份';
