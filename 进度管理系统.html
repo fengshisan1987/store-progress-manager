@@ -1112,7 +1112,7 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
 }
 .engineering-change-input-wrapper {
   display:none;
-  align-items:center;
+  align-items:flex-start;
   gap:8px;
   flex:1;
 }
@@ -1122,6 +1122,11 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
 .engineering-change-input {
   border-color:#1890ff !important;
   background:#e6f7ff !important;
+  resize:none;
+  overflow:hidden;
+  field-sizing:content;
+  min-height:28px;
+  line-height:1.4;
 }
 .engineering-change-input:focus {
   border-color:#1890ff !important;
@@ -4484,7 +4489,7 @@ function render() {
                   <option value="有" ${store['工程增减项备注'] ? 'selected' : ''}>有</option>
                 </select>
                 <div class="engineering-change-input-wrapper ${store['工程增减项备注'] ? 'show' : ''}" id="engineering-change-wrapper-${storeIdx}">
-                  <input type="text" class="editable-input engineering-change-input" id="engineering-change-${storeIdx}" value="${store['工程增减项备注'] || ''}" placeholder="请输入工程增减项详情...">
+                  <textarea class="editable-input engineering-change-input" id="engineering-change-${storeIdx}" placeholder="请输入工程增减项详情..." oninput="autoResizeTextarea(this)">${store['工程增减项备注'] || ''}</textarea>
                   <button class="btn-save-field" onclick="event.stopPropagation();saveStoreField(${storeIdx}, '工程增减项备注', document.getElementById('engineering-change-${storeIdx}').value)">💾</button>
                 </div>
               ` : `<span style="color:#666;font-size:13px;">${store['工程增减项备注'] || '无'}</span>`}
@@ -5345,6 +5350,12 @@ function toggleRiskInput(storeIdx) {
     document.getElementById(`risk-${storeIdx}`).value = '';
     saveStoreField(storeIdx, '风险情况备注', '');
   }
+}
+
+// ── 自动调整 textarea 高度 ─────────────────────────────────────────────────────
+function autoResizeTextarea(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
 }
 
 // ── 切换工程增减项输入框显示 ───────────────────────────────────────────────────
