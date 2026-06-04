@@ -11,13 +11,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Copy frontend file to server
+      - name: Copy frontend files to server
         uses: appleboy/scp-action@v0.1.7
         with:
           HOST: 47.114.120.73
           USERNAME: admin
           KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SOURCE: "进度管理系统.html"
+          SOURCE: "进度管理系统.html,xlsx.min.js"
           TARGET: "/var/www/store-progress-manager/"
           strip_components: 0
 
