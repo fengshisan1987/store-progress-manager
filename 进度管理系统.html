@@ -6808,7 +6808,7 @@ async function confirmExport() {
 // 导出工程结算明细
 function exportFinanceData(fileName) {
   // 表头
-  const headers = ['门店名称', '区域', '门店类型', '预估验收日期', '验收日期', '门店面积', '金额类型', '类型明细', '金额备注',
+  const headers = ['门店名称', '区域', '门店类型', '预估验收日期', '验收日期', '开业日期', '门店面积', '金额类型', '类型明细', '金额备注',
     '工程硬装费用', '广告物料费用', '安装收尾费用', '家具费用', '灯具费用', '配电箱费用', '设计费用', '空调费用', '消防费用', '其他工程类费用',
     '工程类费用小计', '设备费用', '整体筹建费用总计'];
   
@@ -6817,6 +6817,7 @@ function exportFinanceData(fileName) {
     const fin = store._finance || {};
     const estAcceptanceDate = store['预估验收日期'] || '';
     const acceptanceDate = store['门店已验收'] || '';
+    const openingDate = store['已正式开业'] || '';
     const area = store['门店面积'] || '';
 
     // 每个门店数据前插入供应商行
@@ -6826,6 +6827,7 @@ function exportFinanceData(fileName) {
       store['门店类型'] || '',
       estAcceptanceDate,
       acceptanceDate,
+      openingDate,
       area,
       '供应商',
       '',
@@ -6846,6 +6848,7 @@ function exportFinanceData(fileName) {
         store['门店类型'] || '',
         estAcceptanceDate,
         acceptanceDate,
+        openingDate,
         area,
         row.type,
         row.detail,
@@ -9882,7 +9885,7 @@ function renderFinanceStoreList() {
   
   // 列宽定义（两个表格保持一致）
   const colWidths = [
-    '170px', '60px', '70px', '70px', '90px', '90px', '60px', '100px', '120px', '120px',
+    '170px', '60px', '70px', '70px', '90px', '90px', '90px', '60px', '100px', '120px', '120px',
     ...FINANCE_COLUMNS.map(() => '90px'),
     '90px', '80px', '100px', '110px', '110px'
   ];
@@ -9905,10 +9908,11 @@ function renderFinanceStoreList() {
   headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:299px;background:#f5f5f5;z-index:1;">装修形式</th>';
   headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:369px;background:#f5f5f5;z-index:1;">预估验收日期</th>';
   headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:459px;background:#f5f5f5;z-index:1;">验收日期</th>';
-  headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:549px;background:#f5f5f5;z-index:1;">门店面积</th>';
-  headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:609px;background:#f5f5f5;z-index:1;">金额类型</th>';
-  headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:709px;background:#f5f5f5;z-index:1;">类型明细</th>';
-  headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:829px;background:#f5f5f5;z-index:1;">金额备注</th>';
+  headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:549px;background:#f5f5f5;z-index:1;">开业日期</th>';
+  headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:639px;background:#f5f5f5;z-index:1;">门店面积</th>';
+  headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:699px;background:#f5f5f5;z-index:1;">金额类型</th>';
+  headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:799px;background:#f5f5f5;z-index:1;">类型明细</th>';
+  headerHtml += '<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;position:sticky;left:919px;background:#f5f5f5;z-index:1;">金额备注</th>';
   FINANCE_COLUMNS.forEach(col => {
     headerHtml += `<th style="padding:8px 10px;border:1px solid #e8e8e8;text-align:center;font-weight:600;color:#333;background:#f5f5f5;">${col.key}费用</th>`;
   });
@@ -9940,17 +9944,20 @@ function renderFinanceStoreList() {
   // 验收日期（区间 - 美化输入框，带onchange自动筛选）
   headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;position:sticky;left:459px;background:#fff;z-index:1;"><div style="display:flex;gap:2px;align-items:center;"><input type="date" id="fin-filter-date-from" onchange="applyFinanceFilter()" style="flex:1;padding:4px 6px;border:1px solid #d0d0d0;border-radius:20px;font-size:10px;outline:none;min-width:0;"><span style="font-size:10px;color:#999;">-</span><input type="date" id="fin-filter-date-to" onchange="applyFinanceFilter()" style="flex:1;padding:4px 6px;border:1px solid #d0d0d0;border-radius:20px;font-size:10px;outline:none;min-width:0;"></div></td>`;
 
+  // 开业日期（区间 - 美化输入框，带onchange自动筛选）
+  headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;position:sticky;left:549px;background:#fff;z-index:1;"><div style="display:flex;gap:2px;align-items:center;"><input type="date" id="fin-filter-open-date-from" onchange="applyFinanceFilter()" style="flex:1;padding:4px 6px;border:1px solid #d0d0d0;border-radius:20px;font-size:10px;outline:none;min-width:0;"><span style="font-size:10px;color:#999;">-</span><input type="date" id="fin-filter-open-date-to" onchange="applyFinanceFilter()" style="flex:1;padding:4px 6px;border:1px solid #d0d0d0;border-radius:20px;font-size:10px;outline:none;min-width:0;"></div></td>`;
+
   // 门店面积（弹窗填写）
-  headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;position:sticky;left:549px;background:#fff;z-index:1;"><div style="display:flex;gap:2px;align-items:center;position:relative;"><input type="text" id="fin-area-range-min" placeholder="最小" readonly onclick="openFinAreaModal()" style="flex:1;padding:4px 6px;border:1px solid #d0d0d0;border-radius:20px;font-size:10px;outline:none;min-width:0;background:#fff;cursor:pointer;text-align:center;"><span style="font-size:10px;color:#999;">-</span><input type="text" id="fin-area-range-max" placeholder="最大" readonly onclick="openFinAreaModal()" style="flex:1;padding:4px 6px;border:1px solid #d0d0d0;border-radius:20px;font-size:10px;outline:none;min-width:0;background:#fff;cursor:pointer;text-align:center;"></div></td>`;
+  headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;position:sticky;left:639px;background:#fff;z-index:1;"><div style="display:flex;gap:2px;align-items:center;position:relative;"><input type="text" id="fin-area-range-min" placeholder="最小" readonly onclick="openFinAreaModal()" style="flex:1;padding:4px 6px;border:1px solid #d0d0d0;border-radius:20px;font-size:10px;outline:none;min-width:0;background:#fff;cursor:pointer;text-align:center;"><span style="font-size:10px;color:#999;">-</span><input type="text" id="fin-area-range-max" placeholder="最大" readonly onclick="openFinAreaModal()" style="flex:1;padding:4px 6px;border:1px solid #d0d0d0;border-radius:20px;font-size:10px;outline:none;min-width:0;background:#fff;cursor:pointer;text-align:center;"></div></td>`;
 
   // 金额类型（多选自定义下拉）
-  headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;position:sticky;left:609px;background:#fff;z-index:1;"><div class="dropdown-filter" id="fin-dropdown-amount" style="position:relative;"><button class="filter-btn" onclick="toggleFinAmountDropdown()" style="width:100%;padding:4px 8px;font-size:11px;">全部 ▼</button><div id="fin-amount-menu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:400;min-width:120px;max-height:300px;overflow-y:auto;"><div id="fin-amount-items" style="padding:4px;"></div></div></div></td>`;
+  headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;position:sticky;left:699px;background:#fff;z-index:1;"><div class="dropdown-filter" id="fin-dropdown-amount" style="position:relative;"><button class="filter-btn" onclick="toggleFinAmountDropdown()" style="width:100%;padding:4px 8px;font-size:11px;">全部 ▼</button><div id="fin-amount-menu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:400;min-width:120px;max-height:300px;overflow-y:auto;"><div id="fin-amount-items" style="padding:4px;"></div></div></div></td>`;
 
   // 类型明细（多选自定义下拉）
-  headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;position:sticky;left:709px;background:#fff;z-index:1;"><div class="dropdown-filter" id="fin-dropdown-detail" style="position:relative;"><button class="filter-btn" onclick="toggleFinDetailDropdown()" style="width:100%;padding:4px 8px;font-size:11px;">全部 ▼</button><div id="fin-detail-menu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:400;min-width:120px;max-height:300px;overflow-y:auto;"><div id="fin-detail-items" style="padding:4px;"></div></div></div></td>`;
+  headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;position:sticky;left:799px;background:#fff;z-index:1;"><div class="dropdown-filter" id="fin-dropdown-detail" style="position:relative;"><button class="filter-btn" onclick="toggleFinDetailDropdown()" style="width:100%;padding:4px 8px;font-size:11px;">全部 ▼</button><div id="fin-detail-menu" style="display:none;position:absolute;top:100%;left:0;background:#fff;border:1px solid #d0d0d0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:400;min-width:120px;max-height:300px;overflow-y:auto;"><div id="fin-detail-items" style="padding:4px;"></div></div></div></td>`;
 
   // 金额备注 - 无筛选
-  headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;position:sticky;left:829px;background:#fff;z-index:1;"></td>`;
+  headerHtml += `<td style="padding:4px 6px;border:1px solid #e8e8e8;position:sticky;left:919px;background:#fff;z-index:1;"></td>`;
 
   // 10个费用列（多选供应商下拉）
   FINANCE_COLUMNS.forEach((col, i) => {
@@ -9990,9 +9997,10 @@ function renderFinanceStoreList() {
   html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:369px;background:#f6ffed;z-index:1;"></td>';
   html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:459px;background:#f6ffed;z-index:1;"></td>';
   html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:549px;background:#f6ffed;z-index:1;"></td>';
-  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:609px;background:#f6ffed;z-index:1;"></td>';
-  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:709px;background:#f6ffed;z-index:1;"></td>';
-  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:829px;background:#f6ffed;z-index:1;"></td>';
+  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:639px;background:#f6ffed;z-index:1;"></td>';
+  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:699px;background:#f6ffed;z-index:1;"></td>';
+  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:799px;background:#f6ffed;z-index:1;"></td>';
+  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:919px;background:#f6ffed;z-index:1;"></td>';
   for (let i = 0; i < 14; i++) {
     html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;" data-total-col="${i}">-</td>`;
   }
@@ -10008,9 +10016,10 @@ function renderFinanceStoreList() {
   html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:369px;background:#e6f7ff;z-index:1;"></td>';
   html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:459px;background:#e6f7ff;z-index:1;"></td>';
   html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:549px;background:#e6f7ff;z-index:1;"></td>';
-  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:609px;background:#e6f7ff;z-index:1;"></td>';
-  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:709px;background:#e6f7ff;z-index:1;"></td>';
-  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:829px;background:#e6f7ff;z-index:1;"></td>';
+  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:639px;background:#e6f7ff;z-index:1;"></td>';
+  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:699px;background:#e6f7ff;z-index:1;"></td>';
+  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:799px;background:#e6f7ff;z-index:1;"></td>';
+  html += '<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:919px;background:#e6f7ff;z-index:1;"></td>';
   for (let i = 0; i < 14; i++) {
     html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;text-align:right;" data-sum-col="${i}">-</td>`;
   }
@@ -10022,6 +10031,7 @@ function renderFinanceStoreList() {
     const statusColor = status === '已结算完成' ? '#52c41a' : (status === '已支付部分款项' ? '#fa8c16' : (status === '报价阶段' ? '#1677ff' : '#999'));
     const estAcceptanceDate = store['预估验收日期'] || '';
     const acceptanceDate = store['门店已验收'] || '';
+    const openingDate = store['已正式开业'] || '';
     const area = store['门店面积'] || '';
     
     // 精简行（默认显示：最终对外报价金额）
@@ -10032,10 +10042,11 @@ function renderFinanceStoreList() {
     html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:299px;background:#fff;z-index:1;">${store['装修形式'] || ''}</td>`;
     html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:369px;background:#fff;z-index:1;">${estAcceptanceDate}</td>`;
     html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:459px;background:#fff;z-index:1;">${acceptanceDate}</td>`;
-    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:549px;background:#fff;z-index:1;">${area}</td>`;
-    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:609px;background:#fff;z-index:1;">最终结算数据</td>`;
-    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;font-weight:600;position:sticky;left:709px;background:#fff;z-index:1;">最终对外报价金额</td>`;
-    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:829px;background:#fff;z-index:1;"></td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:549px;background:#fff;z-index:1;">${openingDate}</td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:639px;background:#fff;z-index:1;">${area}</td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:699px;background:#fff;z-index:1;">最终结算数据</td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;font-weight:600;position:sticky;left:799px;background:#fff;z-index:1;">最终对外报价金额</td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;position:sticky;left:919px;background:#fff;z-index:1;"></td>`;
     
     // 10个费用列
     FINANCE_COLUMNS.forEach(col => {
@@ -10069,7 +10080,7 @@ function renderFinanceStoreList() {
     
     // 展开行（默认隐藏，内嵌完整表格）
     html += `<tr class="finance-detail-row" data-store="${idx}" style="display:none;">
-      <td colspan="24" style="padding:0;border:none;background:#f8f9fa;">
+      <td colspan="25" style="padding:0;border:none;background:#f8f9fa;">
         <div id="finance-detail-${idx}"></div>
       </td>
     </tr>`;
@@ -10089,6 +10100,10 @@ function renderFinanceStoreList() {
   if (filterDateFrom) filterDateFrom.value = finFilterDateFrom || '';
   const filterDateTo = document.getElementById('fin-filter-date-to');
   if (filterDateTo) filterDateTo.value = finFilterDateTo || '';
+  const filterOpenDateFrom = document.getElementById('fin-filter-open-date-from');
+  if (filterOpenDateFrom) filterOpenDateFrom.value = finFilterOpenDateFrom || '';
+  const filterOpenDateTo = document.getElementById('fin-filter-open-date-to');
+  if (filterOpenDateTo) filterOpenDateTo.value = finFilterOpenDateTo || '';
   updateFinAreaBtn();
   updateFinRenovationBtn();
   updateFinAreaRangeBtn();
@@ -10230,6 +10245,8 @@ let finFilterEstDateFrom = '';
 let finFilterEstDateTo = '';
 let finFilterDateFrom = '';
 let finFilterDateTo = '';
+let finFilterOpenDateFrom = '';
+let finFilterOpenDateTo = '';
 let finFilterRenovationType = ''; // 装修形式筛选
 let _finScrollLeft = 0; // 保存横向滚动位置
 
@@ -10604,6 +10621,8 @@ function applyFinanceFilter() {
   const estDateTo = document.getElementById('fin-filter-est-date-to')?.value || '';
   const dateFrom = document.getElementById('fin-filter-date-from')?.value || '';
   const dateTo = document.getElementById('fin-filter-date-to')?.value || '';
+  const openDateFrom = document.getElementById('fin-filter-open-date-from')?.value || '';
+  const openDateTo = document.getElementById('fin-filter-open-date-to')?.value || '';
   const areaMin = parseFloat(finFilterAreaMin) || 0;
   const areaMax = parseFloat(finFilterAreaMax) || Infinity;
   const amountTypes = finFilterAmountTypes;
@@ -10616,6 +10635,8 @@ function applyFinanceFilter() {
   finFilterEstDateTo = estDateTo;
   finFilterDateFrom = dateFrom;
   finFilterDateTo = dateTo;
+  finFilterOpenDateFrom = openDateFrom;
+  finFilterOpenDateTo = openDateTo;
   
   const hasAmountFilter = amountTypes.length > 0;
   const hasDetailFilter = details.length > 0;
@@ -10643,6 +10664,10 @@ function applyFinanceFilter() {
     const acceptanceDate = store['门店已验收'] || '';
     if (dateFrom && acceptanceDate < dateFrom) storeMatch = false;
     if (dateTo && acceptanceDate > dateTo) storeMatch = false;
+
+    const openingDate = store['已正式开业'] || '';
+    if (openDateFrom && openingDate < openDateFrom) storeMatch = false;
+    if (openDateTo && openingDate > openDateTo) storeMatch = false;
 
     const area = parseFloat(store['门店面积']) || 0;
     if (areaMin && area < areaMin) storeMatch = false;
@@ -10724,7 +10749,7 @@ function applyFinanceFilter() {
 // 重置结算明细筛选
 function resetFinanceFilter() {
   // 重置文本/日期输入框
-  ['fin-filter-store', 'fin-filter-est-date-from', 'fin-filter-est-date-to', 'fin-filter-date-from', 'fin-filter-date-to'].forEach(id => {
+  ['fin-filter-store', 'fin-filter-est-date-from', 'fin-filter-est-date-to', 'fin-filter-date-from', 'fin-filter-date-to', 'fin-filter-open-date-from', 'fin-filter-open-date-to'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -10734,6 +10759,9 @@ function resetFinanceFilter() {
   finFilterEstDateFrom = '';
   finFilterEstDateTo = '';
   finFilterDateFrom = '';
+  finFilterDateTo = '';
+  finFilterOpenDateFrom = '';
+  finFilterOpenDateTo = '';
   finFilterDateTo = '';
   finFilterAreas = [];
   finFilterType = '';
@@ -11056,6 +11084,7 @@ function renderFinanceTableRows(storeIdx, rowFilter, rowClass) {
   const fin = getStoreFinance(storeIdx);
   const estAcceptanceDate = store['预估验收日期'] || '';
   const acceptanceDate = store['门店已验收'] || '';
+  const openingDate = store['已正式开业'] || '';
   const area = store['门店面积'] || '';
 
   const cls = rowClass || 'finance-filter-row';
@@ -11082,7 +11111,7 @@ function renderFinanceTableRows(storeIdx, rowFilter, rowClass) {
   if (cls === 'finance-expand-row') {
     // 供应商行
     html += `<tr class="${cls}" data-store="${storeIdx}" style="background:#fafafa;">`;
-    html += `<td style="padding:4px 6px;border:1px solid #e8e8e8;color:#666;font-size:11px;text-align:center;font-weight:600;position:sticky;left:0;background:#fafafa;z-index:1;" colspan="10">供应商</td>`;
+    html += `<td style="padding:4px 6px;border:1px solid #e8e8e8;color:#666;font-size:11px;text-align:center;font-weight:600;position:sticky;left:0;background:#fafafa;z-index:1;" colspan="11">供应商</td>`;
     FINANCE_COLUMNS.forEach(col => {
       const supplier = (fin._suppliers && fin._suppliers[col.key]) || '';
       const displaySupplier = supplier || '-';
@@ -11097,7 +11126,7 @@ function renderFinanceTableRows(storeIdx, rowFilter, rowClass) {
 
     // 结算状态行
     html += `<tr class="${cls}" data-store="${storeIdx}" style="background:#fafafa;">`;
-    html += `<td style="padding:4px 6px;border:1px solid #e8e8e8;color:#666;font-size:11px;text-align:center;font-weight:600;position:sticky;left:0;background:#fafafa;z-index:1;" colspan="10">结算状态</td>`;
+    html += `<td style="padding:4px 6px;border:1px solid #e8e8e8;color:#666;font-size:11px;text-align:center;font-weight:600;position:sticky;left:0;background:#fafafa;z-index:1;" colspan="11">结算状态</td>`;
     FINANCE_COLUMNS.forEach(col => {
       const colStatus = calcColumnStatus(storeIdx, col.key);
       const colStatusColor = colStatus === '已结算完成' ? '#52c41a' : (colStatus === '已付首款' ? '#fa8c16' : (colStatus === '报价阶段' ? '#1677ff' : '#999'));
@@ -11132,22 +11161,23 @@ function renderFinanceTableRows(storeIdx, rowFilter, rowClass) {
       html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:299px;background:${bgColor};" rowspan="${rowCount}">${store['装修形式'] || ''}</td>`;
       html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:369px;background:${bgColor};" rowspan="${rowCount}">${estAcceptanceDate}</td>`;
       html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:459px;background:${bgColor};" rowspan="${rowCount}">${acceptanceDate}</td>`;
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:549px;background:${bgColor};" rowspan="${rowCount}">${area}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:549px;background:${bgColor};" rowspan="${rowCount}">${openingDate}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:639px;background:${bgColor};" rowspan="${rowCount}">${area}</td>`;
     }
 
     // 金额类型（合并单元格）
     if (row.type !== lastType) {
-      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:600;position:sticky;left:609px;background:${bgColor};text-align:center;vertical-align:middle;" rowspan="${typeRowSpans[row.type]}">${row.type}</td>`;
+      html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:600;position:sticky;left:699px;background:${bgColor};text-align:center;vertical-align:middle;" rowspan="${typeRowSpans[row.type]}">${row.type}</td>`;
       lastType = row.type;
     }
 
     // 类型明细
-    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:${fontWeight};position:sticky;left:709px;background:${bgColor};">${row.detail}</td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#333;font-weight:${fontWeight};position:sticky;left:799px;background:${bgColor};">${row.detail}</td>`;
 
     // 金额备注
     const remark = (fin[row.rowId] && fin[row.rowId]._remark) || '';
     const displayRemark = remark.length > 10 ? remark.substring(0, 10) + '...' : remark;
-    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:829px;background:${bgColor};" title="${remark}">${displayRemark}</td>`;
+    html += `<td style="padding:8px 10px;border:1px solid #e8e8e8;color:#666;font-size:12px;position:sticky;left:919px;background:${bgColor};" title="${remark}">${displayRemark}</td>`;
 
     // 10个费用列
     FINANCE_COLUMNS.forEach(col => {
