@@ -6809,7 +6809,7 @@ async function confirmExport() {
 function exportFinanceData(fileName) {
   // 表头
   const headers = ['门店名称', '区域', '门店类型', '预估验收日期', '验收日期', '开业日期', '门店面积', '金额类型', '类型明细', '金额备注',
-    '工程硬装费用', '广告物料费用', '安装收尾费用', '家具费用', '灯具费用', '配电箱费用', '设计费用', '空调费用', '消防费用', '其他工程类费用',
+    ...FINANCE_COLUMNS.map(col => col.key + '费用'),
     '工程类费用小计', '设备费用', '整体筹建费用总计'];
   
   const data = [];
