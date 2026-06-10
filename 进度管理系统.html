@@ -10182,25 +10182,25 @@ function updateFinanceSummaryRow() {
     dataRows.push(row);
   });
 
-  // 对第11-23列（索引10-22，费用相关列，跳过金额备注，包含整体筹建费用总计）
-  for (let colIdx = 10; colIdx <= 22; colIdx++) {
+  // 对第12-23列（索引11-22，费用相关列，跳过金额备注，包含设备费用）
+  for (let colIdx = 11; colIdx <= 22; colIdx++) {
     let sum = 0;
     let count = 0;      // 非0值计数（用于平均）
     let zeroCount = 0;  // 0值计数
 
     dataRows.forEach(row => {
       // 根据行的cells数量确定费用列的正确索引
-      // 完整行（25cells）：基础信息7列 + 金额类型1列 + 类型明细1列 + 金额备注1列 + 费用列从索引10开始
+      // 完整行（26cells）：基础信息11列（含开业日期）+ 金额类型1列 + 类型明细1列 + 金额备注1列 + 费用列从索引11开始
       // 缩略行B（16cells，不同类型第0行）：金额类型1列 + 类型明细1列 + 金额备注1列 + 费用列从索引3开始
       // 缩略行A（15cells，同类型后续行）：类型明细1列 + 金额备注1列 + 费用列从索引2开始
       const len = row.cells.length;
       let actualColIdx;
       if (len >= 20) {
-        actualColIdx = colIdx;        // 完整行：费用列从索引10开始
+        actualColIdx = colIdx;        // 完整行：费用列从索引11开始
       } else if (len === 16) {
-        actualColIdx = colIdx - 7;    // 缩略行B：费用列从索引3开始（10-7=3）
+        actualColIdx = colIdx - 8;    // 缩略行B：费用列从索引3开始（11-8=3）
       } else if (len === 15) {
-        actualColIdx = colIdx - 8;    // 缩略行A：费用列从索引2开始（10-8=2）
+        actualColIdx = colIdx - 9;    // 缩略行A：费用列从索引2开始（11-9=2）
       } else {
         actualColIdx = colIdx;        // 默认
       }
@@ -10221,12 +10221,12 @@ function updateFinanceSummaryRow() {
 
     // 更新平均行（只统计有非0值的门店）
     const avg = count > 0 ? (sum / count).toFixed(2) : '-';
-    const avgCell = boardAvg.querySelector(`[data-sum-col="${colIdx - 10}"]`);
+    const avgCell = boardAvg.querySelector(`[data-sum-col="${colIdx - 11}"]`);
     if (avgCell) avgCell.textContent = avg;
 
     // 更新合计行（所有可见门店，包括0值）
     const total = (count + zeroCount) > 0 ? sum.toFixed(2) : '-';
-    const totalCell = boardTotal.querySelector(`[data-total-col="${colIdx - 10}"]`);
+    const totalCell = boardTotal.querySelector(`[data-total-col="${colIdx - 11}"]`);
     if (totalCell) totalCell.textContent = total;
   }
 }
