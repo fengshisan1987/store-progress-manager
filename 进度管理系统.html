@@ -10182,8 +10182,8 @@ function updateFinanceSummaryRow() {
     dataRows.push(row);
   });
 
-  // 对第12-23列（索引11-22，费用相关列，跳过金额备注，包含设备费用）
-  for (let colIdx = 11; colIdx <= 22; colIdx++) {
+  // 对第12-24列（索引11-23，费用相关列，跳过金额备注，包含整体筹建费用总计）
+  for (let colIdx = 11; colIdx <= 23; colIdx++) {
     let sum = 0;
     let count = 0;      // 非0值计数（用于平均）
     let zeroCount = 0;  // 0值计数
