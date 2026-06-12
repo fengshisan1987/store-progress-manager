@@ -6922,12 +6922,13 @@ function exportSuppliersData(fileName) {
 
 // 导出维保记录
 function exportMaintenanceData(fileName) {
-  const headers = ['报修门店', '区域', '开业日期', '维保类型', '所属供应商', '维保内容', '是否保内',
+  const headers = ['报修门店', '区域', '门店类型', '开业日期', '维保类型', '所属供应商', '维保内容', '是否保内',
     '额外费用', '报修日期', '完成日期', '维保用时(天)', '备注'];
   
   const data = MAINTENANCE_RECORDS.map(r => [
     r.storeName || '',
     r.storeArea || '',
+    r.storeType || '',
     r.openingDate || '',
     r.maintenanceType || '',
     r.supplier || '',
@@ -9154,6 +9155,7 @@ const MAINTENANCE_TYPES = ['工程硬装','广告物料','安装收尾','家具'
 const MAINTENANCE_TABLE_COLS = [
   { key: 'storeName', title: '报修门店', width: 150, fixed: true },
   { key: 'storeArea', title: '区域', width: 80 },
+  { key: 'storeType', title: '门店类型', width: 80 },
   { key: 'openingDate', title: '开业日期', width: 110 },
   { key: 'maintenanceType', title: '维保类型', width: 100 },
   { key: 'supplier', title: '所属供应商', width: 130 },
@@ -9288,6 +9290,17 @@ function openMaintenanceEditor(idx) {
   html += `<input type="text" id="maint-store-input" placeholder="或手动输入门店名称" value="${record.storeName || ''}" style="width:100%;padding:8px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;box-sizing:border-box;">`;
   html += '</div>';
 
+  // 门店类型（通过门店选择自动关联，手动录入时手动填写）
+  html += '<div>';
+  html += '<label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">门店类型</label>';
+  html += `<select id="maint-store-type" onchange="onMaintenanceStoreTypeChange(this.value)" style="width:100%;padding:8px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;margin-bottom:6px;">`;
+  html += '<option value="">请选择门店类型</option>';
+  html += '<option value="直营店" ${record.storeType === "直营店" ? "selected" : ""}>直营店</option>';
+  html += '<option value="加盟店" ${record.storeType === "加盟店" ? "selected" : ""}>加盟店</option>';
+  html += '</select>';
+  html += `<input type="text" id="maint-store-type-input" placeholder="或手动输入门店类型" value="${record.storeType || ''}" style="width:100%;padding:8px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;box-sizing:border-box;">`;
+  html += '</div>';
+
   // 开业日期
   html += '<div>';
   html += '<label style="display:block;font-size:13px;color:#666;margin-bottom:4px;">开业日期</label>';
@@ -9418,6 +9431,20 @@ function onMaintenanceStoreChange(storeName) {
   const storeInput = document.getElementById('maint-store-input');
   if (storeInput) storeInput.value = storeName;
 
+  // 自动获取门店类型
+  const storeTypeSelect = document.getElementById('maint-store-type');
+  const storeTypeInput = document.getElementById('maint-store-type-input');
+  if (storeTypeSelect && storeTypeInput) {
+    const storeType = store['门店类型'];
+    if (storeType) {
+      storeTypeSelect.value = storeType;
+      storeTypeInput.value = storeType;
+    } else {
+      storeTypeSelect.value = '';
+      storeTypeInput.value = '';
+    }
+  }
+
   // 自动获取开业日期（从"已正式开业"节点）
   const openingDateInput = document.getElementById('maint-opening-date');
   if (openingDateInput) {
@@ -9431,6 +9458,12 @@ function onMaintenanceStoreChange(storeName) {
 
   // 更新供应商下拉
   onMaintenanceTypeChange();
+}
+
+// 门店类型选择变化时同步到输入框
+function onMaintenanceStoreTypeChange(storeType) {
+  const input = document.getElementById('maint-store-type-input');
+  if (input) input.value = storeType;
 }
 
 // 维保类型变化时更新供应商下拉
@@ -9471,6 +9504,9 @@ async function saveMaintenanceRecord(idx) {
   const storeName = document.getElementById('maint-store-input').value.trim();
   const areaSelect = document.getElementById('maint-area-select');
   const storeArea = areaSelect ? areaSelect.value : '';
+  const storeTypeSelect = document.getElementById('maint-store-type');
+  const storeTypeInput = document.getElementById('maint-store-type-input');
+  const storeType = storeTypeSelect ? (storeTypeSelect.value || (storeTypeInput ? storeTypeInput.value.trim() : '')) : '';
   const openingDate = document.getElementById('maint-opening-date').value;
   const maintenanceType = document.getElementById('maint-type').value;
   const supplierInput = document.getElementById('maint-supplier-input');
@@ -9497,6 +9533,7 @@ async function saveMaintenanceRecord(idx) {
     id: idx !== null && idx !== undefined ? MAINTENANCE_RECORDS[idx].id : Date.now().toString(),
     storeName,
     storeArea,
+    storeType,
     openingDate,
     maintenanceType,
     supplier,
