@@ -2597,7 +2597,7 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
         </div>
         <div style="display:flex;flex-direction:column;gap:4px;">
           <label style="font-size:12px;color:#666;">类型明细</label>
-          <select id="dash-detail-type" onchange="renderMonthlyChart()" style="padding:6px 8px;border:1px solid #d0d0d0;border-radius:4px;font-size:12px;outline:none;min-width:120px;background:#fff;">
+          <select id="dash-detail-type" onchange="onDashDetailTypeChange()" style="padding:6px 8px;border:1px solid #d0d0d0;border-radius:4px;font-size:12px;outline:none;min-width:120px;background:#fff;">
             <option value="">请选择</option>
           </select>
         </div>
@@ -14440,6 +14440,9 @@ function renderMonthlyChart() {
     return;
   }
 
+  const rowDef = FINANCE_ROWS.find(r => r.rowId === rowId);
+  const isPercentRow = rowDef && rowDef.isPercent;
+
   // 渲染ECharts
   let chart = echarts.getInstanceByDom(container);
   if (!chart) {
@@ -14456,6 +14459,9 @@ function renderMonthlyChart() {
       trigger: 'axis',
       formatter: function(params) {
         const val = params[0].value;
+        if (isPercentRow) {
+          return `${params[0].axisValue}<br/>平均值: ${val.toFixed(2)}%`;
+        }
         return `${params[0].axisValue}<br/>平均值: ¥${val.toFixed(2)}`;
       }
     },
@@ -14494,6 +14500,9 @@ function renderMonthlyChart() {
         position: 'top',
         formatter: function(params) {
           if (params.value === 0) return '';
+          if (isPercentRow) {
+            return params.value.toFixed(2) + '%';
+          }
           return '¥' + params.value.toFixed(2);
         },
         fontSize: 12,
