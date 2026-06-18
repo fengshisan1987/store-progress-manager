@@ -9717,12 +9717,16 @@ function calcFinanceValue(storeIdx, rowId, colKey) {
 
 // 计算某行的工程类费用小计
 function calcRowSubtotal(storeIdx, rowId) {
-  // 毛利率行特殊处理：本列最终利润 ÷ 本列最终对外报价金额
+  // 毛利率行特殊处理：整体利润 ÷ 整体报价
   if (rowId === 'grossMargin') {
-    const sq = calcRowSubtotal(storeIdx, 'finalQuote');
-    const sp = calcRowSubtotal(storeIdx, 'finalProfit');
-    if (!sq || sq <= 0) return 0;
-    return sp / sq;
+    const tq = calcRowTotal(storeIdx, 'finalQuote');
+    const tp = calcRowTotal(storeIdx, 'finalProfit');
+    if (!tq || tq <= 0) return 0;
+    return tp / tq;
+  }
+  // 最终利润行：不重复累加，直接返回整体利润
+  if (rowId === 'finalProfit') {
+    return calcRowTotal(storeIdx, 'finalQuote') - calcRowTotal(storeIdx, 'finalPay');
   }
   // 报价平米单价：工程类费用小计的最终对外报价金额 ÷ 门店面积
   if (rowId === 'unitQuotePrice') {
@@ -9747,12 +9751,16 @@ function calcRowSubtotal(storeIdx, rowId) {
 
 // 计算某行的整体筹建费用总计
 function calcRowTotal(storeIdx, rowId) {
-  // 毛利率行特殊处理：本列最终利润 ÷ 本列最终对外报价金额
+  // 毛利率行特殊处理：整体利润 ÷ 整体报价
   if (rowId === 'grossMargin') {
     const tq = calcRowTotal(storeIdx, 'finalQuote');
     const tp = calcRowTotal(storeIdx, 'finalProfit');
     if (!tq || tq <= 0) return 0;
     return tp / tq;
+  }
+  // 最终利润行：不重复累加，直接返回整体利润
+  if (rowId === 'finalProfit') {
+    return calcRowTotal(storeIdx, 'finalQuote') - calcRowTotal(storeIdx, 'finalPay');
   }
   // 报价平米单价：整体筹建费用总计的最终对外报价金额 ÷ 门店面积
   if (rowId === 'unitQuotePrice') {
