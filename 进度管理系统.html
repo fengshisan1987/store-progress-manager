@@ -8569,6 +8569,12 @@ function openBannerEditor() {
   modal.style.display = 'flex';
 }
 
+// 关闭 Banner 编辑弹窗
+function closeBannerEditor() {
+  const modal = document.getElementById('bannerEditorModal');
+  if (modal) modal.style.display = 'none';
+}
+
 // 富文本编辑器执行命令
 function bannerExecCommand(command, value) {
   const editor = document.getElementById('banner-editor-text');
