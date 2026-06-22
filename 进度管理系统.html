@@ -2221,7 +2221,14 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
           <option value="7">超大</option>
         </select>
         <button type="button" onclick="bannerExecCommand('bold')" style="padding:4px 10px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer;font-size:13px;font-weight:700;" title="加粗">B</button>
-        <input type="color" onchange="bannerExecCommand('foreColor', this.value)" style="width:32px;height:28px;border:1px solid #d9d9d9;border-radius:4px;cursor:pointer;padding:0;" title="文字颜色" value="#cf1322">
+        <div style="display:flex;gap:4px;align-items:center;">
+          <button type="button" onclick="bannerExecCommand('foreColor', '#cf1322')" style="width:20px;height:20px;border:1px solid #d9d9d9;border-radius:3px;background:#cf1322;cursor:pointer;" title="红色"></button>
+          <button type="button" onclick="bannerExecCommand('foreColor', '#000000')" style="width:20px;height:20px;border:1px solid #d9d9d9;border-radius:3px;background:#000000;cursor:pointer;" title="黑色"></button>
+          <button type="button" onclick="bannerExecCommand('foreColor', '#1677ff')" style="width:20px;height:20px;border:1px solid #d9d9d9;border-radius:3px;background:#1677ff;cursor:pointer;" title="蓝色"></button>
+          <button type="button" onclick="bannerExecCommand('foreColor', '#52c41a')" style="width:20px;height:20px;border:1px solid #d9d9d9;border-radius:3px;background:#52c41a;cursor:pointer;" title="绿色"></button>
+          <button type="button" onclick="bannerExecCommand('foreColor', '#fa8c16')" style="width:20px;height:20px;border:1px solid #d9d9d9;border-radius:3px;background:#fa8c16;cursor:pointer;" title="橙色"></button>
+          <button type="button" onclick="bannerExecCommand('foreColor', '#722ed1')" style="width:20px;height:20px;border:1px solid #d9d9d9;border-radius:3px;background:#722ed1;cursor:pointer;" title="紫色"></button>
+        </div>
         <button type="button" onclick="bannerExecCommand('removeFormat')" style="padding:4px 10px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer;font-size:12px;" title="清除格式">清除格式</button>
       </div>
       <div id="banner-editor-text" contenteditable="true" style="width:100%;padding:10px;border:1px solid #d9d9d9;border-radius:0 0 6px 6px;font-size:14px;min-height:80px;box-sizing:border-box;line-height:1.6;outline:none;" placeholder="请输入提醒内容..."></div>
@@ -8580,6 +8587,16 @@ function bannerExecCommand(command, value) {
   const editor = document.getElementById('banner-editor-text');
   if (!editor) return;
   editor.focus();
+  
+  if (command === 'foreColor') {
+    // 确保有选中文本才应用颜色
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) {
+      alert('请先选中要设置颜色的文字');
+      return;
+    }
+  }
+  
   document.execCommand(command, false, value || null);
 }
 
