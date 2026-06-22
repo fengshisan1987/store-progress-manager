@@ -10,6 +10,7 @@ app.use(bodyParser.json({ limit: '10mb' }));
 
 const DATA_FILE = path.join(__dirname, 'data.json');
 const AUTH_FILE = path.join(__dirname, 'auth.json');
+const BANNER_FILE = path.join(__dirname, 'banner.json');
 
 // 默认账号配置
 const DEFAULT_ACCOUNTS = [
@@ -44,6 +45,24 @@ function initDataFile() {
     if (!fs.existsSync(DATA_FILE)) {
         fs.writeFileSync(DATA_FILE, JSON.stringify({ stores: [], basicFields: [], phases: null }, null, 2));
     }
+}
+
+// 读取 Banner 数据
+function readBanner() {
+    try {
+        if (!fs.existsSync(BANNER_FILE)) {
+            fs.writeFileSync(BANNER_FILE, JSON.stringify({ text: '', bold: true, fontSize: '16px', enabled: false }, null, 2));
+        }
+        const content = fs.readFileSync(BANNER_FILE, 'utf8');
+        return JSON.parse(content);
+    } catch (e) {
+        return { text: '', bold: true, fontSize: '16px', enabled: false };
+    }
+}
+
+// 保存 Banner 数据
+function saveBanner(data) {
+    fs.writeFileSync(BANNER_FILE, JSON.stringify(data, null, 2));
 }
 
 // 读取数据（兼容旧数据结构）
@@ -236,6 +255,20 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', time: new Date().toISOString() });
 });
 
+// ========== Banner 相关 API ==========
+
+// 获取 Banner 内容
+app.get('/api/banner', (req, res) => {
+    res.json({ success: true, data: readBanner() });
+});
+
+// 保存 Banner 内容
+app.post('/api/banner', (req, res) => {
+    const { text, bold, fontSize, enabled } = req.body;
+    saveBanner({ text: text || '', bold: !!bold, fontSize: fontSize || '16px', enabled: !!enabled });
+    res.json({ success: true, message: 'Banner 保存成功' });
+});
+
 // 静态文件服务
 app.use(express.static(path.join(__dirname, '..')));
 
@@ -247,6 +280,7 @@ function startServer(port) {
         console.log(`服务器运行在端口 ${port}`);
         console.log(`认证文件: ${AUTH_FILE}`);
         console.log(`数据文件: ${DATA_FILE}`);
+        console.log(`Banner文件: ${BANNER_FILE}`);
     });
 
     server.on('error', (err) => {

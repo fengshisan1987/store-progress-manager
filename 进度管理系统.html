@@ -8,6 +8,54 @@
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; background:#f0f2f5; color:#333; }
 
+/* ── 重要事项提醒 Banner ── */
+#important-banner {
+  position: relative;
+  padding: 12px 48px 12px 16px;
+  background: linear-gradient(135deg, #fff1f0 0%, #ffccc7 100%);
+  border-left: 4px solid #f5222d;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+}
+#important-banner:hover {
+  background: linear-gradient(135deg, #fff1f0 0%, #ffa39e 100%);
+}
+#important-banner::before {
+  content: "⚠️";
+  margin-right: 10px;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+#important-banner-text {
+  flex: 1;
+  color: #cf1322;
+  line-height: 1.5;
+  word-break: break-word;
+}
+#important-banner-edit-hint {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  color: #999;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+}
+#important-banner:hover #important-banner-edit-hint {
+  opacity: 0.6;
+}
+#important-banner-edit-hint:hover {
+  opacity: 1 !important;
+  background: rgba(0,0,0,0.05);
+}
+
 /* ── 页面布局 ── */
 .page-wrapper {
   display: flex;
@@ -2129,6 +2177,56 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
   <div class="navbar-title">🏪 门店筹建进度管理系统</div>
   <div class="navbar-right">
     <span class="navbar-meta" id="userRoleDisplay" style="padding:4px 12px;background:rgba(255,255,255,0.15);border-radius:4px;font-size:13px;">加载中...</span>
+  </div>
+</div>
+
+<!-- 重要事项提醒 Banner -->
+<div id="important-banner" style="display:none;" onclick="openBannerEditor()">
+  <div id="important-banner-text"></div>
+  <div id="important-banner-edit-hint" title="点击编辑">✏️</div>
+</div>
+
+<!-- Banner 编辑弹窗 -->
+<div id="bannerEditorModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center;">
+  <div style="background:#fff;border-radius:12px;padding:24px;width:480px;max-width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <h3 style="font-size:16px;font-weight:600;color:#333;">✏️ 编辑重要事项提醒</h3>
+      <button onclick="closeBannerEditor()" style="background:none;border:none;font-size:20px;color:#999;cursor:pointer;">✕</button>
+    </div>
+    
+    <div style="margin-bottom:16px;">
+      <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">提醒内容</label>
+      <textarea id="banner-editor-text" style="width:100%;padding:10px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;resize:vertical;min-height:80px;box-sizing:border-box;" placeholder="请输入提醒内容..."></textarea>
+    </div>
+    
+    <div style="display:flex;gap:16px;margin-bottom:16px;">
+      <div style="flex:1;">
+        <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">文字大小</label>
+        <select id="banner-editor-fontsize" style="width:100%;padding:8px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;">
+          <option value="14px">小 (14px)</option>
+          <option value="16px" selected>中 (16px)</option>
+          <option value="20px">大 (20px)</option>
+          <option value="24px">超大 (24px)</option>
+        </select>
+      </div>
+      <div style="flex:1;">
+        <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">文字加粗</label>
+        <select id="banner-editor-bold" style="width:100%;padding:8px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;">
+          <option value="true" selected>加粗</option>
+          <option value="false">常规</option>
+        </select>
+      </div>
+    </div>
+    
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;padding:10px;background:#f6ffed;border-radius:6px;border:1px solid #b7eb8f;">
+      <input type="checkbox" id="banner-editor-enabled" style="cursor:pointer;">
+      <label for="banner-editor-enabled" style="font-size:13px;color:#333;cursor:pointer;">显示重要事项提醒</label>
+    </div>
+    
+    <div style="display:flex;justify-content:flex-end;gap:10px;">
+      <button onclick="closeBannerEditor()" style="padding:8px 16px;border:1px solid #d9d9d9;border-radius:6px;background:#f5f5f5;color:#333;font-size:14px;cursor:pointer;">取消</button>
+      <button onclick="saveBannerData()" style="padding:8px 16px;border:none;border-radius:6px;background:#1677ff;color:#fff;font-size:14px;cursor:pointer;font-weight:500;">保存</button>
+    </div>
   </div>
 </div>
 
@@ -8396,6 +8494,9 @@ async function initPageContent() {
   
   // 启动多设备数据同步轮询
   startSyncPolling();
+  
+  // 加载重要事项提醒 Banner
+  loadBanner();
 
   // ── 横向滚动同步：让表头跟随内容区横向滚动 ──
   const ganttWrap = document.getElementById('ganttWrap');
@@ -8403,6 +8504,97 @@ async function initPageContent() {
   ganttWrap.addEventListener('scroll', function() {
     headerSticky.scrollLeft = ganttWrap.scrollLeft;
   });
+}
+
+// ── 重要事项提醒 Banner 相关函数 ──────────────────────────────────────────────────
+
+let currentBannerData = { text: '', bold: true, fontSize: '16px', enabled: false };
+
+// 加载 Banner 内容
+async function loadBanner() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/banner`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}` }
+    });
+    if (!res.ok) return;
+    const result = await res.json();
+    if (result.success && result.data) {
+      currentBannerData = result.data;
+      renderBanner();
+    }
+  } catch (e) {
+    // 静默失败，不影响页面其他功能
+    console.warn('加载 Banner 失败:', e);
+  }
+}
+
+// 渲染 Banner
+function renderBanner() {
+  const banner = document.getElementById('important-banner');
+  const textEl = document.getElementById('important-banner-text');
+  if (!banner || !textEl) return;
+  
+  if (!currentBannerData.enabled || !currentBannerData.text) {
+    banner.style.display = 'none';
+    return;
+  }
+  
+  banner.style.display = 'flex';
+  textEl.textContent = currentBannerData.text;
+  textEl.style.fontSize = currentBannerData.fontSize || '16px';
+  textEl.style.fontWeight = currentBannerData.bold ? '700' : '400';
+}
+
+// 打开 Banner 编辑器
+function openBannerEditor() {
+  const modal = document.getElementById('bannerEditorModal');
+  if (!modal) return;
+  
+  document.getElementById('banner-editor-text').value = currentBannerData.text || '';
+  document.getElementById('banner-editor-fontsize').value = currentBannerData.fontSize || '16px';
+  document.getElementById('banner-editor-bold').value = currentBannerData.bold ? 'true' : 'false';
+  document.getElementById('banner-editor-enabled').checked = currentBannerData.enabled;
+  
+  modal.style.display = 'flex';
+}
+
+// 关闭 Banner 编辑器
+function closeBannerEditor() {
+  const modal = document.getElementById('bannerEditorModal');
+  if (modal) modal.style.display = 'none';
+}
+
+// 保存 Banner 数据
+async function saveBannerData() {
+  const text = document.getElementById('banner-editor-text').value.trim();
+  const fontSize = document.getElementById('banner-editor-fontsize').value;
+  const bold = document.getElementById('banner-editor-bold').value === 'true';
+  const enabled = document.getElementById('banner-editor-enabled').checked;
+  
+  currentBannerData = { text, bold, fontSize, enabled };
+  
+  try {
+    const res = await fetch(`${API_BASE_URL}/banner`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`
+      },
+      body: JSON.stringify(currentBannerData)
+    });
+    
+    if (!res.ok) throw new Error('保存失败');
+    const result = await res.json();
+    if (result.success) {
+      showToast('重要事项提醒已保存');
+      renderBanner();
+      closeBannerEditor();
+    } else {
+      showToast('保存失败: ' + result.message, 'error');
+    }
+  } catch (e) {
+    showToast('保存失败: ' + e.message, 'error');
+  }
 }
 
 // ── 角色权限检查函数 ───────────────────────────────────────────────────────────
