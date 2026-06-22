@@ -23,7 +23,19 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
 #important-banner:hover {
   background: linear-gradient(135deg, #fff1f0 0%, #ffa39e 100%);
 }
-#important-banner::before {
+#important-banner.banner-placeholder {
+  background: linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%);
+  border-left: 4px solid #52c41a;
+  cursor: pointer;
+}
+#important-banner.banner-placeholder::before {
+  content: "";
+  margin-right: 0;
+}
+#important-banner.banner-placeholder:hover {
+  background: linear-gradient(135deg, #f6ffed 0%, #b7eb8f 100%);
+}
+#important-banner.banner-normal::before {
   content: "⚠️";
   margin-right: 10px;
   font-size: 18px;
@@ -34,6 +46,9 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
   color: #cf1322;
   line-height: 1.5;
   word-break: break-word;
+}
+#important-banner.banner-placeholder #important-banner-text {
+  color: #389e0d;
 }
 #important-banner-edit-hint {
   position: absolute;
@@ -8534,15 +8549,22 @@ function renderBanner() {
   const textEl = document.getElementById('important-banner-text');
   if (!banner || !textEl) return;
   
-  if (!currentBannerData.enabled || !currentBannerData.text) {
-    banner.style.display = 'none';
+  // 优先显示正常内容
+  if (currentBannerData.enabled && currentBannerData.text) {
+    banner.style.display = 'flex';
+    banner.className = 'banner-normal';
+    textEl.textContent = currentBannerData.text;
+    textEl.style.fontSize = currentBannerData.fontSize || '16px';
+    textEl.style.fontWeight = currentBannerData.bold ? '700' : '400';
     return;
   }
   
+  // 无内容时显示占位提示
   banner.style.display = 'flex';
-  textEl.textContent = currentBannerData.text;
-  textEl.style.fontSize = currentBannerData.fontSize || '16px';
-  textEl.style.fontWeight = currentBannerData.bold ? '700' : '400';
+  banner.className = 'banner-placeholder';
+  textEl.textContent = '⚠️ 点击添加重要事项提醒';
+  textEl.style.fontSize = '14px';
+  textEl.style.fontWeight = '400';
 }
 
 // 打开 Banner 编辑器
