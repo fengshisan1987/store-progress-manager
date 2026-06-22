@@ -2209,29 +2209,22 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
       <button onclick="closeBannerEditor()" style="background:none;border:none;font-size:20px;color:#999;cursor:pointer;">✕</button>
     </div>
     
-    <div style="margin-bottom:16px;">
-      <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">提醒内容</label>
-      <textarea id="banner-editor-text" style="width:100%;padding:10px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;resize:vertical;min-height:80px;box-sizing:border-box;" placeholder="请输入提醒内容..."></textarea>
-    </div>
-    
-    <div style="display:flex;gap:16px;margin-bottom:16px;">
-      <div style="flex:1;">
-        <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">文字大小</label>
-        <select id="banner-editor-fontsize" style="width:100%;padding:8px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;">
-          <option value="14px">小 (14px)</option>
-          <option value="16px" selected>中 (16px)</option>
-          <option value="20px">大 (20px)</option>
-          <option value="24px">超大 (24px)</option>
+    <div style="margin-bottom:12px;">
+      <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">提醒内容（选中文字可单独设置格式）</label>
+      <!-- 富文本工具栏 -->
+      <div style="display:flex;gap:6px;margin-bottom:6px;padding:6px 8px;background:#fafafa;border:1px solid #d9d9d9;border-bottom:none;border-radius:6px 6px 0 0;">
+        <select onchange="bannerExecCommand('fontSize', this.value);this.value=''" style="padding:4px 6px;border:1px solid #d9d9d9;border-radius:4px;font-size:12px;cursor:pointer;" title="字号">
+          <option value="" disabled selected>字号</option>
+          <option value="1">小</option>
+          <option value="3">中</option>
+          <option value="5">大</option>
+          <option value="7">超大</option>
         </select>
+        <button type="button" onclick="bannerExecCommand('bold')" style="padding:4px 10px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer;font-size:13px;font-weight:700;" title="加粗">B</button>
+        <input type="color" onchange="bannerExecCommand('foreColor', this.value)" style="width:32px;height:28px;border:1px solid #d9d9d9;border-radius:4px;cursor:pointer;padding:0;" title="文字颜色" value="#cf1322">
+        <button type="button" onclick="bannerExecCommand('removeFormat')" style="padding:4px 10px;border:1px solid #d9d9d9;border-radius:4px;background:#fff;cursor:pointer;font-size:12px;" title="清除格式">清除格式</button>
       </div>
-      <div style="flex:1;">
-        <label style="display:block;font-size:13px;color:#666;margin-bottom:6px;">文字加粗</label>
-        <select id="banner-editor-bold" style="width:100%;padding:8px 10px;border:1px solid #d9d9d9;border-radius:6px;font-size:14px;">
-          <option value="true" selected>加粗</option>
-          <option value="false">常规</option>
-        </select>
-      </div>
-    </div>
+      <div id="banner-editor-text" contenteditable="true" style="width:100%;padding:10px;border:1px solid #d9d9d9;border-radius:0 0 6px 6px;font-size:14px;min-height:80px;box-sizing:border-box;line-height:1.6;outline:none;" placeholder="请输入提醒内容...">
     
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;padding:10px;background:#f6ffed;border-radius:6px;border:1px solid #b7eb8f;">
       <input type="checkbox" id="banner-editor-enabled" style="cursor:pointer;">
@@ -8553,18 +8546,14 @@ function renderBanner() {
   if (currentBannerData.enabled && currentBannerData.text) {
     banner.style.display = 'flex';
     banner.className = 'banner-normal';
-    textEl.textContent = currentBannerData.text;
-    textEl.style.fontSize = currentBannerData.fontSize || '16px';
-    textEl.style.fontWeight = currentBannerData.bold ? '700' : '400';
+    textEl.innerHTML = currentBannerData.text;
     return;
   }
   
   // 无内容时显示占位提示
   banner.style.display = 'flex';
   banner.className = 'banner-placeholder';
-  textEl.textContent = '⚠️ 点击添加重要事项提醒';
-  textEl.style.fontSize = '14px';
-  textEl.style.fontWeight = '400';
+  textEl.innerHTML = '⚠️ 点击添加重要事项提醒';
 }
 
 // 打开 Banner 编辑器
@@ -8572,28 +8561,80 @@ function openBannerEditor() {
   const modal = document.getElementById('bannerEditorModal');
   if (!modal) return;
   
-  document.getElementById('banner-editor-text').value = currentBannerData.text || '';
-  document.getElementById('banner-editor-fontsize').value = currentBannerData.fontSize || '16px';
-  document.getElementById('banner-editor-bold').value = currentBannerData.bold ? 'true' : 'false';
+  const editor = document.getElementById('banner-editor-text');
+  if (editor) editor.innerHTML = currentBannerData.text || '';
   document.getElementById('banner-editor-enabled').checked = currentBannerData.enabled;
   
   modal.style.display = 'flex';
 }
 
-// 关闭 Banner 编辑器
-function closeBannerEditor() {
-  const modal = document.getElementById('bannerEditorModal');
-  if (modal) modal.style.display = 'none';
+// 富文本编辑器执行命令
+function bannerExecCommand(command, value) {
+  const editor = document.getElementById('banner-editor-text');
+  if (!editor) return;
+  editor.focus();
+  document.execCommand(command, false, value || null);
+}
+
+// 过滤 HTML，只允许安全标签和样式
+function sanitizeBannerHtml(html) {
+  if (!html) return '';
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  
+  // 递归清理节点
+  function cleanNode(node) {
+    if (node.nodeType === 3) return; // 文本节点，保留
+    if (node.nodeType !== 1) {
+      node.remove();
+      return;
+    }
+    
+    const tag = node.tagName.toLowerCase();
+    const allowedTags = ['span', 'b', 'strong', 'i', 'em', 'u', 'br', 'div', 'p', 'font'];
+    if (!allowedTags.includes(tag)) {
+      // 把内容提升到父节点
+      const parent = node.parentNode;
+      while (node.firstChild) {
+        parent.insertBefore(node.firstChild, node);
+      }
+      node.remove();
+      return;
+    }
+    
+    // 清理属性，只保留 style
+    const attrs = Array.from(node.attributes);
+    attrs.forEach(attr => {
+      if (attr.name === 'style') {
+        // 只允许特定的 CSS 属性
+        const allowedStyles = ['font-size', 'font-weight', 'color', 'background-color'];
+        const styles = node.style.cssText.split(';');
+        const cleanStyles = styles.filter(s => {
+          const prop = s.split(':')[0].trim().toLowerCase();
+          return allowedStyles.includes(prop);
+        });
+        node.setAttribute('style', cleanStyles.join(';'));
+      } else if (attr.name !== 'face' && attr.name !== 'size' && attr.name !== 'color') {
+        node.removeAttribute(attr.name);
+      }
+    });
+    
+    // 递归清理子节点
+    Array.from(node.childNodes).forEach(cleanNode);
+  }
+  
+  Array.from(div.childNodes).forEach(cleanNode);
+  return div.innerHTML;
 }
 
 // 保存 Banner 数据
 async function saveBannerData() {
-  const text = document.getElementById('banner-editor-text').value.trim();
-  const fontSize = document.getElementById('banner-editor-fontsize').value;
-  const bold = document.getElementById('banner-editor-bold').value === 'true';
+  const editor = document.getElementById('banner-editor-text');
+  const rawHtml = editor ? editor.innerHTML : '';
+  const text = sanitizeBannerHtml(rawHtml);
   const enabled = document.getElementById('banner-editor-enabled').checked;
   
-  currentBannerData = { text, bold, fontSize, enabled };
+  currentBannerData = { text, enabled };
   
   try {
     const res = await fetch(`${API_BASE_URL}/api/banner`, {
