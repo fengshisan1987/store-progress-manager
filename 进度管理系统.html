@@ -8861,7 +8861,7 @@ function renderSettingsCards() {
 
   // 渲染快捷操作卡片
   let quickHtml = '';
-  if (role === 'superadmin' || role === 'admin') {
+  if (role === 'superadmin' || role === 'admin' || role === 'engineer') {
     quickHtml += `
       <div class="settings-card" onclick="openStoreEditor()">
         <div class="settings-card-icon">➕</div>
