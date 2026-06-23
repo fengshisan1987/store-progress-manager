@@ -14747,7 +14747,7 @@ function renderMonthlyChart() {
       formatter: function(params) {
         const val = params[0].value;
         if (isPercentRow) {
-          return `${params[0].axisValue}<br/>平均值: ${val.toFixed(2)}%`;
+          return `${params[0].axisValue}<br/>平均值: ${(val * 100).toFixed(2)}%`;
         }
         return `${params[0].axisValue}<br/>平均值: ¥${val.toFixed(2)}`;
       }
@@ -14788,7 +14788,7 @@ function renderMonthlyChart() {
         formatter: function(params) {
           if (params.value === 0) return '';
           if (isPercentRow) {
-            return params.value.toFixed(2) + '%';
+            return (params.value * 100).toFixed(2) + '%';
           }
           return '¥' + params.value.toFixed(2);
         },
