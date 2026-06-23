@@ -14612,6 +14612,10 @@ function applyDashAreaFilter() {
 // 计算指定门店、指定行、指定费用列的值
 function calcDashboardValue(storeIdx, rowId, costCol) {
   if (costCol === '工程类费用小计') {
+    // 毛利率行特殊处理：不能简单累加各列毛利率，需要计算整体毛利率
+    if (rowId === 'grossMargin') {
+      return calcFinanceValue(storeIdx, 'grossMargin', '工程类费用小计');
+    }
     let sum = 0;
     FINANCE_COLUMNS.forEach(col => {
       sum += calcFinanceValue(storeIdx, rowId, col.key);
@@ -14622,6 +14626,10 @@ function calcDashboardValue(storeIdx, rowId, costCol) {
     return calcFinanceValue(storeIdx, rowId, '设备费用');
   }
   if (costCol === '整体筹建费用总计') {
+    // 毛利率行特殊处理：不能简单累加各列毛利率，需要计算整体毛利率
+    if (rowId === 'grossMargin') {
+      return calcFinanceValue(storeIdx, 'grossMargin', '整体筹建费用总计');
+    }
     let sum = 0;
     FINANCE_COLUMNS.forEach(col => {
       sum += calcFinanceValue(storeIdx, rowId, col.key);
