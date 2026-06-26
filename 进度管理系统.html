@@ -2610,10 +2610,9 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
     
     <!-- 维保看板子tab -->
     <div id="maintenance-subtab-dashboard" style="display:none;">
-      <div style="text-align:center;padding:80px 20px;color:#999;">
-        <div style="font-size:48px;margin-bottom:16px;">📊</div>
-        <div style="font-size:16px;margin-bottom:8px;">维保看板</div>
-        <div style="font-size:14px;color:#bbb;">功能开发中，敬请期待...</div>
+      <div style="padding:20px 0;">
+        <div style="font-size:18px;font-weight:600;color:#333;margin-bottom:20px;">📊 维保类型占比</div>
+        <div id="maintenance-dashboard-chart" style="width:100%;height:400px;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.06);"></div>
       </div>
     </div>
   </div>
@@ -9678,6 +9677,84 @@ function openMaintenanceEditor(idx) {
   }
 }
 
+// 渲染维保看板图表
+function renderMaintenanceDashboard() {
+  const container = document.getElementById('maintenance-dashboard-chart');
+  if (!container) return;
+
+  // 按月份和维保类型统计
+  const monthData = {};
+  const typeSet = new Set();
+
+  MAINTENANCE_RECORDS.forEach(r => {
+    if (!r.reportDate || !r.maintenanceType) return;
+    const month = r.reportDate.slice(0, 7); // YYYY-MM
+    if (!monthData[month]) monthData[month] = {};
+    if (!monthData[month][r.maintenanceType]) monthData[month][r.maintenanceType] = 0;
+    monthData[month][r.maintenanceType]++;
+    typeSet.add(r.maintenanceType);
+  });
+
+  const months = Object.keys(monthData).sort();
+  const types = Array.from(typeSet).sort();
+  if (months.length === 0) {
+    container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;">暂无维保数据</div>';
+    return;
+  }
+
+  const series = types.map(type => ({
+    name: type,
+    type: 'bar',
+    stack: 'total',
+    emphasis: { focus: 'series' },
+    data: months.map(m => monthData[m][type] || 0),
+    itemStyle: { borderRadius: [0, 0, 0, 0] }
+  }));
+
+  // 第一列和最后一列添加圆角
+  if (series.length > 0) {
+    series[0].itemStyle.borderRadius = [4, 4, 0, 0];
+  }
+
+  const chart = echarts.init(container);
+  chart.setOption({
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' }
+    },
+    legend: {
+      type: 'scroll',
+      bottom: 0,
+      data: types
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '15%',
+      top: '10%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: months,
+      axisLine: { lineStyle: { color: '#e8e8e8' } },
+      axisLabel: { color: '#666' }
+    },
+    yAxis: {
+      type: 'value',
+      name: '数量',
+      axisLine: { show: false },
+      splitLine: { lineStyle: { color: '#f0f0f0' } },
+      axisLabel: { color: '#666' }
+    },
+    color: ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4', '#ea7ccc', '#1677ff', '#52c41a', '#fa8c16'],
+    series: series
+  });
+
+  // 响应式
+  window.addEventListener('resize', () => chart.resize());
+}
+
 // 关闭维保记录编辑弹窗
 function closeMaintenanceEditor() {
   document.getElementById('maintenanceEditorPanel').classList.remove('open');
@@ -10192,6 +10269,7 @@ function switchMaintenanceSubTab(tab) {
     dashboardBtn.style.cssText = 'padding:6px 16px;border:none;border-radius:4px;font-size:13px;cursor:pointer;background:#fff;color:#1677ff;font-weight:500;';
     recordsPanel.style.display = 'none';
     dashboardPanel.style.display = 'block';
+    renderMaintenanceDashboard();
   }
 }
 
