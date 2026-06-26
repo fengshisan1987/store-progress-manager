@@ -9057,7 +9057,10 @@ function closeSecuritySettings() {
 // ═════════════════════════════════════════════════════════════════════════════
 
 // 供应商分类列表
-const SUPPLIER_CATEGORIES = ['工程硬装','广告物料','安装收尾','家具','灯具','配电箱','设计','空调','消防','其他工程类'];
+// 供应商分类列表（动态引用维保类型，自动同步）
+function getSupplierCategories() {
+  return MAINTENANCE_TYPES;
+}
 
 // 供应商数据（从服务器加载，localStorage备份）
 let SUPPLIERS = JSON.parse(localStorage.getItem('storeSuppliers') || '[]');
@@ -9185,7 +9188,7 @@ function openSupplierEditModal(idx) {
 
   // 构建分类多选
   let catHtml = '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">';
-  SUPPLIER_CATEGORIES.forEach(cat => {
+  getSupplierCategories().forEach(cat => {
     const checked = (s.categories || []).includes(cat) ? 'checked' : '';
     catHtml += `<label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:4px 8px;background:#f5f5f5;border-radius:4px;border:1px solid #e8e8e8;"><input type="checkbox" name="sup-cat" value="${cat}" ${checked}>${cat}</label>`;
   });
@@ -9347,7 +9350,7 @@ function renderSupplierPanel() {
   let html = '<div style="padding:16px;">';
   
   // 按分类分组显示
-  SUPPLIER_CATEGORIES.forEach(cat => {
+  getSupplierCategories().forEach(cat => {
     const list = SUPPLIERS.filter(s => (s.categories || []).includes(cat));
     html += `
       <div style="margin-bottom:20px;">
