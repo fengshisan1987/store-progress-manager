@@ -9876,7 +9876,7 @@ function renderNewStoreMaintenanceRate() {
 
   const years = [];
   const rate3m = [];
-  const rate3to6m = [];
+  const rate6m = [];
 
   // 获取所有年份（从维保记录中收集）
   const allYears = new Set();
@@ -9927,8 +9927,8 @@ function renderNewStoreMaintenanceRate() {
     });
     const count3m = stores3m.size;
 
-    // 分子2：今年所有报修中，报修时间与开业时间差值在3-6个月的去重门店数量
-    const stores3to6m = new Set();
+    // 分子2：今年所有报修中，报修时间与开业时间差值在6个月内的去重门店数量
+    const stores6m = new Set();
     MAINTENANCE_RECORDS.forEach(r => {
       if (!r.reportDate || r.reportDate.slice(0, 4) !== yearStr) return;
       if (r.maintenanceType === '工程改造') return;
@@ -9940,37 +9940,37 @@ function renderNewStoreMaintenanceRate() {
 
       const rd = new Date(r.reportDate);
       const diffDays = (rd - odDate) / (1000 * 60 * 60 * 24);
-      if (diffDays >= 90 && diffDays < 180) {
-        stores3to6m.add(r.storeName);
+      if (diffDays >= 0 && diffDays < 180) {
+        stores6m.add(r.storeName);
       }
     });
-    const count3to6m = stores3to6m.size;
+    const count6m = stores6m.size;
 
     const rate3mVal = totalStores > 0 ? ((count3m / totalStores) * 100) : 0;
-    const rate3to6mVal = totalStores > 0 ? ((count3to6m / totalStores) * 100) : 0;
+    const rate6mVal = totalStores > 0 ? ((count6m / totalStores) * 100) : 0;
 
     years.push(yearStr + '年');
     rate3m.push({
       value: rate3mVal.toFixed(2),
       label: { show: true, position: 'top', formatter: rate3mVal.toFixed(1) + '%', fontSize: 8, color: '#666' }
     });
-    rate3to6m.push({
-      value: rate3to6mVal.toFixed(2),
-      label: { show: true, position: 'top', formatter: rate3to6mVal.toFixed(1) + '%', fontSize: 8, color: '#666' }
+    rate6m.push({
+      value: rate6mVal.toFixed(2),
+      label: { show: true, position: 'top', formatter: rate6mVal.toFixed(1) + '%', fontSize: 8, color: '#666' }
     });
   });
 
   const chart = echarts.init(container);
   chart.setOption({
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-    legend: { data: ['开业3个月内', '开业3-6个月'], bottom: 0 },
+    legend: { data: ['开业3个月内', '开业6个月内'], bottom: 0 },
     grid: { left: '3%', right: '4%', bottom: '12%', top: '10%', containLabel: true },
     xAxis: { type: 'category', data: years, axisLine: { lineStyle: { color: '#e8e8e8' } }, axisLabel: { color: '#666' } },
     yAxis: { type: 'value', name: '维保率(%)', max: 100, axisLine: { show: false }, splitLine: { lineStyle: { color: '#f0f0f0' } }, axisLabel: { color: '#666', formatter: '{value}%' } },
     color: ['#1677ff', '#52c41a'],
     series: [
       { name: '开业3个月内', type: 'bar', data: rate3m, itemStyle: { borderRadius: [4, 4, 0, 0] } },
-      { name: '开业3-6个月', type: 'bar', data: rate3to6m, itemStyle: { borderRadius: [4, 4, 0, 0] } }
+      { name: '开业6个月内', type: 'bar', data: rate6m, itemStyle: { borderRadius: [4, 4, 0, 0] } }
     ]
   });
   window.addEventListener('resize', () => chart.resize());
