@@ -9908,11 +9908,12 @@ function renderNewStoreMaintenanceRate() {
       return odDate >= yearStart && odDate < yearEnd;
     }).length;
 
-    // 分子1：今年所有报修中，报修时间与开业时间差值<3个月的去重门店数量
+    // 分子1：今年所有报修中，报修时间与开业时间差值<3个月的去重门店数量（排除工程改造和其他工程类）
     const stores3m = new Set();
+    const EXCLUDED_MAINTENANCE_TYPES = ['工程改造', '其他工程类'];
     MAINTENANCE_RECORDS.forEach(r => {
       if (!r.reportDate || r.reportDate.slice(0, 4) !== yearStr) return;
-      if (r.maintenanceType === '工程改造') return;
+      if (EXCLUDED_MAINTENANCE_TYPES.includes(r.maintenanceType)) return;
       const od = r.openingDate;
       if (!od || !/^\d{4}-\d{2}-\d{2}$/.test(od)) return;
       const odDate = new Date(od);
@@ -9927,11 +9928,11 @@ function renderNewStoreMaintenanceRate() {
     });
     const count3m = stores3m.size;
 
-    // 分子2：今年所有报修中，报修时间与开业时间差值在6个月内的去重门店数量
+    // 分子2：今年所有报修中，报修时间与开业时间差值在6个月内的去重门店数量（排除工程改造和其他工程类）
     const stores6m = new Set();
     MAINTENANCE_RECORDS.forEach(r => {
       if (!r.reportDate || r.reportDate.slice(0, 4) !== yearStr) return;
-      if (r.maintenanceType === '工程改造') return;
+      if (EXCLUDED_MAINTENANCE_TYPES.includes(r.maintenanceType)) return;
       const od = r.openingDate;
       if (!od || !/^\d{4}-\d{2}-\d{2}$/.test(od)) return;
       const odDate = new Date(od);
