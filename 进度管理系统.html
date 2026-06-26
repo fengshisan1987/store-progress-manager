@@ -9953,11 +9953,11 @@ function renderNewStoreMaintenanceRate() {
     years.push(yearStr + '年');
     rate3m.push({
       value: rate3mVal.toFixed(2),
-      label: { show: true, position: 'top', formatter: rate3mVal.toFixed(1) + '%', fontSize: 8, color: '#666' }
+      label: { show: true, position: 'top', formatter: rate3mVal.toFixed(1) + '% (' + count3m + ')', fontSize: 8, color: '#666' }
     });
     rate6m.push({
       value: rate6mVal.toFixed(2),
-      label: { show: true, position: 'top', formatter: rate6mVal.toFixed(1) + '%', fontSize: 8, color: '#666' }
+      label: { show: true, position: 'top', formatter: rate6mVal.toFixed(1) + '% (' + count6m + ')', fontSize: 8, color: '#666' }
     });
   });
 
