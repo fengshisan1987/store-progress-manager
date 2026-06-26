@@ -9904,8 +9904,8 @@ function renderNewStoreMaintenanceRate() {
       return odDate >= startMonth && odDate < endMonth;
     }).length;
 
-    // 分子1：当月非"工程改造"、报修日期与开业日期差值在3个月内的维保记录数量
-    let count3m = 0;
+    // 分子1：近3个月（不含本月）开业的门店中，报修时间与开业时间差值<3个月的门店数量（去重）
+    const stores3m = new Set();
     MAINTENANCE_RECORDS.forEach(r => {
       if (!r.reportDate || r.reportDate.slice(0, 7) !== monthStr) return;
       if (r.maintenanceType === '工程改造') return;
@@ -9917,11 +9917,14 @@ function renderNewStoreMaintenanceRate() {
 
       const rd = new Date(r.reportDate);
       const diffDays = (rd - odDate) / (1000 * 60 * 60 * 24);
-      if (diffDays >= 0 && diffDays < 90) count3m++;
+      if (diffDays >= 0 && diffDays < 90) {
+        stores3m.add(r.storeName);
+      }
     });
+    const count3m = stores3m.size;
 
-    // 分子2：当月非"工程改造"、报修日期与开业日期差值在3-6个月的维保记录数量
-    let count3to6m = 0;
+    // 分子2：近3个月（不含本月）开业的门店中，报修时间与开业时间差值在3-6个月的门店数量（去重）
+    const stores3to6m = new Set();
     MAINTENANCE_RECORDS.forEach(r => {
       if (!r.reportDate || r.reportDate.slice(0, 7) !== monthStr) return;
       if (r.maintenanceType === '工程改造') return;
@@ -9933,8 +9936,11 @@ function renderNewStoreMaintenanceRate() {
 
       const rd = new Date(r.reportDate);
       const diffDays = (rd - odDate) / (1000 * 60 * 60 * 24);
-      if (diffDays >= 90 && diffDays < 180) count3to6m++;
+      if (diffDays >= 90 && diffDays < 180) {
+        stores3to6m.add(r.storeName);
+      }
     });
+    const count3to6m = stores3to6m.size;
 
     const rate3mVal = totalStores > 0 ? ((count3m / totalStores) * 100) : 0;
     const rate3to6mVal = totalStores > 0 ? ((count3to6m / totalStores) * 100) : 0;
