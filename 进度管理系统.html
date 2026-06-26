@@ -9874,46 +9874,50 @@ function renderNewStoreMaintenanceRate() {
   const container = document.getElementById('new-store-maintenance-rate-chart');
   if (!container) return;
 
-  const months = [];
+  const years = [];
   const rate3m = [];
   const rate3to6m = [];
 
-  // 获取所有月份（从维保记录中收集）
-  const allMonths = new Set();
+  // 获取所有年份（从维保记录中收集）
+  const allYears = new Set();
   MAINTENANCE_RECORDS.forEach(r => {
-    if (r.reportDate) allMonths.add(r.reportDate.slice(0, 7));
+    if (r.reportDate) allYears.add(r.reportDate.slice(0, 4));
   });
-  const sortedMonths = Array.from(allMonths).sort();
-  if (sortedMonths.length === 0) {
+  // 也包含门店开业年份
+  STORES.forEach(s => {
+    const od = s['已正式开业'];
+    if (od && /^\d{4}-\d{2}-\d{2}$/.test(od)) {
+      allYears.add(od.slice(0, 4));
+    }
+  });
+  const sortedYears = Array.from(allYears).sort();
+  if (sortedYears.length === 0) {
     container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;">暂无数据</div>';
     return;
   }
 
-  sortedMonths.forEach(monthStr => {
-    const monthDate = new Date(monthStr + '-01');
+  sortedYears.forEach(yearStr => {
+    const yearStart = new Date(yearStr + '-01-01');
+    const yearEnd = new Date((parseInt(yearStr) + 1) + '-01-01');
 
-    // 分母：近3个月（不含本月）"已正式开业"的门店数量
-    const startMonth = new Date(monthDate);
-    startMonth.setMonth(startMonth.getMonth() - 3);
-    const endMonth = new Date(monthDate); // 当月的1号，不包含当月
-
+    // 分母：今年所有"已正式开业"的门店数量
     const totalStores = STORES.filter(s => {
       const od = s['已正式开业'];
       if (!od || !/^\d{4}-\d{2}-\d{2}$/.test(od)) return false;
       const odDate = new Date(od);
-      return odDate >= startMonth && odDate < endMonth;
+      return odDate >= yearStart && odDate < yearEnd;
     }).length;
 
-    // 分子1：近3个月（不含本月）开业的门店中，报修时间与开业时间差值<3个月的门店数量（去重）
+    // 分子1：今年所有报修中，报修时间与开业时间差值<3个月的去重门店数量
     const stores3m = new Set();
     MAINTENANCE_RECORDS.forEach(r => {
-      if (!r.reportDate || r.reportDate.slice(0, 7) !== monthStr) return;
+      if (!r.reportDate || r.reportDate.slice(0, 4) !== yearStr) return;
       if (r.maintenanceType === '工程改造') return;
       const od = r.openingDate;
       if (!od || !/^\d{4}-\d{2}-\d{2}$/.test(od)) return;
       const odDate = new Date(od);
-      // 只统计近3个月（不含本月）开业的门店
-      if (odDate < startMonth || odDate >= endMonth) return;
+      // 只统计今年开业的门店
+      if (odDate < yearStart || odDate >= yearEnd) return;
 
       const rd = new Date(r.reportDate);
       const diffDays = (rd - odDate) / (1000 * 60 * 60 * 24);
@@ -9923,16 +9927,16 @@ function renderNewStoreMaintenanceRate() {
     });
     const count3m = stores3m.size;
 
-    // 分子2：近3个月（不含本月）开业的门店中，报修时间与开业时间差值在3-6个月的门店数量（去重）
+    // 分子2：今年所有报修中，报修时间与开业时间差值在3-6个月的去重门店数量
     const stores3to6m = new Set();
     MAINTENANCE_RECORDS.forEach(r => {
-      if (!r.reportDate || r.reportDate.slice(0, 7) !== monthStr) return;
+      if (!r.reportDate || r.reportDate.slice(0, 4) !== yearStr) return;
       if (r.maintenanceType === '工程改造') return;
       const od = r.openingDate;
       if (!od || !/^\d{4}-\d{2}-\d{2}$/.test(od)) return;
       const odDate = new Date(od);
-      // 只统计近3个月（不含本月）开业的门店
-      if (odDate < startMonth || odDate >= endMonth) return;
+      // 只统计今年开业的门店
+      if (odDate < yearStart || odDate >= yearEnd) return;
 
       const rd = new Date(r.reportDate);
       const diffDays = (rd - odDate) / (1000 * 60 * 60 * 24);
@@ -9945,7 +9949,7 @@ function renderNewStoreMaintenanceRate() {
     const rate3mVal = totalStores > 0 ? ((count3m / totalStores) * 100) : 0;
     const rate3to6mVal = totalStores > 0 ? ((count3to6m / totalStores) * 100) : 0;
 
-    months.push(monthStr);
+    years.push(yearStr + '年');
     rate3m.push({
       value: rate3mVal.toFixed(2),
       label: { show: true, position: 'top', formatter: rate3mVal.toFixed(1) + '%', fontSize: 8, color: '#666' }
@@ -9961,7 +9965,7 @@ function renderNewStoreMaintenanceRate() {
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
     legend: { data: ['开业3个月内', '开业3-6个月'], bottom: 0 },
     grid: { left: '3%', right: '4%', bottom: '12%', top: '10%', containLabel: true },
-    xAxis: { type: 'category', data: months, axisLine: { lineStyle: { color: '#e8e8e8' } }, axisLabel: { color: '#666' } },
+    xAxis: { type: 'category', data: years, axisLine: { lineStyle: { color: '#e8e8e8' } }, axisLabel: { color: '#666' } },
     yAxis: { type: 'value', name: '维保率(%)', max: 100, axisLine: { show: false }, splitLine: { lineStyle: { color: '#f0f0f0' } }, axisLabel: { color: '#666', formatter: '{value}%' } },
     color: ['#1677ff', '#52c41a'],
     series: [
