@@ -9893,9 +9893,7 @@ function renderNewStoreMaintenanceRate() {
     // 分母：近3个月（不含本月）"已正式开业"的门店数量
     const startMonth = new Date(monthDate);
     startMonth.setMonth(startMonth.getMonth() - 3);
-    const endMonth = new Date(monthDate);
-    endMonth.setMonth(endMonth.getMonth() - 1);
-    endMonth.setDate(endMonth.getDate() + 1); // 包含最后一天
+    const endMonth = new Date(monthDate); // 当月的1号，不包含当月
 
     const totalStores = STORES.filter(s => {
       const od = s['已正式开业'];
