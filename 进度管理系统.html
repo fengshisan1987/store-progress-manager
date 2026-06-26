@@ -9702,19 +9702,33 @@ function renderMaintenanceDashboard() {
     return;
   }
 
+  // 计算每月总数用于百分比
+  const monthTotals = {};
+  months.forEach(m => {
+    monthTotals[m] = types.reduce((sum, t) => sum + (monthData[m][t] || 0), 0);
+  });
+
   const series = types.map(type => ({
     name: type,
     type: 'bar',
-    stack: 'total',
     emphasis: { focus: 'series' },
-    data: months.map(m => monthData[m][type] || 0),
-    itemStyle: { borderRadius: [0, 0, 0, 0] }
+    data: months.map(m => {
+      const count = monthData[m][type] || 0;
+      const total = monthTotals[m] || 1;
+      const percent = total > 0 ? ((count / total) * 100).toFixed(1) : '0.0';
+      return {
+        value: count,
+        label: {
+          show: true,
+          position: 'top',
+          formatter: percent + '%',
+          fontSize: 10,
+          color: '#666'
+        }
+      };
+    }),
+    itemStyle: { borderRadius: [3, 3, 0, 0] }
   }));
-
-  // 第一列和最后一列添加圆角
-  if (series.length > 0) {
-    series[0].itemStyle.borderRadius = [4, 4, 0, 0];
-  }
 
   const chart = echarts.init(container);
   chart.setOption({
@@ -9731,7 +9745,7 @@ function renderMaintenanceDashboard() {
       left: '3%',
       right: '4%',
       bottom: '15%',
-      top: '10%',
+      top: '15%',
       containLabel: true
     },
     xAxis: {
