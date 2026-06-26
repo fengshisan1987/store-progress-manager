@@ -9724,7 +9724,7 @@ function renderMaintenanceDashboard() {
         label: {
           show: percent >= 3, // 占比小于3%不显示，避免拥挤
           position: 'top',
-          formatter: percentStr + '%',
+          formatter: percentStr + '% (' + count + ')',
           fontSize: 8, // 字体缩小到8px
           color: '#666'
         }
@@ -9741,13 +9741,13 @@ function renderMaintenanceDashboard() {
     },
     legend: {
       type: 'scroll',
-      bottom: 0,
+      bottom: 32,
       data: types
     },
     grid: {
       left: '3%',
       right: '4%',
-      bottom: '18%', // 增大底部空间容纳dataZoom滑动条
+      bottom: '22%',
       top: '15%',
       containLabel: true
     },
@@ -9758,7 +9758,7 @@ function renderMaintenanceDashboard() {
       startValue: Math.max(0, months.length - 3), // 默认显示最后3个月
       endValue: months.length - 1,
       height: 20,
-      bottom: 10,
+      bottom: 5,
       borderColor: '#e8e8e8',
       fillerColor: 'rgba(22, 119, 255, 0.1)',
       handleStyle: { color: '#1677ff' },
