@@ -9715,14 +9715,15 @@ function renderMaintenanceDashboard() {
     data: months.map(m => {
       const count = monthData[m][type] || 0;
       const total = monthTotals[m] || 1;
-      const percent = total > 0 ? ((count / total) * 100).toFixed(1) : '0.0';
+      const percent = total > 0 ? ((count / total) * 100) : 0;
+      const percentStr = percent.toFixed(1);
       return {
         value: count,
         label: {
-          show: true,
+          show: percent >= 3, // 占比小于3%不显示，避免拥挤
           position: 'top',
-          formatter: percent + '%',
-          fontSize: 10,
+          formatter: percentStr + '%',
+          fontSize: 8, // 字体缩小到8px
           color: '#666'
         }
       };
@@ -9744,10 +9745,24 @@ function renderMaintenanceDashboard() {
     grid: {
       left: '3%',
       right: '4%',
-      bottom: '15%',
+      bottom: '18%', // 增大底部空间容纳dataZoom滑动条
       top: '15%',
       containLabel: true
     },
+    dataZoom: [{
+      type: 'slider',
+      show: true,
+      xAxisIndex: 0,
+      startValue: Math.max(0, months.length - 3), // 默认显示最后3个月
+      endValue: months.length - 1,
+      height: 20,
+      bottom: 10,
+      borderColor: '#e8e8e8',
+      fillerColor: 'rgba(22, 119, 255, 0.1)',
+      handleStyle: { color: '#1677ff' },
+      textStyle: { color: '#666', fontSize: 10 },
+      showDetail: true
+    }],
     xAxis: {
       type: 'category',
       data: months,
