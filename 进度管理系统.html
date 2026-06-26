@@ -9872,174 +9872,97 @@ function renderNewStoreMaintenanceRate() {
   const container = document.getElementById('new-store-maintenance-rate-chart');
   if (!container) return;
 
-  // 收集所有月份（从门店开业日期和维保报修日期）
-  const monthSet = new Set();
-  STORES.forEach(s => {
-    const od = s['已正式开业'];
-    if (od && /^\d{4}-\d{2}-\d{2}$/.test(od)) {
-      monthSet.add(od.slice(0, 7));
-    }
-  });
-  MAINTENANCE_RECORDS.forEach(r => {
-    if (r.reportDate) monthSet.add(r.reportDate.slice(0, 7));
-  });
+  const months = [];
+  const rate3m = [];
+  const rate3to6m = [];
 
-  const months = Array.from(monthSet).sort();
-  if (months.length === 0) {
+  // 获取所有月份（从维保记录中收集）
+  const allMonths = new Set();
+  MAINTENANCE_RECORDS.forEach(r => {
+    if (r.reportDate) allMonths.add(r.reportDate.slice(0, 7));
+  });
+  const sortedMonths = Array.from(allMonths).sort();
+  if (sortedMonths.length === 0) {
     container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;">暂无数据</div>';
     return;
   }
 
-  const data3m = [];     // 开业3个月内维保率
-  const data3to6m = [];  // 开业3-6个月维保率
+  sortedMonths.forEach(monthStr => {
+    const monthDate = new Date(monthStr + '-01');
 
-  months.forEach(month => {
-    const monthDate = new Date(month + '-01');
+    // 分母：近3个月（不含本月）"已正式开业"的门店数量
+    const startMonth = new Date(monthDate);
+    startMonth.setMonth(startMonth.getMonth() - 3);
+    const endMonth = new Date(monthDate);
+    endMonth.setMonth(endMonth.getMonth() - 1);
+    endMonth.setDate(endMonth.getDate() + 1); // 包含最后一天
 
-    // === 开业3个月内 ===
-    // 开业日期在 [month-3月, month-1月] 之间
-    const start3m = new Date(monthDate);
-    start3m.setMonth(start3m.getMonth() - 3);
-    const end3m = new Date(monthDate);
-    end3m.setMonth(end3m.getMonth() - 1);
-    end3m.setDate(end3m.getDate() + 1); // 包含最后一天
-
-    const stores3m = STORES.filter(s => {
+    const totalStores = STORES.filter(s => {
       const od = s['已正式开业'];
       if (!od || !/^\d{4}-\d{2}-\d{2}$/.test(od)) return false;
       const odDate = new Date(od);
-      return odDate >= start3m && odDate < end3m;
-    });
+      return odDate >= startMonth && odDate < endMonth;
+    }).length;
 
-    let hasMaint3m = 0;
-    stores3m.forEach(store => {
-      const storeName = store['门店'] || '';
-      const od = store['已正式开业'];
+    // 分子1：当月非"工程改造"、报修日期与开业日期差值在3个月内的维保记录数量
+    let count3m = 0;
+    MAINTENANCE_RECORDS.forEach(r => {
+      if (!r.reportDate || r.reportDate.slice(0, 7) !== monthStr) return;
+      if (r.maintenanceType === '工程改造') return;
+      const od = r.openingDate;
+      if (!od || !/^\d{4}-\d{2}-\d{2}$/.test(od)) return;
       const odDate = new Date(od);
-      const odPlus3m = new Date(odDate);
-      odPlus3m.setMonth(odPlus3m.getMonth() + 3);
+      // 只统计近3个月（不含本月）开业的门店
+      if (odDate < startMonth || odDate >= endMonth) return;
 
-      const hasNonEng = MAINTENANCE_RECORDS.some(r => {
-        if (r.storeName !== storeName) return false;
-        if (r.maintenanceType === '工程改造') return false;
-        if (!r.reportDate) return false;
-        const rd = new Date(r.reportDate);
-        return rd >= odDate && rd < odPlus3m;
-      });
-      if (hasNonEng) hasMaint3m++;
+      const rd = new Date(r.reportDate);
+      const diffDays = (rd - odDate) / (1000 * 60 * 60 * 24);
+      if (diffDays >= 0 && diffDays < 90) count3m++;
     });
 
-    const rate3m = stores3m.length > 0 ? (hasMaint3m / stores3m.length * 100) : 0;
-    data3m.push(parseFloat(rate3m.toFixed(1)));
-
-    // === 开业3-6个月 ===
-    // 开业日期在 [month-6月, month-4月] 之间
-    const start3to6m = new Date(monthDate);
-    start3to6m.setMonth(start3to6m.getMonth() - 6);
-    const end3to6m = new Date(monthDate);
-    end3to6m.setMonth(end3to6m.getMonth() - 4);
-    end3to6m.setDate(end3to6m.getDate() + 1);
-
-    const stores3to6m = STORES.filter(s => {
-      const od = s['已正式开业'];
-      if (!od || !/^\d{4}-\d{2}-\d{2}$/.test(od)) return false;
+    // 分子2：当月非"工程改造"、报修日期与开业日期差值在3-6个月的维保记录数量
+    let count3to6m = 0;
+    MAINTENANCE_RECORDS.forEach(r => {
+      if (!r.reportDate || r.reportDate.slice(0, 7) !== monthStr) return;
+      if (r.maintenanceType === '工程改造') return;
+      const od = r.openingDate;
+      if (!od || !/^\d{4}-\d{2}-\d{2}$/.test(od)) return;
       const odDate = new Date(od);
-      return odDate >= start3to6m && odDate < end3to6m;
+      // 只统计近3个月（不含本月）开业的门店
+      if (odDate < startMonth || odDate >= endMonth) return;
+
+      const rd = new Date(r.reportDate);
+      const diffDays = (rd - odDate) / (1000 * 60 * 60 * 24);
+      if (diffDays >= 90 && diffDays < 180) count3to6m++;
     });
 
-    let hasMaint3to6m = 0;
-    stores3to6m.forEach(store => {
-      const storeName = store['门店'] || '';
-      const od = store['已正式开业'];
-      const odDate = new Date(od);
-      const odPlus3m = new Date(odDate);
-      odPlus3m.setMonth(odPlus3m.getMonth() + 3);
-      const odPlus6m = new Date(odDate);
-      odPlus6m.setMonth(odPlus6m.getMonth() + 6);
+    const rate3mVal = totalStores > 0 ? ((count3m / totalStores) * 100) : 0;
+    const rate3to6mVal = totalStores > 0 ? ((count3to6m / totalStores) * 100) : 0;
 
-      const hasNonEng = MAINTENANCE_RECORDS.some(r => {
-        if (r.storeName !== storeName) return false;
-        if (r.maintenanceType === '工程改造') return false;
-        if (!r.reportDate) return false;
-        const rd = new Date(r.reportDate);
-        return rd >= odPlus3m && rd < odPlus6m;
-      });
-      if (hasNonEng) hasMaint3to6m++;
+    months.push(monthStr);
+    rate3m.push({
+      value: rate3mVal.toFixed(2),
+      label: { show: true, position: 'top', formatter: rate3mVal.toFixed(1) + '%', fontSize: 8, color: '#666' }
     });
-
-    const rate3to6m = stores3to6m.length > 0 ? (hasMaint3to6m / stores3to6m.length * 100) : 0;
-    data3to6m.push(parseFloat(rate3to6m.toFixed(1)));
+    rate3to6m.push({
+      value: rate3to6mVal.toFixed(2),
+      label: { show: true, position: 'top', formatter: rate3to6mVal.toFixed(1) + '%', fontSize: 8, color: '#666' }
+    });
   });
 
   const chart = echarts.init(container);
   chart.setOption({
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: { type: 'shadow' },
-      formatter: function(params) {
-        let result = params[0].axisValue + '<br/>';
-        params.forEach(p => {
-          result += p.marker + ' ' + p.seriesName + ': ' + p.value.toFixed(1) + '%<br/>';
-        });
-        return result;
-      }
-    },
-    legend: {
-      data: ['开业3个月内', '开业3-6个月'],
-      bottom: 0
-    },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '12%',
-      top: '10%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'category',
-      data: months,
-      axisLine: { lineStyle: { color: '#e8e8e8' } },
-      axisLabel: { color: '#666' }
-    },
-    yAxis: {
-      type: 'value',
-      name: '维保率(%)',
-      max: 100,
-      axisLine: { show: false },
-      splitLine: { lineStyle: { color: '#f0f0f0' } },
-      axisLabel: { color: '#666', formatter: '{value}%' }
-    },
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    legend: { data: ['开业3个月内', '开业3-6个月'], bottom: 0 },
+    grid: { left: '3%', right: '4%', bottom: '12%', top: '10%', containLabel: true },
+    xAxis: { type: 'category', data: months, axisLine: { lineStyle: { color: '#e8e8e8' } }, axisLabel: { color: '#666' } },
+    yAxis: { type: 'value', name: '维保率(%)', max: 100, axisLine: { show: false }, splitLine: { lineStyle: { color: '#f0f0f0' } }, axisLabel: { color: '#666', formatter: '{value}%' } },
     color: ['#1677ff', '#52c41a'],
     series: [
-      {
-        name: '开业3个月内',
-        type: 'bar',
-        data: data3m,
-        itemStyle: { borderRadius: [3, 3, 0, 0] },
-        label: {
-          show: true,
-          position: 'top',
-          formatter: '{c}%',
-          fontSize: 10,
-          color: '#666'
-        }
-      },
-      {
-        name: '开业3-6个月',
-        type: 'bar',
-        data: data3to6m,
-        itemStyle: { borderRadius: [3, 3, 0, 0] },
-        label: {
-          show: true,
-          position: 'top',
-          formatter: '{c}%',
-          fontSize: 10,
-          color: '#666'
-        }
-      }
+      { name: '开业3个月内', type: 'bar', data: rate3m, itemStyle: { borderRadius: [4, 4, 0, 0] } },
+      { name: '开业3-6个月', type: 'bar', data: rate3to6m, itemStyle: { borderRadius: [4, 4, 0, 0] } }
     ]
   });
-
   window.addEventListener('resize', () => chart.resize());
 }
 
