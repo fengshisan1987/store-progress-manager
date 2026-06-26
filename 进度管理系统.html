@@ -9913,13 +9913,14 @@ function renderNewStoreMaintenanceRate() {
 
     let hasMaint3m = 0;
     stores3m.forEach(store => {
+      const storeName = store['门店'] || '';
       const od = store['已正式开业'];
       const odDate = new Date(od);
       const odPlus3m = new Date(odDate);
       odPlus3m.setMonth(odPlus3m.getMonth() + 3);
 
       const hasNonEng = MAINTENANCE_RECORDS.some(r => {
-        if (r.storeName !== store.name) return false;
+        if (r.storeName !== storeName) return false;
         if (r.maintenanceType === '工程改造') return false;
         if (!r.reportDate) return false;
         const rd = new Date(r.reportDate);
@@ -9948,6 +9949,7 @@ function renderNewStoreMaintenanceRate() {
 
     let hasMaint3to6m = 0;
     stores3to6m.forEach(store => {
+      const storeName = store['门店'] || '';
       const od = store['已正式开业'];
       const odDate = new Date(od);
       const odPlus3m = new Date(odDate);
@@ -9956,7 +9958,7 @@ function renderNewStoreMaintenanceRate() {
       odPlus6m.setMonth(odPlus6m.getMonth() + 6);
 
       const hasNonEng = MAINTENANCE_RECORDS.some(r => {
-        if (r.storeName !== store.name) return false;
+        if (r.storeName !== storeName) return false;
         if (r.maintenanceType === '工程改造') return false;
         if (!r.reportDate) return false;
         const rd = new Date(r.reportDate);
