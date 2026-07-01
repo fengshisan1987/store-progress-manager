@@ -14963,6 +14963,7 @@ function onDashAmountTypeChange() {
   }
 
   renderMonthlyChart();
+  renderMonthlyTotalChart();
 }
 
 // 类型明细变化
@@ -14970,6 +14971,7 @@ function onDashDetailTypeChange() {
   const detailSelect = document.getElementById('dash-detail-type');
   dashFilterDetailType = detailSelect.value;
   renderMonthlyChart();
+  renderMonthlyTotalChart();
 }
 
 // 门店面积弹窗
