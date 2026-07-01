@@ -2732,6 +2732,9 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
       </div>
       <!-- 图表容器 -->
       <div id="monthly-chart-container" style="width:100%;height:500px;background:#fff;border:1px solid #e8e8e8;border-radius:8px;"></div>
+      <div style="font-size:16px;font-weight:600;color:#333;margin:32px 0 16px;">📊 月度数据合计看板（按验收日期）</div>
+      <div style="font-size:12px;color:#666;margin-bottom:8px;">统计方式：合计（所有门店费用累加） | 日期维度：门店已验收日期</div>
+      <div id="monthly-total-chart-container" style="width:100%;height:500px;background:#fff;border:1px solid #e8e8e8;border-radius:8px;"></div>
     </div>
     <div id="supplier-list" style="display:none;">
       <!-- 动态填充门店列表 -->
@@ -14743,6 +14746,7 @@ function initDashboardFilters() {
     dashFilterAreas = vals;
     updateDashDropdownBtn('dash-dropdown-area', vals);
     renderMonthlyChart();
+    renderMonthlyTotalChart();
   });
 
   // 门店类型下拉
@@ -14751,6 +14755,7 @@ function initDashboardFilters() {
     dashFilterStoreTypes = vals;
     updateDashDropdownBtn('dash-dropdown-storetype', vals);
     renderMonthlyChart();
+    renderMonthlyTotalChart();
   });
 
   // 装修形式下拉
@@ -14759,6 +14764,7 @@ function initDashboardFilters() {
     dashFilterRenovations = vals;
     updateDashDropdownBtn('dash-dropdown-renovation', vals);
     renderMonthlyChart();
+    renderMonthlyTotalChart();
   });
 
   // 金额类型下拉
@@ -15217,10 +15223,179 @@ function renderMonthlyChart() {
   chart.setOption(option);
 }
 
+// 渲染月度合计折线图（按验收日期分组，显示合计值）
+function renderMonthlyTotalChart() {
+  const container = document.getElementById('monthly-total-chart-container');
+  if (!container) return;
+
+  // 获取rowId
+  const detailRowIdMap = getDetailRowIdMap();
+  const rowId = detailRowIdMap[dashFilterDetailType];
+  if (!rowId) {
+    container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;">请选择金额类型和类型明细</div>';
+    return;
+  }
+
+  // 筛选门店（与现有看板相同的筛选条件）
+  const filteredStores = STORES.filter((store, idx) => {
+    // 区域筛选
+    if (dashFilterAreas.length > 0 && !dashFilterAreas.includes(store['区域'])) return false;
+    // 门店类型筛选
+    if (dashFilterStoreTypes.length > 0 && !dashFilterStoreTypes.includes(store['门店类型'])) return false;
+    // 装修形式筛选
+    if (dashFilterRenovations.length > 0 && !dashFilterRenovations.includes(store['装修形式'])) return false;
+    // 门店面积筛选
+    const area = parseFloat(store['门店面积']);
+    if (dashFilterAreaMin && area < parseFloat(dashFilterAreaMin)) return false;
+    if (dashFilterAreaMax && area > parseFloat(dashFilterAreaMax)) return false;
+    // 必须有验收日期（门店已验收）
+    const acceptanceDate = store['门店已验收'];
+    if (!acceptanceDate || !/^\d{4}-\d{2}-\d{2}$/.test(acceptanceDate)) return false;
+    return true;
+  });
+
+  // 按验收日期月份分组（合计值）
+  const monthSums = {};   // 每月总和
+  const monthCounts = {}; // 每月门店计数
+  let minMonth = '2026-01';
+  let maxMonth = '2026-01';
+
+  filteredStores.forEach((store, idx) => {
+    const originalIdx = STORES.indexOf(store);
+    const acceptanceDate = store['门店已验收'];
+    const month = acceptanceDate.substring(0, 7); // YYYY-MM
+
+    if (month < minMonth) minMonth = month;
+    if (month > maxMonth) maxMonth = month;
+
+    if (!monthSums[month]) monthSums[month] = 0;
+    if (!monthCounts[month]) monthCounts[month] = 0;
+
+    // 累加选中的费用列
+    let storeVal = 0;
+    dashFilterCostCols.forEach(costCol => {
+      storeVal += calcDashboardValue(originalIdx, rowId, costCol);
+    });
+    
+    // 只统计有值的门店
+    if (storeVal > 0) {
+      monthSums[month] += storeVal;
+      monthCounts[month]++;
+    }
+  });
+
+  // 生成月份序列
+  const months = [];
+  const values = [];
+  const counts = [];
+  const [minYear, minMon] = minMonth.split('-').map(Number);
+  const [maxYear, maxMon] = maxMonth.split('-').map(Number);
+
+  let y = minYear, m = minMon;
+  while (y < maxYear || (y === maxYear && m <= maxMon)) {
+    const monthStr = `${y}-${String(m).padStart(2, '0')}`;
+    months.push(monthStr);
+    values.push(monthSums[monthStr] || 0);
+    counts.push(monthCounts[monthStr] || 0);
+    m++;
+    if (m > 12) { m = 1; y++; }
+  }
+
+  // 如果没有数据
+  if (months.length === 0) {
+    container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;">暂无数据</div>';
+    return;
+  }
+
+  const rowDef = FINANCE_ROWS.find(r => r.rowId === rowId);
+  const isPercentRow = rowDef && rowDef.isPercent;
+
+  // 渲染ECharts
+  let chart = echarts.getInstanceByDom(container);
+  if (!chart) {
+    chart = echarts.init(container);
+  }
+
+  const option = {
+    title: {
+      text: `${dashFilterAmountType} - ${dashFilterDetailType}（合计）`,
+      left: 'center',
+      textStyle: { fontSize: 16, fontWeight: 600, color: '#333' }
+    },
+    tooltip: {
+      trigger: 'axis',
+      formatter: function(params) {
+        const val = params[0].value;
+        const count = counts[params[0].dataIndex];
+        if (isPercentRow) {
+          return `${params[0].axisValue}<br/>合计: ${(val * 100).toFixed(2)}%<br/>门店数: ${count}家`;
+        }
+        return `${params[0].axisValue}<br/>合计: ¥${val.toFixed(2)}<br/>门店数: ${count}家`;
+      }
+    },
+    grid: {
+      left: '3%', right: '4%', bottom: '3%', containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: months,
+      axisLabel: { color: '#666' },
+      axisLine: { lineStyle: { color: '#e8e8e8' } }
+    },
+    yAxis: {
+      type: 'value',
+      axisLabel: {
+        color: '#666',
+        formatter: function(value) {
+          if (value >= 10000) return (value / 10000).toFixed(1) + '万';
+          return value;
+        }
+      },
+      axisLine: { lineStyle: { color: '#e8e8e8' } },
+      splitLine: { lineStyle: { color: '#f0f0f0' } }
+    },
+    series: [{
+      name: '月度合计',
+      type: 'line',
+      data: values,
+      smooth: true,
+      symbol: 'circle',
+      symbolSize: 8,
+      lineStyle: { color: '#52c41a', width: 3 },
+      itemStyle: { color: '#52c41a', borderColor: '#fff', borderWidth: 2 },
+      label: {
+        show: true,
+        position: 'top',
+        formatter: function(params) {
+          if (params.value === 0) return '';
+          if (isPercentRow) {
+            return (params.value * 100).toFixed(2) + '%';
+          }
+          return '¥' + params.value.toFixed(2);
+        },
+        fontSize: 12,
+        color: '#666'
+      },
+      areaStyle: {
+        color: {
+          type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+          colorStops: [
+            { offset: 0, color: 'rgba(82,196,26,0.2)' },
+            { offset: 1, color: 'rgba(82,196,26,.01)' }
+          ]
+        }
+      }
+    }]
+  };
+
+  chart.setOption(option);
+}
+
 // 当切换到工程结算看板时初始化
 function initDashboard() {
   initDashboardFilters();
   renderMonthlyChart();
+  renderMonthlyTotalChart();
 }
 
 // 页面加载完成后执行初始化
