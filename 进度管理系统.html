@@ -15161,10 +15161,11 @@ function renderMonthlyChart() {
       trigger: 'axis',
       formatter: function(params) {
         const val = params[0].value;
+        const count = monthCounts[params[0].axisValue] || 0;
         if (isPercentRow) {
-          return `${params[0].axisValue}<br/>平均值: ${(val * 100).toFixed(2)}%`;
+          return `${params[0].axisValue}<br/>平均值: ${(val * 100).toFixed(2)}%<br/>门店数: ${count}家`;
         }
-        return `${params[0].axisValue}<br/>平均值: ¥${val.toFixed(2)}`;
+        return `${params[0].axisValue}<br/>平均值: ¥${val.toFixed(2)}<br/>门店数: ${count}家`;
       }
     },
     grid: {
