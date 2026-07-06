@@ -12,6 +12,23 @@ const path = require('path');
 const API_BASE = 'http://47.114.120.73';
 const BACKUP_BASE = '/Users/fengshisan/Desktop/筹建系统代码备份';
 
+// 递归复制目录
+function copyDirRecursive(src, dest) {
+  if (!fs.existsSync(dest)) {
+    fs.mkdirSync(dest, { recursive: true });
+  }
+  const entries = fs.readdirSync(src, { withFileTypes: true });
+  entries.forEach(entry => {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+    if (entry.isDirectory()) {
+      copyDirRecursive(srcPath, destPath);
+    } else {
+      fs.copyFileSync(srcPath, destPath);
+    }
+  });
+}
+
 // 获取今天日期字符串
 function getTodayStr() {
   const d = new Date();
@@ -74,7 +91,18 @@ async function main() {
     console.log(`  ⚠ 本地前端文件不存在，跳过`);
   }
 
-  // 4. 清理30天前的旧备份
+  // 4. 备份 skills 文件夹
+  console.log('  正在备份 skills 文件夹...');
+  const localSkills = '/Users/fengshisan/WorkBuddy/20260410105809/skills';
+  const skillsBackupPath = path.join(backupDir, 'skills');
+  if (fs.existsSync(localSkills)) {
+    copyDirRecursive(localSkills, skillsBackupPath);
+    console.log(`  ✓ skills 文件夹已备份`);
+  } else {
+    console.log(`  ⚠ 本地 skills 文件夹不存在，跳过`);
+  }
+
+  // 5. 清理30天前的旧备份
   console.log('  正在清理30天前的旧备份...');
   const cutoffDate = new Date();
   cutoffDate.setDate(cutoffDate.getDate() - 30);
