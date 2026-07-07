@@ -10467,9 +10467,29 @@ function calcColumnStatus(storeIdx, colKey) {
   };
   
   const finalPay = calcFinanceValue(storeIdx, 'finalPay', colKey);
-  const firstPay = v('firstPay', colKey);
-  const secondPay = v('secondPay', colKey);
   const unpaid = calcFinanceValue(storeIdx, 'unpaid', colKey);
+  
+  // 对小计/总计列，汇总各列的支付金额
+  let firstPay = v('firstPay', colKey);
+  let secondPay = v('secondPay', colKey);
+  
+  if (colKey === '工程类费用小计') {
+    firstPay = 0;
+    secondPay = 0;
+    FINANCE_COLUMNS.forEach(col => {
+      firstPay += v('firstPay', col.key);
+      secondPay += v('secondPay', col.key);
+    });
+  } else if (colKey === '整体筹建费用总计') {
+    firstPay = 0;
+    secondPay = 0;
+    FINANCE_COLUMNS.forEach(col => {
+      firstPay += v('firstPay', col.key);
+      secondPay += v('secondPay', col.key);
+    });
+    firstPay += v('firstPay', '设备费用');
+    secondPay += v('secondPay', '设备费用');
+  }
   
   if (finalPay > 0 && firstPay === 0 && secondPay === 0) return '报价阶段';
   if (firstPay > 0 && !(Math.abs(unpaid) < 0.01)) return '已付首款';
