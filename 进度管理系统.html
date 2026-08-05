@@ -4335,7 +4335,6 @@ function updateStats() {
     const constructionData = calculatePhaseCycleData('装修阶段', cycleFilters);
     const openingData = calculateOpeningCycleData(cycleFilters);
     const constructionPreparationData = calculateConstructionPreparationCycleData(cycleFilters);
-    const openingData = calculatePhaseCycleData('开业周期', cycleFilters);
     
     const designHTML = generateCycleWidgetForDashboard(designData, '设计周期', '🎨', '#2563eb');
     const contractHTML = generateCycleWidgetForDashboard(contractData, '施工前准备周期', '📝', '#0891b2');
