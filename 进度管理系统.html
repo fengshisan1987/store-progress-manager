@@ -13784,7 +13784,7 @@ function generateCycleWidgetForDashboard(data, title, icon, color) {
 
         <!-- 共 N 家门店 -->
         <div>
-          <div style="font-size:12px;color:#666;margin-bottom:8px;">共 ${filteredStores.length} 家门店</div>
+          <div style="font-size:12px;color:#666;margin-bottom:8px;">超期 ${filteredStores.length} 家门店</div>
           <div style="max-height:120px;overflow-y:auto;">
             ${filteredStores.length === 0 ? `<div style="text-align:center;color:#999;padding:10px;font-size:12px;">暂无数据</div>` : filteredStores.map((s, i) => {
               const typeLabel = s.type || '未设置';
