@@ -13083,36 +13083,21 @@ function calculateOpeningCycleData(filters = {}) {
     // 门店状态筛选（多选）
     if (!matchMultiValue(filters.storeStatuses, store['门店状态'])) return;
 
-    // 时间筛选（基于施工阶段和开业阶段的日期）
-    let hasDateInRange = false;
-    // 使用本地日期字符串比较，避免时区问题
+    // 时间筛选（统一基于"门店已验收"节点日期）
     const startStr = filters.startDate ? filters.startDate : null;
     const endStr = filters.endDate ? filters.endDate : null;
-    
-    // 检查施工阶段和开业阶段的日期是否在范围内
-    const phasesToCheck = ['施工阶段', '开业阶段'];
-    phasesToCheck.forEach(phaseName => {
-      const phase = PHASES.find(p => p.name === phaseName);
-      if (!phase) return;
-      
-      phase.steps.forEach(step => {
-        const value = store[step.name];
-        if (value && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
-          // 检查日期是否在筛选范围内（使用字符串比较）
-          if (startStr || endStr) {
-            let inRange = true;
-            if (startStr && value < startStr) inRange = false;
-            if (endStr && value > endStr) inRange = false;
-            if (inRange) hasDateInRange = true;
-          } else {
-            hasDateInRange = true;
-          }
-        }
-      });
-    });
-    
-    // 如果有时间筛选条件，但没有日期在范围内，则跳过
-    if ((filters.startDate || filters.endDate) && !hasDateInRange) return;
+
+    if (startStr || endStr) {
+      const acceptValue = store['门店已验收'];
+      let inRange = true;
+      if (acceptValue && /^\d{4}-\d{2}-\d{2}$/.test(acceptValue)) {
+        if (startStr && acceptValue < startStr) inRange = false;
+        if (endStr && acceptValue > endStr) inRange = false;
+      } else {
+        inRange = false; // "门店已验收"没有日期，直接排除
+      }
+      if (!inRange) return;
+    }
     
     // 计算开业周期
     const cycle = calculateOpeningCycle(store);
@@ -13166,16 +13151,14 @@ function calculateConstructionPreparationCycleData(filters = {}) {
     const endStr = filters.endDate ? filters.endDate : null;
 
     if (startStr || endStr) {
-      // 当筛选状态仅选择了"已完成"时，统一基于"已正式开业"日期筛选
-      const hasOnlyCompleted = selectedStatuses.length === 1 && selectedStatuses[0] === '已完成';
-      const endNodeField = hasOnlyCompleted ? '已正式开业' : '门店已验收';
-      const endValue = store[endNodeField];
+      // 统一基于"门店已验收"节点日期筛选
+      const acceptValue = store['门店已验收'];
       let inRange = true;
-      if (endValue && /^\d{4}-\d{2}-\d{2}$/.test(endValue)) {
-        if (startStr && endValue < startStr) inRange = false;
-        if (endStr && endValue > endStr) inRange = false;
+      if (acceptValue && /^\d{4}-\d{2}-\d{2}$/.test(acceptValue)) {
+        if (startStr && acceptValue < startStr) inRange = false;
+        if (endStr && acceptValue > endStr) inRange = false;
       } else {
-        inRange = false; // 结束节点没有日期，直接排除
+        inRange = false; // "门店已验收"没有日期，直接排除
       }
       if (!inRange) return;
     }
@@ -13251,37 +13234,16 @@ function calculatePhaseCycleData(phaseName, filters = {}) {
     const endStr = filters.endDate ? filters.endDate : null;
 
     if (startStr || endStr) {
-      // 当筛选状态仅选择了"已完成"时，所有阶段统一基于"已正式开业"日期筛选
-      // 其他情况保持各阶段看自己的结束日期
-      let endNodeField = '';
-      const hasOnlyCompleted = selectedStatuses.length === 1 && selectedStatuses[0] === '已完成';
-      if (hasOnlyCompleted) {
-        endNodeField = '已正式开业';
+      // 统一基于"门店已验收"节点日期筛选
+      const acceptValue = store['门店已验收'];
+      let inRange = true;
+      if (acceptValue && /^\d{4}-\d{2}-\d{2}$/.test(acceptValue)) {
+        if (startStr && acceptValue < startStr) inRange = false;
+        if (endStr && acceptValue > endStr) inRange = false;
       } else {
-        if (actualPhaseName === '设计阶段') {
-          endNodeField = '施工图已确认';
-        } else if (actualPhaseName === '施工前准备阶段') {
-          endNodeField = '工程已进场';
-        } else if (actualPhaseName === '施工阶段') {
-          endNodeField = '门店已验收';
-        } else if (actualPhaseName === '筹建阶段') {
-          endNodeField = '门店已验收';
-        } else if (actualPhaseName === '开业周期') {
-          endNodeField = '已正式开业';
-        }
+        inRange = false; // "门店已验收"没有日期，直接排除
       }
-
-      if (endNodeField) {
-        const endValue = store[endNodeField];
-        let inRange = true;
-        if (endValue && /^\d{4}-\d{2}-\d{2}$/.test(endValue)) {
-          if (startStr && endValue < startStr) inRange = false;
-          if (endStr && endValue > endStr) inRange = false;
-        } else {
-          inRange = false; // 结束节点没有日期，直接排除
-        }
-        if (!inRange) return;
-      }
+      if (!inRange) return;
     }
     
     // 计算周期
