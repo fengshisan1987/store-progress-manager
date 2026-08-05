@@ -4333,13 +4333,14 @@ function updateStats() {
     const designData = calculatePhaseCycleData('设计阶段', cycleFilters);
     const contractData = calculatePhaseCycleData('合同阶段', cycleFilters);
     const constructionData = calculatePhaseCycleData('装修阶段', cycleFilters);
+    const openingData = calculateOpeningCycleData(cycleFilters);
     const constructionPreparationData = calculateConstructionPreparationCycleData(cycleFilters);
     const openingData = calculatePhaseCycleData('开业周期', cycleFilters);
     
     const designHTML = generateCycleWidgetForDashboard(designData, '设计周期', '🎨', '#2563eb');
     const contractHTML = generateCycleWidgetForDashboard(contractData, '施工前准备周期', '📝', '#0891b2');
     const constructionHTML = generateCycleWidgetForDashboard(constructionData, '施工阶段周期', '🔨', '#d97706');
-    const openingHTML = generateCycleWidgetForDashboard(openingData, '开业周期', '🎉', '#8B5CF6');
+    const openingHTML = generateCycleWidgetForDashboard(openingData, '开业周期', '🎉', '#dc2626');
     const preparationHTML = generateCycleWidgetForDashboard(constructionPreparationData, '筹建周期', '🏗️', '#e11d48');
     
     cycleStatsEl.innerHTML = `
@@ -13027,6 +13028,127 @@ function calculateConstructionPreparationCycle(store) {
   return diffDays >= 1 ? diffDays : 1;
 }
 
+// 计算开业周期（从施工阶段最后一个节点到开业阶段最后一个节点）
+function calculateOpeningCycle(store) {
+  // 获取施工阶段的最后一个节点日期
+  const constructionPhase = PHASES.find(p => p.name === '施工阶段');
+  let firstDate = null;
+  
+  if (constructionPhase) {
+    constructionPhase.steps.forEach(step => {
+      const value = store[step.name];
+      if (value && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        const date = new Date(value);
+        if (!firstDate || date > firstDate) {
+          firstDate = date;
+        }
+      }
+    });
+  }
+  
+  // 获取开业阶段的最后一个节点日期
+  const openingPhase = PHASES.find(p => p.name === '开业阶段');
+  let lastDate = null;
+  
+  if (openingPhase) {
+    openingPhase.steps.forEach(step => {
+      const value = store[step.name];
+      if (value && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        const date = new Date(value);
+        if (!lastDate || date > lastDate) {
+          lastDate = date;
+        }
+      }
+    });
+  }
+  
+  // 如果两个日期都存在，计算周期
+  if (firstDate && lastDate) {
+    const diffTime = lastDate - firstDate;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // 包含首尾两天
+    return diffDays;
+  }
+  
+  return null;
+}
+
+// 计算开业周期统计数据（支持筛选）
+function calculateOpeningCycleData(filters = {}) {
+  const cycles = [];
+  const storeDetails = [];
+  
+  STORES.forEach(store => {
+    // 区域筛选（多选）
+    if (!matchMultiValue(filters.regions, store['区域'])) return;
+
+    // 门店状态筛选（多选）
+    if (!matchMultiValue(filters.storeStatuses, store['门店状态'])) return;
+
+    // 时间筛选（基于施工阶段和开业阶段的日期）
+    let hasDateInRange = false;
+    // 使用本地日期字符串比较，避免时区问题
+    const startStr = filters.startDate ? filters.startDate : null;
+    const endStr = filters.endDate ? filters.endDate : null;
+    
+    // 检查施工阶段和开业阶段的日期是否在范围内
+    const phasesToCheck = ['施工阶段', '开业阶段'];
+    phasesToCheck.forEach(phaseName => {
+      const phase = PHASES.find(p => p.name === phaseName);
+      if (!phase) return;
+      
+      phase.steps.forEach(step => {
+        const value = store[step.name];
+        if (value && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+          // 检查日期是否在筛选范围内（使用字符串比较）
+          if (startStr || endStr) {
+            let inRange = true;
+            if (startStr && value < startStr) inRange = false;
+            if (endStr && value > endStr) inRange = false;
+            if (inRange) hasDateInRange = true;
+          } else {
+            hasDateInRange = true;
+          }
+        }
+      });
+    });
+    
+    // 如果有时间筛选条件，但没有日期在范围内，则跳过
+    if ((filters.startDate || filters.endDate) && !hasDateInRange) return;
+    
+    // 计算开业周期
+    const cycle = calculateOpeningCycle(store);
+    if (cycle !== null) {
+      cycles.push(cycle);
+      storeDetails.push({
+        storeName: store['门店'],
+        cycle: cycle,
+        region: store['区域'],
+        status: store['门店状态'] || '测量中'
+      });
+    }
+  });
+  
+  if (cycles.length === 0) {
+    return {
+      count: 0,
+      average: 0,
+      min: 0,
+      max: 0,
+      stores: []
+    };
+  }
+  
+  const sum = cycles.reduce((a, b) => a + b, 0);
+  
+  return {
+    count: cycles.length,
+    average: Math.round(sum / cycles.length),
+    min: Math.min(...cycles),
+    max: Math.max(...cycles),
+    stores: storeDetails.sort((a, b) => b.cycle - a.cycle).slice(0, 10) // 取周期最长的10家
+  };
+}
+
 // 计算筹建周期统计数据（支持筛选）
 function calculateConstructionPreparationCycleData(filters = {}) {
   const cycles = [];
@@ -13619,7 +13741,27 @@ function generateCycleWidgetForDashboard(data, title, icon, color) {
     `;
   }
 
-  const filteredStores = data.stores;
+  // 根据看板标题确定阈值
+  let threshold = 35; // 默认阈值
+  let thresholdLabel = '35';
+  if (title.includes('设计周期')) {
+    threshold = 7;
+    thresholdLabel = '7';
+  } else if (title.includes('施工前准备')) {
+    threshold = 5;
+    thresholdLabel = '5';
+  } else if (title.includes('施工阶段')) {
+    threshold = 18;
+    thresholdLabel = '18';
+  } else if (title.includes('开业周期')) {
+    threshold = 7;
+    thresholdLabel = '7';
+  } else if (title.includes('筹建周期')) {
+    threshold = 35;
+    thresholdLabel = '35';
+  }
+  
+  const filteredStores = data.stores.filter(s => s.cycle > threshold);
 
   return `
     <div class="dashboard-real-widget">
