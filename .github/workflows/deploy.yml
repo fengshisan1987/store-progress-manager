@@ -18,7 +18,7 @@ jobs:
           USERNAME: admin
           KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SOURCE: "进度管理系统.html,xlsx.min.js"
-          TARGET: "/var/www/store-progress-manager/"
+          TARGET: "/var/www/store-progress-manager/store/"
           strip_components: 0
 
       - name: Copy backend file to server
@@ -38,7 +38,8 @@ jobs:
           USERNAME: admin
           KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            chmod 644 /var/www/store-progress-manager/进度管理系统.html
+            mkdir -p /var/www/store-progress-manager/store
+            chmod 644 /var/www/store-progress-manager/store/进度管理系统.html
             echo "=== Verifying role API exists ==="
             grep -n 'PUT.*role' /var/www/store-progress-manager/backend/server.js || (echo "ERROR: role API not found" && exit 1)
             echo "=== Stopping old backend ==="
