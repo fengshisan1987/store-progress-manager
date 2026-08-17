@@ -8,6 +8,14 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json({ limit: '10mb' }));
 
+// 重写 /jd-api 请求为 /api，支持 Nginx 多项目共存
+app.use((req, res, next) => {
+    if (req.path.startsWith('/jd-api/')) {
+        req.url = req.url.replace('/jd-api/', '/api/');
+    }
+    next();
+});
+
 const DATA_FILE = path.join(__dirname, 'data.json');
 const AUTH_FILE = path.join(__dirname, 'auth.json');
 const BANNER_FILE = path.join(__dirname, 'banner.json');
