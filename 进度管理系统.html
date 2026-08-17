@@ -9483,6 +9483,13 @@ function renderMaintenanceList() {
     }
   });
 
+  // 按报修日期倒序排列（最近的日期在最前面）
+  visibleRecords.sort((a, b) => {
+    const dateA = a.record.reportDate ? new Date(a.record.reportDate) : new Date(0);
+    const dateB = b.record.reportDate ? new Date(b.record.reportDate) : new Date(0);
+    return dateB - dateA;
+  });
+
   let html = '<div style="font-size:14px;color:#666;margin-bottom:12px;">共 ' + visibleRecords.length + ' 条维保记录' + (_hideCompletedMaintenance ? '（隐藏已完成）' : '（显示全部）') + '</div>';
 
   html += '<div style="overflow-x:auto;border:1px solid #e8e8e8;border-radius:8px;">';
