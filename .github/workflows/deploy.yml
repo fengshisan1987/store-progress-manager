@@ -18,7 +18,7 @@ jobs:
           USERNAME: admin
           KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SOURCE: "进度管理系统.html,xlsx.min.js"
-          TARGET: "/var/www/jd-progress/"
+          TARGET: "/var/www/store-progress-manager/jd/"
           strip_components: 0
 
       - name: Copy backend file to server
@@ -28,7 +28,7 @@ jobs:
           USERNAME: admin
           KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SOURCE: "backend/server.js"
-          TARGET: "/var/www/jd-progress/backend/"
+          TARGET: "/var/www/store-progress-manager/jd/backend/"
           strip_components: 1
 
       - name: Restart backend
@@ -38,10 +38,10 @@ jobs:
           USERNAME: admin
           KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            mkdir -p /var/www/jd-progress
-            chmod 644 /var/www/jd-progress/进度管理系统.html
+            mkdir -p /var/www/store-progress-manager/jd
+            chmod 644 /var/www/store-progress-manager/jd/进度管理系统.html
             echo "=== Verifying role API exists ==="
-            grep -n 'PUT.*role' /var/www/jd-progress/backend/server.js || (echo "ERROR: role API not found" && exit 1)
+            grep -n 'PUT.*role' /var/www/store-progress-manager/jd/backend/server.js || (echo "ERROR: role API not found" && exit 1)
             echo "=== Stopping old backend ==="
             pm2 delete store-progress-api 2>/dev/null || true
             fuser -k 3001/tcp 2>/dev/null || true
@@ -50,14 +50,14 @@ jobs:
             fuser -k 3004/tcp 2>/dev/null || true
             echo "=== Adding Nginx config for jd-progress ==="
             if ! grep -q 'location /jd' /etc/nginx/nginx.conf; then
-              sudo sed -i '/server_name/i\    location /jd {\n        alias /var/www/jd-progress/;\n        index 进度管理系统.html;\n    }\n' /etc/nginx/nginx.conf
+              sudo sed -i '/server_name/i\    location /jd {\n        alias /var/www/store-progress-manager/jd/;\n        index 进度管理系统.html;\n    }\n' /etc/nginx/nginx.conf
             fi
             echo "=== Updating nginx config to port 3004 ==="
             sudo sed -i 's/localhost:3002/localhost:3004/g' /etc/nginx/nginx.conf
             sudo sed -i 's/localhost:3003/localhost:3004/g' /etc/nginx/nginx.conf
             sudo nginx -t && sudo nginx -s reload || echo "nginx reload failed"
             echo "=== Starting new backend on port 3004 ==="
-            cd /var/www/jd-progress/backend && PORT=3004 pm2 start server.js --name store-progress-api
+            cd /var/www/store-progress-manager/jd/backend && PORT=3004 pm2 start server.js --name store-progress-api
             sleep 3
             echo "=== Checking backend status ==="
             pm2 list
