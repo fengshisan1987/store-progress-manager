@@ -11,6 +11,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Fix directory permissions
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          HOST: 47.114.120.73
+          USERNAME: admin
+          KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "=== Fixing directory permissions ==="
+            sudo rm -rf /home/admin/jd-progress
+            mkdir -p /home/admin/jd-progress/backend
+            chmod 755 /home/admin/jd-progress
+            chmod 755 /home/admin/jd-progress/backend
+            ls -la /home/admin/
+            echo "Permissions fixed"
+
       - name: Copy frontend files to server
         uses: appleboy/scp-action@v0.1.7
         with:
