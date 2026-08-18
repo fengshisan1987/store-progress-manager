@@ -17,7 +17,7 @@ const XLSX = (() => {
   }
 })();
 
-const API_URL = 'http://47.114.120.73/api/data';
+const API_URL = 'http://47.114.120.73/jd-api/data';
 const BACKUP_BASE = '/Users/fengshisan/Desktop/筹建系统代码备份';
 
 // 获取今天日期字符串
