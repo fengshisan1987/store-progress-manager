@@ -20,6 +20,7 @@ jobs:
           SOURCE: "进度管理系统.html,xlsx.min.js"
           TARGET: "/home/admin/jd-progress/"
           strip_components: 0
+          OVERWRITE: true
 
       - name: Copy backend file to server
         uses: appleboy/scp-action@v0.1.7
@@ -30,6 +31,7 @@ jobs:
           SOURCE: "backend/server.js"
           TARGET: "/home/admin/jd-progress/backend/"
           strip_components: 1
+          OVERWRITE: true
 
       - name: Restart backend
         uses: appleboy/ssh-action@v1.0.3
