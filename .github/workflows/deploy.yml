@@ -37,13 +37,13 @@ jobs:
           strip_components: 0
           OVERWRITE: true
 
-      - name: Copy backend file to server
+      - name: Copy backend files to server
         uses: appleboy/scp-action@v0.1.7
         with:
           HOST: 47.114.120.73
           USERNAME: admin
           KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SOURCE: "backend/server.js"
+          SOURCE: "backend/server.js,backend/data.json,backend/auth.json"
           TARGET: "/home/admin/jd-progress/backend/"
           strip_components: 1
           OVERWRITE: true
@@ -57,17 +57,8 @@ jobs:
           script: |
             mkdir -p /home/admin/jd-progress
             chmod 644 /home/admin/jd-progress/进度管理系统.html
-            echo "=== Migrating data from old location ==="
-            if [ -f /var/www/store-progress-manager/backend/data.json ]; then
-              cp /var/www/store-progress-manager/backend/data.json /home/admin/jd-progress/backend/data.json
-              echo "Data migrated successfully"
-            else
-              echo "No old data found, using default"
-            fi
-            if [ -f /var/www/store-progress-manager/backend/auth.json ]; then
-              cp /var/www/store-progress-manager/backend/auth.json /home/admin/jd-progress/backend/auth.json
-              echo "Auth migrated successfully"
-            fi
+            echo "=== Data files deployed from local ==="
+            ls -la /home/admin/jd-progress/backend/
             echo "=== Verifying role API exists ==="
             grep -n 'PUT.*role' /home/admin/jd-progress/backend/server.js || (echo "ERROR: role API not found" && exit 1)
             echo "=== Stopping old backend ==="
