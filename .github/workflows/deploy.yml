@@ -40,6 +40,17 @@ jobs:
           script: |
             mkdir -p /home/admin/jd-progress
             chmod 644 /home/admin/jd-progress/进度管理系统.html
+            echo "=== Migrating data from old location ==="
+            if [ -f /var/www/store-progress-manager/backend/data.json ]; then
+              cp /var/www/store-progress-manager/backend/data.json /home/admin/jd-progress/backend/data.json
+              echo "Data migrated successfully"
+            else
+              echo "No old data found, using default"
+            fi
+            if [ -f /var/www/store-progress-manager/backend/auth.json ]; then
+              cp /var/www/store-progress-manager/backend/auth.json /home/admin/jd-progress/backend/auth.json
+              echo "Auth migrated successfully"
+            fi
             echo "=== Verifying role API exists ==="
             grep -n 'PUT.*role' /home/admin/jd-progress/backend/server.js || (echo "ERROR: role API not found" && exit 1)
             echo "=== Stopping old backend ==="
