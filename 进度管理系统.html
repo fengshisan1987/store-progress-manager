@@ -8822,7 +8822,7 @@ function initAuthSystem() {
 // 检查后端服务是否可用
 async function checkBackendHealth() {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/health`, {
+    const response = await fetch(`${API_BASE_URL}/jd-api/health`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }
     });
@@ -9003,7 +9003,7 @@ async function handleLogin() {
   }
   
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    const response = await fetch(`${API_BASE_URL}/jd-api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
@@ -14583,7 +14583,7 @@ async function authorizeNewAccount() {
   }
   
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/accounts`, {
+    const response = await fetch(`${API_BASE_URL}/jd-api/auth/accounts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password, role })
@@ -14614,7 +14614,7 @@ async function renderAuthorizedAccountsList() {
   if (!container) return;
   
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/accounts`);
+    const response = await fetch(`${API_BASE_URL}/jd-api/auth/accounts`);
     const result = await response.json();
     
     if (!result.success) {
@@ -14692,7 +14692,7 @@ async function changePassword() {
   const currentUser = JSON.parse(localStorage.getItem('auth_current_user') || '{}');
   
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/accounts/${encodeURIComponent(currentUser.username)}/password`, {
+    const response = await fetch(`${API_BASE_URL}/jd-api/auth/accounts/${encodeURIComponent(currentUser.username)}/password`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ newPassword })
@@ -14764,7 +14764,7 @@ async function changeAccountRole(username, currentRole) {
     }
     
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/accounts/${encodeURIComponent(username)}/role`, {
+      const response = await fetch(`${API_BASE_URL}/jd-api/auth/accounts/${encodeURIComponent(username)}/role`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: newRole })
@@ -14799,7 +14799,7 @@ async function deleteAccount(username) {
   }
   
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/accounts/${encodeURIComponent(username)}`, {
+    const response = await fetch(`${API_BASE_URL}/jd-api/auth/accounts/${encodeURIComponent(username)}`, {
       method: 'DELETE'
     });
     
