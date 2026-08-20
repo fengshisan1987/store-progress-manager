@@ -19,7 +19,20 @@ jobs:
           KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             echo "=== Fixing directory permissions ==="
-            sudo rm -rf /home/admin/jd-progress
+            # 备份现有数据文件（如果存在）
+            mkdir -p /tmp/jd-backup
+            if [ -f /home/admin/jd-progress/backend/data.json ]; then
+              cp /home/admin/jd-progress/backend/data.json /tmp/jd-backup/data.json
+              echo "Backed up existing data.json"
+            fi
+            if [ -f /home/admin/jd-progress/backend/auth.json ]; then
+              cp /home/admin/jd-progress/backend/auth.json /tmp/jd-backup/auth.json
+              echo "Backed up existing auth.json"
+            fi
+            # 只删除前端文件和 server.js，保留数据
+            rm -f /home/admin/jd-progress/进度管理系统.html
+            rm -f /home/admin/jd-progress/xlsx.min.js
+            rm -f /home/admin/jd-progress/backend/server.js
             mkdir -p /home/admin/jd-progress/backend
             chmod 755 /home/admin/jd-progress
             chmod 755 /home/admin/jd-progress/backend
@@ -43,7 +56,7 @@ jobs:
           HOST: 47.114.120.73
           USERNAME: admin
           KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SOURCE: "backend/server.js,backend/data.json,backend/auth.json"
+          SOURCE: "backend/server.js"
           TARGET: "/home/admin/jd-progress/backend/"
           strip_components: 1
           OVERWRITE: true
@@ -57,6 +70,17 @@ jobs:
           script: |
             mkdir -p /home/admin/jd-progress
             chmod 644 /home/admin/jd-progress/进度管理系统.html
+            # 恢复数据文件（如果之前备份了）
+            if [ -f /tmp/jd-backup/data.json ]; then
+              cp /tmp/jd-backup/data.json /home/admin/jd-progress/backend/data.json
+              chown admin:admin /home/admin/jd-progress/backend/data.json
+              echo "Restored data.json from backup"
+            fi
+            if [ -f /tmp/jd-backup/auth.json ]; then
+              cp /tmp/jd-backup/auth.json /home/admin/jd-progress/backend/auth.json
+              chown admin:admin /home/admin/jd-progress/backend/auth.json
+              echo "Restored auth.json from backup"
+            fi
             echo "=== Data files deployed from local ==="
             ls -la /home/admin/jd-progress/backend/
             echo "=== Verifying role API exists ==="
