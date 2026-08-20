@@ -69,7 +69,7 @@ async function main() {
 
   // 1. 备份 data.json
   console.log('  正在获取 data.json...');
-  const dataJson = await fetchJson('/api/data');
+  const dataJson = await fetchJson('/jd-api/data');
   const dataPath = path.join(backupDir, 'data.json');
   fs.writeFileSync(dataPath, JSON.stringify(dataJson, null, 2), 'utf8');
   const dataStats = fs.statSync(dataPath);
