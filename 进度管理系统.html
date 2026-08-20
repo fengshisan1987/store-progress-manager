@@ -8537,7 +8537,7 @@ let currentBannerData = { text: '', bold: true, fontSize: '16px', enabled: false
 // 加载 Banner 内容
 async function loadBanner() {
   try {
-    const res = await fetch(`${API_BASE_URL}/jd-api/banner`, {
+    const res = await fetch(`${API_BASE}/banner`, {
       headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}` }
     });
     if (!res.ok) return;
@@ -8669,7 +8669,7 @@ async function saveBannerData() {
   currentBannerData = { text, enabled };
   
   try {
-    const res = await fetch(`${API_BASE_URL}/jd-api/banner`, {
+    const res = await fetch(`${API_BASE}/banner`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -8799,7 +8799,7 @@ async function init() {
 // ── 账号安全管理功能 ───────────────────────────────────────────────────────────
 
 // API 基础配置 - 自动检测当前域名
-const API_BASE_URL = window.location.origin;
+// API_BASE already defined at line 3209
 
 // 超级管理员账号配置（仅用于前端显示默认值）
 const SUPER_ADMIN = {
@@ -8822,7 +8822,7 @@ function initAuthSystem() {
 // 检查后端服务是否可用
 async function checkBackendHealth() {
   try {
-    const response = await fetch(`${API_BASE_URL}/jd-api/health`, {
+    const response = await fetch(`${API_BASE}/health`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }
     });
@@ -9003,7 +9003,7 @@ async function handleLogin() {
   }
   
   try {
-    const response = await fetch(`${API_BASE_URL}/jd-api/auth/login`, {
+    const response = await fetch(`${API_BASE}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
@@ -14583,7 +14583,7 @@ async function authorizeNewAccount() {
   }
   
   try {
-    const response = await fetch(`${API_BASE_URL}/jd-api/auth/accounts`, {
+    const response = await fetch(`${API_BASE}/auth/accounts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password, role })
@@ -14614,7 +14614,7 @@ async function renderAuthorizedAccountsList() {
   if (!container) return;
   
   try {
-    const response = await fetch(`${API_BASE_URL}/jd-api/auth/accounts`);
+    const response = await fetch(`${API_BASE}/auth/accounts`);
     const result = await response.json();
     
     if (!result.success) {
@@ -14692,7 +14692,7 @@ async function changePassword() {
   const currentUser = JSON.parse(localStorage.getItem('auth_current_user') || '{}');
   
   try {
-    const response = await fetch(`${API_BASE_URL}/jd-api/auth/accounts/${encodeURIComponent(currentUser.username)}/password`, {
+    const response = await fetch(`${API_BASE}/auth/accounts/${encodeURIComponent(currentUser.username)}/password`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ newPassword })
@@ -14764,7 +14764,7 @@ async function changeAccountRole(username, currentRole) {
     }
     
     try {
-      const response = await fetch(`${API_BASE_URL}/jd-api/auth/accounts/${encodeURIComponent(username)}/role`, {
+      const response = await fetch(`${API_BASE}/auth/accounts/${encodeURIComponent(username)}/role`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: newRole })
@@ -14799,7 +14799,7 @@ async function deleteAccount(username) {
   }
   
   try {
-    const response = await fetch(`${API_BASE_URL}/jd-api/auth/accounts/${encodeURIComponent(username)}`, {
+    const response = await fetch(`${API_BASE}/auth/accounts/${encodeURIComponent(username)}`, {
       method: 'DELETE'
     });
     
