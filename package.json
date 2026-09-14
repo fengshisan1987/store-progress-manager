@@ -1,0 +1,11 @@
+{
+  "name": "store-progress-release-candidate",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {"node": ">=16"},
+  "dependencies": {
+    "express": "4.22.1",
+    "cors": "2.8.6",
+    "body-parser": "1.20.4"
+  }
+}

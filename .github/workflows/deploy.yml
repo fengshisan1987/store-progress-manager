@@ -1,108 +1,35 @@
-name: Deploy to Aliyun
-
+# Prepare a program package only when explicitly requested.
+# No SSH credentials, production uploads, service restarts, or data restoration.
+name: Prepare reviewed release
 on:
-  push:
-    branches: [ main ]
-
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: store-progress-release-preparation
+  cancel-in-progress: false
 jobs:
-  deploy:
+  prepare:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Fix directory permissions
-        uses: appleboy/ssh-action@v1.0.3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          HOST: 47.114.120.73
-          USERNAME: admin
-          KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            echo "=== Fixing directory permissions ==="
-            # 备份现有数据文件（如果存在）
-            mkdir -p /tmp/jd-backup
-            if [ -f /home/admin/jd-progress/backend/data.json ]; then
-              cp /home/admin/jd-progress/backend/data.json /tmp/jd-backup/data.json
-              echo "Backed up existing data.json"
-            fi
-            if [ -f /home/admin/jd-progress/backend/auth.json ]; then
-              cp /home/admin/jd-progress/backend/auth.json /tmp/jd-backup/auth.json
-              echo "Backed up existing auth.json"
-            fi
-            # 只删除前端文件和 server.js，保留数据
-            rm -f /home/admin/jd-progress/进度管理系统.html
-            rm -f /home/admin/jd-progress/xlsx.min.js
-            rm -f /home/admin/jd-progress/backend/server.js
-            mkdir -p /home/admin/jd-progress/backend
-            chmod 755 /home/admin/jd-progress
-            chmod 755 /home/admin/jd-progress/backend
-            ls -la /home/admin/
-            echo "Permissions fixed"
-
-      - name: Copy frontend files to server
-        uses: appleboy/scp-action@v0.1.7
+          node-version: '16.20.2'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: node --check backend/server.js
+      - name: Package code only
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar -czf program-only.tar.gz -- \
+            进度管理系统.html xlsx.min.js backend/server.js \
+            package.json package-lock.json node_modules
+          sha256sum program-only.tar.gz > program-only.tar.gz.sha256
+      - uses: actions/upload-artifact@v4
         with:
-          HOST: 47.114.120.73
-          USERNAME: admin
-          KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SOURCE: "进度管理系统.html,xlsx.min.js"
-          TARGET: "/home/admin/jd-progress/"
-          strip_components: 0
-          OVERWRITE: true
-
-      - name: Copy backend files to server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          HOST: 47.114.120.73
-          USERNAME: admin
-          KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SOURCE: "backend/server.js"
-          TARGET: "/home/admin/jd-progress/backend/"
-          strip_components: 1
-          OVERWRITE: true
-
-      - name: Restart backend
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          HOST: 47.114.120.73
-          USERNAME: admin
-          KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            mkdir -p /home/admin/jd-progress
-            chmod 644 /home/admin/jd-progress/进度管理系统.html
-            # 恢复数据文件（如果之前备份了）
-            if [ -f /tmp/jd-backup/data.json ]; then
-              cp /tmp/jd-backup/data.json /home/admin/jd-progress/backend/data.json
-              chown admin:admin /home/admin/jd-progress/backend/data.json
-              echo "Restored data.json from backup"
-            fi
-            if [ -f /tmp/jd-backup/auth.json ]; then
-              cp /tmp/jd-backup/auth.json /home/admin/jd-progress/backend/auth.json
-              chown admin:admin /home/admin/jd-progress/backend/auth.json
-              echo "Restored auth.json from backup"
-            fi
-            echo "=== Data files deployed from local ==="
-            ls -la /home/admin/jd-progress/backend/
-            echo "=== Verifying role API exists ==="
-            grep -n 'PUT.*role' /home/admin/jd-progress/backend/server.js || (echo "ERROR: role API not found" && exit 1)
-            echo "=== Stopping old backend ==="
-            pm2 delete store-progress-api 2>/dev/null || true
-            fuser -k 3001/tcp 2>/dev/null || true
-            fuser -k 3002/tcp 2>/dev/null || true
-            fuser -k 3003/tcp 2>/dev/null || true
-            fuser -k 3004/tcp 2>/dev/null || true
-            echo "=== Adding Nginx config for jd-progress ==="
-            if ! grep -q 'location /jd' /etc/nginx/nginx.conf; then
-              sudo sed -i '/server_name/i\    location /jd {\n        alias /home/admin/jd-progress/;\n        index 进度管理系统.html;\n    }\n' /etc/nginx/nginx.conf
-            fi
-            echo "=== Updating nginx config to port 3004 ==="
-            sudo sed -i 's/localhost:3002/localhost:3004/g' /etc/nginx/nginx.conf
-            sudo sed -i 's/localhost:3003/localhost:3004/g' /etc/nginx/nginx.conf
-            sudo nginx -t && sudo nginx -s reload || echo "nginx reload failed"
-            echo "=== Starting new backend on port 3004 ==="
-            cd /home/admin/jd-progress/backend && PORT=3004 pm2 start server.js --name store-progress-api
-            sleep 3
-            echo "=== Checking backend status ==="
-            pm2 list
-            curl -s http://localhost:3004/jd-api/health || echo "WARNING: health check failed"
-            echo "Deploy completed at $(date)"
+          name: reviewed-program-${{ github.sha }}
+          path: |
+            program-only.tar.gz
+            program-only.tar.gz.sha256
+          retention-days: 7
