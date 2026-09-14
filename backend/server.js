@@ -19,6 +19,7 @@ app.use((req, res, next) => {
 const DATA_FILE = path.join(__dirname, 'data.json');
 const AUTH_FILE = path.join(__dirname, 'auth.json');
 const BANNER_FILE = path.join(__dirname, 'banner.json');
+const syncStore = require('./sync-store')(DATA_FILE);
 
 // 默认账号配置
 const DEFAULT_ACCOUNTS = [
@@ -247,15 +248,14 @@ app.put('/api/auth/accounts/:username/role', (req, res) => {
 
 // 获取数据
 app.get('/api/data', (req, res) => {
-    initDataFile();
-    res.json(readData());
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(syncStore.get());
 });
 
 // 保存数据
 app.post('/api/data', (req, res) => {
-    initDataFile();
-    saveData(req.body);
-    res.json({ success: true });
+    try { res.json(syncStore.save(req.body)); }
+    catch(e) { res.status(e.status || 500).json({success:false,message:e.status?e.message:'保存失败，原数据保留，请稍后重试',conflicts:e.conflicts,data:e.data}); }
 });
 
 // 健康检查
@@ -278,13 +278,17 @@ app.post('/api/banner', (req, res) => {
 });
 
 // 静态文件服务
-app.use(express.static(path.join(__dirname, '..')));
+app.get('/', (req,res) => res.redirect('/jd/'));
+app.get('/jd/', (req,res) => res.sendFile(path.join(__dirname, '../进度管理系统.html')));
+for (const name of ['xlsx.min.js','echarts.min.js','sync-core.js','sync-client.js']) {
+ app.get('/jd/'+name, (req,res) => res.sendFile(path.join(__dirname,'..',name)));
+}
 
 const PORT = process.env.PORT || 3004;
 
 // 启动服务器，如果端口被占用则尝试下一个端口
 function startServer(port) {
-    const server = app.listen(port, () => {
+    const server = app.listen(port, '127.0.0.1', () => {
         console.log(`服务器运行在端口 ${port}`);
         console.log(`认证文件: ${AUTH_FILE}`);
         console.log(`数据文件: ${DATA_FILE}`);
@@ -294,7 +298,7 @@ function startServer(port) {
     server.on('error', (err) => {
         if (err.code === 'EADDRINUSE') {
             console.log(`端口 ${port} 被占用，尝试端口 ${port + 1}`);
-            startServer(port + 1);
+            process.exitCode = 1;
         } else {
             console.error('服务器启动错误:', err);
         }

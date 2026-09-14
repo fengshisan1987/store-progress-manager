@@ -23,7 +23,7 @@ jobs:
         run: |
           set -euo pipefail
           tar -czf program-only.tar.gz -- \
-            进度管理系统.html xlsx.min.js backend/server.js \
+            进度管理系统.html xlsx.min.js echarts.min.js sync-core.js sync-client.js backend/server.js backend/sync-store.js \
             package.json package-lock.json node_modules
           sha256sum program-only.tar.gz > program-only.tar.gz.sha256
       - uses: actions/upload-artifact@v4

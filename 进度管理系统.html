@@ -2180,7 +2180,9 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
 }
 </style>
 <script src="./xlsx.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script src="./sync-core.js"></script>
+<script src="./sync-client.js"></script>
+<script src="./echarts.min.js"></script>
 </head>
 <body>
 
@@ -3212,286 +3214,11 @@ const API_BASE = '/jd-api';
 let STORES = JSON.parse(JSON.stringify(DEFAULT_STORES));
 let dataLoaded = false;
 
-// 从后端加载数据（优先从服务器，服务器为空时从 localStorage 回退）
-async function loadStoresFromServer() {
-  let serverDataLoaded = false;
-  
-  try {
-    const response = await fetch(`${API_BASE}/data`);
-    if (response.ok) {
-      const data = await response.json();
-      
-      // 优先从服务器加载门店数据
-      if (data.stores && data.stores.length > 0) {
-        STORES = data.stores;
-        dataLoaded = true;
-        serverDataLoaded = true;
-        console.log('门店数据已从服务器加载');
-      } else {
-        // 服务器数据为空，尝试从 localStorage 回退
-        const localStores = localStorage.getItem('storeData');
-        if (localStores) {
-          STORES = JSON.parse(localStores);
-          dataLoaded = true;
-          console.log('门店数据从 localStorage 加载（服务器为空）');
-        }
-      }
-      
-      // 优先从服务器加载基本信息字段配置
-      if (data.basicFields && data.basicFields.length > 0) {
-        BASIC_FIELDS = data.basicFields;
-        localStorage.setItem('basicFields', JSON.stringify(BASIC_FIELDS));
-        console.log('基本信息字段配置已从服务器加载');
-      } else {
-        // 服务器数据为空，尝试从 localStorage 回退
-        const localBasicFields = localStorage.getItem('basicFields');
-        if (localBasicFields) {
-          BASIC_FIELDS = JSON.parse(localBasicFields);
-          console.log('基本信息字段配置从 localStorage 加载（服务器为空）');
-        }
-      }
-      
-      // 优先从服务器加载阶段节点配置
-      if (data.storePhases && data.storePhases.length > 0) {
-        PHASES = data.storePhases;
-        localStorage.setItem('storePhases', JSON.stringify(PHASES));
-        // 重新计算 ALL_STEPS
-        ALL_STEPS = [].concat.apply([], PHASES.map(p => p.steps.map(s => ({step:s.name, phase:p, requireDate:s.requireDate}))));
-        console.log('阶段节点配置已从服务器加载');
-      } else {
-        // 服务器没有节点配置，尝试从 localStorage 回退，并上传到服务器
-        const localPhases = localStorage.getItem('storePhases');
-        if (localPhases) {
-          try {
-            const parsed = JSON.parse(localPhases);
-            if (parsed && parsed.length > 0) {
-              PHASES = parsed;
-              ALL_STEPS = [].concat.apply([], PHASES.map(p => p.steps.map(s => ({step:s.name, phase:p, requireDate:s.requireDate}))));
-              console.log('阶段节点配置从 localStorage 加载，准备上传到服务器...');
-              // 异步上传到服务器，不阻塞页面加载
-              saveStoresToServer().catch(e => console.log('上传节点配置到服务器失败:', e));
-            }
-          } catch (e) {
-            console.log('localStorage 节点配置解析失败，使用默认值');
-          }
-        } else {
-          // localStorage 也没有，用默认值并上传到服务器
-          console.log('使用默认节点配置，准备上传到服务器...');
-          saveStoresToServer().catch(e => console.log('上传默认节点配置到服务器失败:', e));
-        }
-      }
-      
-      // 优先从服务器加载供应商配置
-      if (data.suppliers && Array.isArray(data.suppliers)) {
-        SUPPLIERS = migrateSuppliers(data.suppliers);
-        localStorage.setItem('storeSuppliers', JSON.stringify(SUPPLIERS));
-        console.log('供应商配置已从服务器加载');
-      } else {
-        // 服务器没有供应商配置，尝试从 localStorage 回退
-        const localSuppliers = localStorage.getItem('storeSuppliers');
-        if (localSuppliers) {
-          try {
-            SUPPLIERS = migrateSuppliers(JSON.parse(localSuppliers));
-            console.log('供应商配置从 localStorage 加载');
-          } catch (e) {
-            console.log('localStorage 供应商配置解析失败，使用默认值');
-          }
-        }
-      }
-
-      // 优先从服务器加载维保记录
-      if (data.maintenanceRecords && Array.isArray(data.maintenanceRecords)) {
-        MAINTENANCE_RECORDS = data.maintenanceRecords;
-        localStorage.setItem('maintenanceRecords', JSON.stringify(MAINTENANCE_RECORDS));
-        console.log('维保记录已从服务器加载');
-      } else {
-        // 服务器没有维保记录，尝试从 localStorage 回退
-        const localRecords = localStorage.getItem('maintenanceRecords');
-        if (localRecords) {
-          try {
-            MAINTENANCE_RECORDS = JSON.parse(localRecords);
-            console.log('维保记录从 localStorage 加载');
-          } catch (e) {
-            console.log('localStorage 维保记录解析失败');
-          }
-        }
-      }
-
-      // 如果服务器有数据，同步到 localStorage 作为备份
-      if (serverDataLoaded) {
-        localStorage.setItem('storeData', JSON.stringify(STORES));
-      }
-      
-      return true;
-    }
-  } catch (e) {
-    console.log('从服务器加载数据失败，使用 localStorage 数据:', e);
-    // 网络错误时从 localStorage 加载
-    loadFromLocalStorage();
-  }
-  return false;
-}
-
-// 从 localStorage 加载数据（作为备份）
-function loadFromLocalStorage() {
-  const localStores = localStorage.getItem('storeData');
-  if (localStores) {
-    STORES = JSON.parse(localStores);
-    dataLoaded = true;
-    console.log('门店数据从 localStorage 加载');
-  }
-  
-  const localBasicFields = localStorage.getItem('basicFields');
-  if (localBasicFields) {
-    BASIC_FIELDS = JSON.parse(localBasicFields);
-    console.log('基本信息字段配置从 localStorage 加载');
-  }
-  
-  const localPhases = localStorage.getItem('storePhases');
-  if (localPhases) {
-    PHASES = JSON.parse(localPhases);
-    ALL_STEPS = [].concat.apply([], PHASES.map(p => p.steps.map(s => ({step:s.name, phase:p, requireDate:s.requireDate}))));
-    console.log('阶段节点配置从 localStorage 加载');
-  }
-
-  const localMaintenance = localStorage.getItem('maintenanceRecords');
-  if (localMaintenance) {
-    try {
-      MAINTENANCE_RECORDS = JSON.parse(localMaintenance);
-      console.log('维保记录从 localStorage 加载');
-    } catch (e) {
-      console.log('localStorage 维保记录解析失败');
-    }
-  }
-}
-
-// 保存门店数据到后端
-async function saveStoresToServer() {
-  try {
-    const response = await fetch(`${API_BASE}/data`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ stores: STORES, basicFields: BASIC_FIELDS, storePhases: PHASES, suppliers: SUPPLIERS, maintenanceRecords: MAINTENANCE_RECORDS })
-    });
-    if (response.ok) {
-      console.log('数据已保存到服务器');
-      return true;
-    }
-  } catch (e) {
-    console.error('保存数据到服务器失败:', e);
-  }
-  return false;
-}
-
-// 兼容旧代码的 saveStores 函数
-async function saveStores() {
-  // 先保存到服务器
-  await saveStoresToServer();
-  // 同时保存到 localStorage 作为备份
-  localStorage.setItem('storeData', JSON.stringify(STORES));
-}
-
-// 页面加载时从服务器获取数据（返回 Promise 供 init 使用）
+// Load the versioned data before initializing the page.
 let dataLoadPromise = loadStoresFromServer().then(() => {
-  // 数据加载完成后刷新页面显示
-  if (typeof renderOverview === 'function') {
-    renderOverview();
-  }
-  if (typeof renderDetail === 'function') {
-    renderDetail();
-  }
+  if (typeof renderOverview === 'function') renderOverview();
+  if (typeof renderDetail === 'function') renderDetail();
 });
-
-// ── 多设备数据轮询同步 ─────────────────────────────────────────────────────────
-let _lastSyncHash = '';
-let _syncTimer = null;
-let _isSaving = false; // 本地正在保存时跳过轮询
-const SYNC_INTERVAL = 5000; // 每5秒轮询一次
-
-// 简单数据指纹（用于判断服务器数据是否有变化）
-function _dataHash(data) {
-  try { return JSON.stringify(data); } catch(e) { return ''; }
-}
-
-// 轮询：从服务器拉取最新数据，如果与本地不同则自动更新
-async function syncFromServer() {
-  if (_isSaving) return; // 本地正在保存，跳过
-  try {
-    const response = await fetch(`${API_BASE}/data`);
-    if (!response.ok) return;
-    const data = await response.json();
-    const serverHash = _dataHash(data.stores);
-
-    // 计算完整数据指纹（包含门店、字段、节点配置、维保记录）
-    const fullServerHash = _dataHash({ stores: data.stores, basicFields: data.basicFields, storePhases: data.storePhases, maintenanceRecords: data.maintenanceRecords });
-    if (fullServerHash && fullServerHash !== _lastSyncHash) {
-      // 数据有变化，更新本地
-      if (data.stores && data.stores.length > 0) {
-        STORES = data.stores;
-        localStorage.setItem('storeData', JSON.stringify(STORES));
-      }
-      if (data.basicFields && data.basicFields.length > 0) {
-        BASIC_FIELDS = data.basicFields;
-        localStorage.setItem('basicFields', JSON.stringify(BASIC_FIELDS));
-      }
-      if (data.storePhases && data.storePhases.length > 0) {
-        PHASES = data.storePhases;
-        ALL_STEPS = [].concat.apply([], PHASES.map(p => p.steps.map(s => ({step:s.name, phase:p, requireDate:s.requireDate}))));
-        localStorage.setItem('storePhases', JSON.stringify(PHASES));
-      }
-      if (data.maintenanceRecords && Array.isArray(data.maintenanceRecords)) {
-        MAINTENANCE_RECORDS = data.maintenanceRecords;
-        localStorage.setItem('maintenanceRecords', JSON.stringify(MAINTENANCE_RECORDS));
-      }
-      _lastSyncHash = fullServerHash;
-
-      // 重新渲染页面
-      if (typeof render === 'function') render();
-      if (typeof renderOverview === 'function') renderOverview();
-      if (typeof renderDetail === 'function') renderDetail();
-      if (typeof updateStats === 'function') updateStats();
-      if (typeof renderMaintenanceList === 'function') renderMaintenanceList();
-      console.log('数据已从服务器同步更新');
-    }
-  } catch (e) {
-    // 静默失败，不影响用户操作
-  }
-}
-
-// 启动轮询
-function startSyncPolling() {
-  // 初始化 hash（包含门店、字段、节点配置、维保记录）
-  _lastSyncHash = _dataHash({ stores: STORES, basicFields: BASIC_FIELDS, storePhases: PHASES, maintenanceRecords: MAINTENANCE_RECORDS });
-  // 启动定时器
-  if (_syncTimer) clearInterval(_syncTimer);
-  _syncTimer = setInterval(syncFromServer, SYNC_INTERVAL);
-  console.log('多设备同步已启动，每' + SYNC_INTERVAL/1000 + '秒检查一次');
-}
-
-// 停止轮询（登出时调用）
-function stopSyncPolling() {
-  if (_syncTimer) {
-    clearInterval(_syncTimer);
-    _syncTimer = null;
-  }
-}
-
-// 包装保存函数，保存期间暂停轮询（避免覆盖自己刚保存的数据）
-const _origSaveToServer = saveStoresToServer;
-saveStoresToServer = async function() {
-  _isSaving = true;
-  try {
-    const result = await _origSaveToServer();
-    // 保存成功后更新本地 hash，避免轮询把自己刚存的当成"远程更新"
-    if (result) {
-      _lastSyncHash = _dataHash({ stores: STORES, basicFields: BASIC_FIELDS, storePhases: PHASES, maintenanceRecords: MAINTENANCE_RECORDS });
-    }
-    return result;
-  } finally {
-    _isSaving = false;
-  }
-};
-
 
 // ── 进度计算 ──────────────────────────────────────────────────────────────────
 function calcProgress(store) {
@@ -5415,7 +5142,7 @@ function exportNodeConfig() {
 }
 
 // ── 保存门店字段 ───────────────────────────────────────────────────────────────
-function saveStoreField(storeIdx, fieldName, value) {
+async function saveStoreField(storeIdx, fieldName, value) {
   // 权限检查：超管、管理员、工程管理员可以保存字段
   const role = checkRole();
   if (role !== 'superadmin' && role !== 'admin' && role !== 'engineer') {
@@ -5452,7 +5179,7 @@ function saveStoreField(storeIdx, fieldName, value) {
   }
   
   // 同步保存到服务器和 localStorage
-  saveStoresToServer();
+  await saveStoresToServer();
   localStorage.setItem('storeData', JSON.stringify(STORES));
   
   // 显示保存成功提示
@@ -5952,7 +5679,7 @@ function handleFileSelect(input) {
   reader.readAsArrayBuffer(file);
 }
 
-function confirmImport() {
+async function confirmImport() {
   if (!window._importData) return;
 
   const data = window._importData;
@@ -5961,13 +5688,13 @@ function confirmImport() {
   // 根据导入类型路由到不同处理函数
   const importType = document.getElementById('importType').value;
   if (importType === 'finance') {
-    importFinanceData(data, headers);
+    await importFinanceData(data, headers);
     return;
   } else if (importType === 'suppliers') {
-    importSuppliersData(data, headers);
+    await importSuppliersData(data, headers);
     return;
   } else if (importType === 'maintenance') {
-    importMaintenanceData(data, headers);
+    await importMaintenanceData(data, headers);
     return;
   }
 
@@ -6185,7 +5912,7 @@ function confirmImport() {
     }
   }
 
-  saveStores();
+  await saveStores();
   renderTable();
   updateStats();
   refreshAllDropdowns();
@@ -6195,7 +5922,7 @@ function confirmImport() {
 }
 
 // 导入工程结算明细
-function importFinanceData(data, headers) {
+async function importFinanceData(data, headers) {
   const storeNameCol = headers.indexOf('门店名称');
   if (storeNameCol < 0) {
     alert('未找到"门店名称"列，请检查表格格式');
@@ -6345,14 +6072,14 @@ function importFinanceData(data, headers) {
     updatedCount++;
   });
 
-  saveStores();
+  await saveStores();
   if (typeof renderFinanceStoreList === 'function') renderFinanceStoreList();
   alert(`工程结算明细导入完成！更新 ${updatedCount} 家门店，跳过 ${skippedCount} 家（门店不存在）`);
   closeImportModal();
 }
 
 // 导入供应商管理
-function importSuppliersData(data, headers) {
+async function importSuppliersData(data, headers) {
   const nameCol = headers.indexOf('供应商名称');
   if (nameCol < 0) {
     alert('未找到"供应商名称"列，请检查表格格式');
@@ -6414,14 +6141,14 @@ function importSuppliersData(data, headers) {
   }
 
   localStorage.setItem('storeSuppliers', JSON.stringify(SUPPLIERS));
-  saveStoresToServer();
+  await saveStoresToServer();
   if (typeof renderSupplierList === 'function') renderSupplierList();
   alert(`供应商导入完成！新增 ${createdCount} 家，更新 ${updatedCount} 家`);
   closeImportModal();
 }
 
 // 导入维保记录
-function importMaintenanceData(data, headers) {
+async function importMaintenanceData(data, headers) {
   const storeNameCol = headers.indexOf('报修门店');
   if (storeNameCol < 0) {
     alert('未找到"报修门店"列，请检查表格格式');
@@ -6518,7 +6245,6 @@ function importMaintenanceData(data, headers) {
   }
 
   localStorage.setItem('maintenanceRecords', JSON.stringify(MAINTENANCE_RECORDS));
-  saveStoresToServer();
   if (typeof renderMaintenanceList === 'function') renderMaintenanceList();
   // 导入完成后，自动计算维保用时（报修日期和完成日期都有值但维保用时为空的记录）
   MAINTENANCE_RECORDS.forEach(record => {
@@ -6530,6 +6256,7 @@ function importMaintenanceData(data, headers) {
     }
   });
 
+  await saveStoresToServer();
   alert(`维保记录导入完成！新增 ${createdCount} 条，更新 ${updatedCount} 条`);
   closeImportModal();
 }
@@ -7344,7 +7071,7 @@ function renderStoreEditorContent(store, regionOptions) {
 }
 
 // ── 保存门店（带必填验证）───────────────────────────────────────────────────────
-function saveStoreWithRequiredCheck(btn, requiredFields) {
+async function saveStoreWithRequiredCheck(btn, requiredFields) {
   // 验证必填字段 - 从表单实时读取值
   const missingFields = [];
   
@@ -7402,17 +7129,18 @@ function saveStoreWithRequiredCheck(btn, requiredFields) {
   }
   
   // 验证通过，执行保存
-  saveStoreWithFeedback(btn);
+  if (!(await saveStoreWithFeedback(btn))) return;
   
   // 保存成功后，自动完成装修阶段第一个节点
-  setTimeout(() => {
-    if (window._pendingNodeStep) {
+  {
+    const store = STORES[_editingStoreIdx];
+    if (store && window._pendingNodeStep) {
       const constructionPhase = PHASES.find(p => p.name === '装修阶段') || PHASES.find(p => p.name === '施工阶段');
       if (constructionPhase && constructionPhase.steps.length > 0) {
         const firstStep = constructionPhase.steps[0].name;
         if (!store[firstStep]) {
           store[firstStep] = '已完成';
-          saveStores();
+          await saveStores();
           checkAndCompleteStore(window._editingStoreIdx);
           render();
         }
@@ -7420,7 +7148,7 @@ function saveStoreWithRequiredCheck(btn, requiredFields) {
       window._pendingNodeStep = null;
       window._requiredFieldsForValidation = null;
     }
-  }, 300);
+  }
 }
 
 // ── 编辑时分组和字段管理函数 ────────────────────────────────────────────────────
@@ -7760,7 +7488,7 @@ async function saveStore() {
   
   if (!nameEl || !personEl || !regionSelectEl) {
     alert('页面元素加载异常，请关闭后重试');
-    return;
+    return false;
   }
   
   const name = nameEl.value.trim();
@@ -7770,7 +7498,7 @@ async function saveStore() {
   const region = regionSelect === '__new__' ? regionNew : regionSelect;
   if (!name || !person || !region) {
     alert('请填写完整信息（门店名称、负责人、区域）');
-    return;
+    return false;
   }
   
   // 获取手动选择的门店状态
@@ -7832,6 +7560,7 @@ async function saveStore() {
     // 添加新门店
     storeData._finance = {};
     STORES.push(storeData);
+    _editingStoreIdx = STORES.length - 1;
   }
   
   // 保存到服务器
@@ -7841,32 +7570,17 @@ async function saveStore() {
   initRegionButtons();
   render();
   closeStoreEditor();
+  return true;
 }
 
 // 保存门店（带按钮反馈）
 async function saveStoreWithFeedback(btn) {
-  // 按钮点击反馈效果
-  btn.style.transform = 'scale(0.95)';
-  btn.style.background = '#389e0d';
-  btn.textContent = '✓ 保存中...';
+  if (btn.disabled) return false;
   btn.disabled = true;
-  
-  // 延迟执行保存，让用户看到反馈
-  setTimeout(async () => {
-    try {
-      await saveStore();
-      // 保存成功后页面已关闭，不需要恢复按钮状态
-    } catch (e) {
-      // 保存失败时按钮还存在，恢复按钮状态
-      if (document.body.contains(btn)) {
-        btn.style.transform = 'scale(1)';
-        btn.style.background = '#52c41a';
-        btn.textContent = '💾 保存门店';
-        btn.disabled = false;
-      }
-      alert('保存失败：' + e.message);
-    }
-  }, 200);
+  btn.textContent = '正在保存…';
+  try { return (await saveStore()) === true; }
+  catch(e) { if (!e.syncHandled) alert('保存失败：' + e.message); return false; }
+  finally { if(document.body.contains(btn)){btn.disabled=false;btn.textContent='💾 保存门店';} }
 }
 
 // ── 根据进度节点计算门店状态 ────────────────────────────────────────────────────
@@ -7970,7 +7684,7 @@ function initRegionButtons() {
   if (cntCity) cntCity.textContent = regions.length;
 }
 
-function deleteStore(storeIdx) {
+async function deleteStore(storeIdx) {
   // 权限检查：访客不能删除门店
   if (isVisitor()) {
     alert('访客账号无删除权限');
@@ -7979,7 +7693,7 @@ function deleteStore(storeIdx) {
   
   if (confirm(`确定删除门店「${STORES[storeIdx]['门店']}」吗？此操作不可恢复。`)) {
     STORES.splice(storeIdx, 1);
-    saveStores();
+    await saveStores();
     initRegionButtons();
     render();
   }
@@ -9083,6 +8797,7 @@ function migrateSuppliers(list) {
     }
     // 老格式转换
     return {
+      _syncId: s._syncId,
       name: s.name || '',
       categories: s.category ? [s.category] : [],
       contractType: '',
@@ -9328,9 +9043,10 @@ async function saveSupplierModal(idx) {
   };
 
   if (idx >= 0) {
-    SUPPLIERS[idx] = newSupplier;
+    SUPPLIERS[idx] = { ...newSupplier, _syncId: SUPPLIERS[idx]._syncId };
   } else {
     SUPPLIERS.push(newSupplier);
+    document.querySelector('[onclick^="saveSupplierModal("]')?.setAttribute('onclick', 'saveSupplierModal('+(SUPPLIERS.length-1)+')');
   }
 
   localStorage.setItem('storeSuppliers', JSON.stringify(SUPPLIERS));
@@ -10231,9 +9947,10 @@ async function saveMaintenanceRecord(idx) {
   };
 
   if (idx !== null && idx !== undefined) {
-    MAINTENANCE_RECORDS[idx] = record;
+    MAINTENANCE_RECORDS[idx] = { ...record, _syncId: MAINTENANCE_RECORDS[idx]._syncId };
   } else {
     MAINTENANCE_RECORDS.push(record);
+    document.querySelector('[onclick^="saveMaintenanceRecord("]')?.setAttribute('onclick', 'saveMaintenanceRecord('+(MAINTENANCE_RECORDS.length-1)+')');
   }
 
   // 保存到 localStorage 和服务器
