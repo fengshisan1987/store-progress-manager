@@ -2178,6 +2178,12 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
 .finance-summary-row:hover {
   background: #f0f5ff !important;
 }
+.finance-edit-table th, .finance-edit-table td {
+  box-sizing: border-box;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.finance-edit-table input, .finance-edit-table select { min-width: 0; max-width: 100%; }
 </style>
 <script src="./xlsx.min.js"></script>
 <script src="./sync-core.js"></script>
@@ -11296,9 +11302,9 @@ function renderFinanceTable(storeIdx, isEdit, rowFilter) {
   
   // 构建 colgroup（编辑模式删除区域、门店类型、装修形式、预估验收日期、验收日期5列）
   const colWidths = isEdit ? [
-    '170px', '60px', '100px', '120px', '120px',
-    ...FINANCE_COLUMNS.map(() => '90px'),
-    '90px', '80px', '100px', '90px'
+    '170px', '80px', '110px', '160px', '140px',
+    ...FINANCE_COLUMNS.map(() => '120px'),
+    '140px', '120px', '160px', '140px'
   ] : [
     '170px', '60px', '70px', '70px', '90px', '90px', '60px', '100px', '120px', '120px',
     ...FINANCE_COLUMNS.map(() => '90px'),
@@ -11306,8 +11312,9 @@ function renderFinanceTable(storeIdx, isEdit, rowFilter) {
   ];
   const colGroup = '<colgroup>' + colWidths.map(w => `<col style="width:${w};">`).join('') + '</colgroup>';
   
-  let html = '<div style="overflow-x:auto;">';
-  html += `<table class="finance-table" style="border-collapse:collapse;font-size:13px;table-layout:fixed;">${colGroup}`;
+  const editWidth = colWidths.reduce((sum, width) => sum + parseInt(width, 10), 0);
+  let html = '<div style="overflow-x:auto;max-width:100%;">';
+  html += `<table class="finance-table${isEdit ? ' finance-edit-table' : ''}" style="border-collapse:collapse;font-size:13px;table-layout:fixed;${isEdit ? `width:${editWidth}px;min-width:${editWidth}px;` : ''}">${colGroup}`;
   
   // 表头
   html += '<thead>';
@@ -11545,6 +11552,17 @@ function renderFinanceTable(storeIdx, isEdit, rowFilter) {
   html += '</tbody></table>';
   html += '</div>';
   
+  if (isEdit) {
+    // Sticky offsets must use the same widths as the fixed-layout columns.
+    const previousOffsets = [0, 169, 229, 329, 449];
+    let left = 0;
+    const offsets = new Map(previousOffsets.map((old, index) => {
+      const pair = [old, left];
+      left += parseInt(colWidths[index], 10);
+      return pair;
+    }));
+    html = html.replace(/left:(0|169|229|329|449)(?:px)?;/g, (_, old) => `left:${offsets.get(Number(old))}px;`);
+  }
   return html;
 }
 
