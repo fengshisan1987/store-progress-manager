@@ -10,12 +10,17 @@ function syncSnapshot() {
 }
 function syncDirty(){return !!_syncBase&&SyncCore.diff(_syncBase,syncSnapshot()).length>0;}
 function syncEditing(){return _syncEditors.some(id=>document.getElementById(id)?.classList.contains('open'))||['datePickerOverlay','stopWorkOverlay'].some(id=>document.getElementById(id)?.classList.contains('show'))||!!document.getElementById('supplierModalOverlay')||!!document.getElementById('syncConflictDialog')||['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName);}
-function syncStatus(message,error=false) {
+let _syncStatusTimer=null;
+function syncStatus(message,error=false,persistent=false) {
+  if(_syncStatusTimer!==null){clearTimeout(_syncStatusTimer);_syncStatusTimer=null;}
   let bar=document.getElementById('syncStatusBar');
-  if(!bar){bar=document.createElement('div');bar.id='syncStatusBar';bar.style.cssText='position:fixed;bottom:28px;left:12px;right:12px;z-index:2147483645;padding:9px 12px;border-radius:6px;background:#e6f4ff;color:#16365d;font-size:13px;display:flex;gap:12px;align-items:center';document.body.appendChild(bar);}
+  if(!bar){bar=document.createElement('div');bar.id='syncStatusBar';bar.style.cssText='position:fixed;bottom:28px;right:12px;max-width:min(440px,calc(100vw - 24px));box-sizing:border-box;flex-wrap:wrap;z-index:2147483645;padding:9px 12px;border-radius:6px;background:#e6f4ff;color:#16365d;font-size:13px;display:flex;gap:12px;align-items:center';document.body.appendChild(bar);}
+  bar.style.display='flex';bar.style.pointerEvents=error?'auto':'none';
+  bar.setAttribute('role',error?'alert':'status');
   bar.replaceChildren();bar.style.background=error?'#fff1f0':'#e6f4ff';
   const text=document.createElement('span');text.textContent=message;bar.appendChild(text);
   if(error){const button=document.createElement('button');button.textContent=_syncConflict?'核对冲突':'重试保存';button.onclick=()=>_syncConflict?showSyncConflict():saveStoresToServer().catch(()=>{});bar.appendChild(button);}
+  if(!error&&!persistent)_syncStatusTimer=setTimeout(()=>{bar.style.display='none';_syncStatusTimer=null;},3000);
 }
 function syncKeepDraft(){try {sessionStorage.setItem('jd-sync-draft',JSON.stringify({base:_syncBase,local:syncSnapshot(),pending:_syncPending}));}catch(e){syncStatus('草稿未能写入浏览器缓存，请保持页面打开。',true);}}
 function syncInstall(data,render=false) {
@@ -60,13 +65,13 @@ function saveStoresToServer() {
     try {
       if(!_syncBase)throw Error('数据尚未加载，请刷新后再编辑');
       if(_syncConflict)throw Error('请先核对保存冲突');
-      syncStatus('正在保存，请稍候…');
+      syncStatus('正在保存，请稍候…',false,true);
       if(_syncPending)await syncSendPending();
       const snapshot=syncSnapshot(),changes=SyncCore.diff(_syncBase,snapshot);
       if(changes.length){_syncPending={snapshot,body:{protocol:2,requestId:syncUUID(),baseRevision:_syncBase._sync.revision,changes}};syncKeepDraft();await syncSendPending();}
       _syncFailure=false;
       if(syncDirty())syncKeepDraft();else sessionStorage.removeItem('jd-sync-draft');
-      syncStatus(syncDirty()?'已保存提交内容，仍有后续修改未保存':'服务器已确认保存成功');
+      syncStatus(syncDirty()?'已保存提交内容，仍有后续修改未保存':'服务器已确认保存成功',false,syncDirty());
       return true;
     } catch(e){_syncFailure=true;e.syncHandled=true;syncKeepDraft();syncStatus(e.message+'；你的修改已保留。',true);if(_syncConflict)showSyncConflict();throw e;}
     finally{_syncBusy--;_syncEpoch++;}
