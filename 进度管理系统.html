@@ -2187,7 +2187,7 @@ body { font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif; bac
 </style>
 <script src="./xlsx.min.js"></script>
 <script src="./sync-core.js"></script>
-<script src="./sync-client.js?v=20261020-material"></script>
+<script src="./sync-client.js?v=20261020-acceptance"></script>
 <script src="./material-plan.js?v=20261020-material"></script>
 <script src="./echarts.min.js"></script>
 </head>
@@ -4505,6 +4505,51 @@ function selectDatePickerDate(year, month, day) {
   renderDatePickerCalendar();
 }
 
+// 验收前明确选择，取消或选择否均不修改节点。
+let closeAcceptanceConfirmation = null;
+function askAcceptanceConfirmation() {
+  if (document.getElementById('acceptanceConfirmDialog')) return Promise.resolve(false);
+  return new Promise(resolve => {
+    const previousFocus = document.activeElement;
+    const overlay = document.createElement('div');
+    overlay.id = 'acceptanceConfirmDialog';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:2147483644;background:#0007;display:flex;align-items:center;justify-content:center;padding:16px';
+    overlay.innerHTML = `<form role="dialog" aria-modal="true" aria-labelledby="acceptanceConfirmTitle" style="background:white;color:#222;border-radius:12px;padding:24px;width:420px;max-width:100%;box-sizing:border-box">
+      <h3 id="acceptanceConfirmTitle" style="margin:0 0 20px">加盟商是否确认验收表</h3>
+      <div style="display:flex;gap:40px;margin-bottom:24px">
+        <label><input type="radio" name="acceptanceAnswer" value="yes" required> 是</label>
+        <label><input type="radio" name="acceptanceAnswer" value="no" required> 否</label>
+      </div>
+      <p style="font-size:13px;color:#666">选择“是”后继续选择验收日期；选择“否”则不完成该节点。</p>
+      <div style="display:flex;gap:12px;justify-content:flex-end"><button type="button">取消</button><button type="submit" style="background:#1677ff;color:white;border:0;border-radius:6px;padding:8px 18px">确定</button></div>
+    </form>`;
+    let settled = false;
+    const finish = answer => {
+      if (settled) return;
+      settled = true; overlay.remove(); closeAcceptanceConfirmation = null;
+      previousFocus?.focus?.(); resolve(answer);
+    };
+    closeAcceptanceConfirmation = () => finish(false);
+    const form = overlay.querySelector('form');
+    form.onsubmit = event => {
+      event.preventDefault();
+      const answer = form.querySelector('input:checked');
+      if (answer) finish(answer.value === 'yes');
+    };
+    form.querySelector('[type="button"]').onclick = () => finish(false);
+    form.onkeydown = event => {
+      if (event.key === 'Escape') { event.preventDefault(); finish(false); }
+      if (event.key === 'Tab') {
+        const first = form.querySelector('input:checked') || form.querySelector('input');
+        const last = form.querySelector('[type="submit"]');
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
+    };
+    document.body.appendChild(overlay); form.querySelector('input').focus();
+  });
+}
+
 // ── 点击节点切换完成状态 ───────────────────────────────────────────────────────
 async function toggleNode(storeIdx, step, event) {
   event.stopPropagation(); // 防止触发行的点击
@@ -4559,7 +4604,10 @@ async function toggleNode(storeIdx, step, event) {
   }
   
   // 如果该节点需要确认弹窗（且当前未完成），先弹出确认
-  if (stepRequireConfirm && stepConfirmText && (!currentVal || currentVal === '待完成' || currentVal === '待启动')) {
+  if (step === '门店已验收' && (!currentVal || ['待完成','待启动','已完成'].includes(currentVal))) {
+    if (!(await askAcceptanceConfirmation())) return;
+    stepRequireDate = true;
+  } else if (stepRequireConfirm && stepConfirmText && (!currentVal || currentVal === '待完成' || currentVal === '待启动')) {
     if (!confirm(stepConfirmText)) {
       // 用户点击"否"，关闭弹窗，不执行后续操作
       return;
