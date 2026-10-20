@@ -9,7 +9,7 @@ function syncSnapshot() {
   SyncCore.normalize(d,()=>syncUUID());return SyncCore.clone(d);
 }
 function syncDirty(){return !!_syncBase&&SyncCore.diff(_syncBase,syncSnapshot()).length>0;}
-function syncEditing(){return _syncEditors.some(id=>document.getElementById(id)?.classList.contains('open'))||['datePickerOverlay','stopWorkOverlay'].some(id=>document.getElementById(id)?.classList.contains('show'))||!!document.getElementById('supplierModalOverlay')||!!document.getElementById('syncConflictDialog')||['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName);}
+function syncEditing(){return _syncEditors.some(id=>document.getElementById(id)?.classList.contains('open'))||['datePickerOverlay','stopWorkOverlay'].some(id=>document.getElementById(id)?.classList.contains('show'))||!!document.getElementById('materialPlanDialog')||!!document.getElementById('supplierModalOverlay')||!!document.getElementById('syncConflictDialog')||['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName);}
 let _syncStatusTimer=null;
 function syncStatus(message,error=false,persistent=false) {
   if(_syncStatusTimer!==null){clearTimeout(_syncStatusTimer);_syncStatusTimer=null;}
@@ -115,6 +115,7 @@ function showSyncConflict(){
     const merged=SyncCore.apply(remote,selected,true);if(merged.conflicts.length){alert('记录结构已改变，请先保留线上内容。');return;}
     for(const id of _syncEditors)document.getElementById(id)?.classList.remove('open');
     document.getElementById('supplierModalOverlay')?.remove();document.getElementById('overlay')?.classList.remove('show');
+    if(typeof closeMaterialPlan==='function')closeMaterialPlan(true);
     overlay.remove();syncInstall(merged.data,true);_syncBase=SyncCore.clone(remote);_syncConflict=null;_syncPending=null;_syncFailure=syncDirty();_syncEpoch++;syncKeepDraft();syncStatus('冲突已整理，请核对草稿并点击重试保存。',true);
   };panel.appendChild(apply);
   const close=document.createElement('button');close.textContent='暂不处理，保留输入';close.style.marginLeft='12px';close.onclick=()=>overlay.remove();panel.appendChild(close);document.body.appendChild(overlay);
