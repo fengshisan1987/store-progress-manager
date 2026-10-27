@@ -3986,6 +3986,13 @@ function updateStats() {
 }
 
 // ── 渲染行 ────────────────────────────────────────────────────────────────────
+function renderStoreModeTag(value) {
+  const mode = typeof value === 'string' ? value.trim() : '';
+  const label = ['新模式', '老模式'].includes(mode) ? mode : '模式未设置';
+  const isNew = label === '新模式';
+  return `<span class="store-mode-tag" style="display:inline-block;font-size:11px;padding:2px 6px;border-radius:3px;white-space:nowrap;flex-shrink:0;background:${isNew ? '#e6f4ff' : '#f0f0f0'};color:${isNew ? '#0958d9' : '#595959'};border:1px solid ${isNew ? '#91caff' : '#d9d9d9'}">${label}</span>`;
+}
+
 function render() {
   const body = document.getElementById('ganttBody');
   
@@ -4178,6 +4185,7 @@ function render() {
             <span class="region-tag">${store['区域']}</span>
             <span class="status-tag ${statusCls}">${status}</span>
             <span class="type-tag">${store['门店类型'] || '未设置'}</span>
+            ${renderStoreModeTag(store['门店模式'])}
             <span class="engineer-tag">${store['工程负责人'] || '未分配'}</span>
             <span class="renovation-tag">${store['装修形式'] || '未设置'}</span>
             <span class="area-tag">${store['门店面积'] ? store['门店面积'] + '㎡' : '面积未设置'}</span>
@@ -7505,6 +7513,11 @@ async function saveStore() {
   // 重新初始化区域按钮
   initRegionButtons();
   render();
+  const openingCalendarEl = document.getElementById('openingCalendarInDashboard');
+  if (openingCalendarEl) {
+    openingCalendarEl.innerHTML = generateOpeningCalendarWidget();
+    initOpeningCalendarMultiSelects();
+  }
   closeStoreEditor();
   return true;
 }
@@ -13549,6 +13562,7 @@ function generateOpeningCalendarWidget() {
       }
       storesByMonth[monthKey].storesByDay[day].push({
         name: store['门店'],
+        mode: store['门店模式'],
         region: store['区域'],
         type: store['门店类型'] || '未设置',
         date: openingDate
@@ -13638,6 +13652,7 @@ function generateOpeningCalendarWidget() {
                     <div class="opening-store-list-item-store-section">
                       <span class="opening-store-list-item-badge ${typeClass}">${typeBadge}</span>
                       <span class="opening-store-list-item-name">${s.name}</span>
+                      ${renderStoreModeTag(s.mode)}
                       <span class="opening-store-list-item-region ${regionClass}">${region}</span>
                     </div>
                   `;
